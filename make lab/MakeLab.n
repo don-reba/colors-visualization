@@ -1,0 +1,62 @@
+// REFERENCE: ConvertColor.dll
+
+using ConvertColor;
+using System.IO;
+
+def δ = 4;
+def vertexCount = 6 * (256 / δ + 1) * (256 / δ + 1);
+def faceCount   = 6 * (256 / δ) * (256 / δ);
+
+def writer = File.CreateText("lab.ply");
+[ "ply"
+, "format ascii 1.0"
+, "comment Created by Alexey Badalov"
+, $"element vertex $vertexCount"
+, "property float x"
+, "property float y"
+, "property float z"
+, "property float red"
+, "property float green"
+, "property float blue"
+, $"element face $faceCount"
+, "property list uchar uint vertex_indices"
+, "end_header"
+].Iter(writer.WriteLine);
+
+def ProcessSide(WriteVertex : double * double -> void)
+{
+	foreach (b in [0, δ .. 256])
+	foreach (a in [0, δ .. 256])
+		WriteVertex(a / 256.0, b / 256.0);
+}
+
+def WriteVertex(r, g, b)
+{
+	def (x, y, z) = (r, g, b) |> RgbToXyz |> XyzToLab;
+	def x = x / 50.0;
+	def y = y / 50.0;
+	def z = z / 50.0;
+	writer.WriteLine(string.Join(" ", array[x, y, z, r, g, b]))
+}
+
+ProcessSide(WriteVertex(0, _, _));
+ProcessSide(WriteVertex(1, _, _));
+ProcessSide(WriteVertex(_, 0, _));
+ProcessSide(WriteVertex(_, 1, _));
+ProcessSide(WriteVertex(_, _, 0));
+ProcessSide(WriteVertex(_, _, 1));
+
+foreach (k in [0 .. 5])
+foreach (b in [0 .. 256 / δ - 1])
+foreach (a in [0 .. 256 / δ - 1])
+{
+	def offset = k * (256 / δ + 1) * (256 / δ + 1);
+	def v0 = offset + (b + 0) * (256 / δ + 1) + a + 0;
+	def v1 = offset + (b + 1) * (256 / δ + 1) + a + 0;
+	def v2 = offset + (b + 1) * (256 / δ + 1) + a + 1;
+	def v3 = offset + (b + 0) * (256 / δ + 1) + a + 1;
+	writer.WriteLine("4 {0} {1} {2} {3}", v0, v1, v2, v3)
+}
+
+
+writer.Close();
