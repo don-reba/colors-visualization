@@ -24,13 +24,13 @@ void SaveBuffer(const char * path, size_t width, size_t height, const Pixel * bu
 {
 	size_t bpp(32);
 	fipImage img(FIT_BITMAP, width, height, bpp);
-	for (int y(0); y != height; ++y)
+	for (size_t y(0); y != height; ++y)
 	{
 		BYTE * scanline(img.getScanLine(y));
-		for (int x(0); x !=  width; ++x)
+		for (size_t x(0); x !=  width; ++x)
 		{
 			const Pixel & pxl(*buffer++);
-			Vector3f rgb(Vector3f(pxl.L, pxl.A, pxl.B));
+			Vector3f rgb(LabToRgb(Vector3f(pxl.L, pxl.A, pxl.B)));
 			*scanline++ = FloatToByteChannel(rgb(0));
 			*scanline++ = FloatToByteChannel(rgb(1));
 			*scanline++ = FloatToByteChannel(rgb(2));

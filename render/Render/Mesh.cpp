@@ -8,6 +8,11 @@
 using namespace Eigen;
 using namespace std;
 
+Mesh::Triangle::Triangle(int v0, int v1, int v2)
+	: v0(v0), v1(v1), v2(v2)
+{
+}
+
 struct PlyHeader
 {
 	int VertexCount;
@@ -54,16 +59,14 @@ Mesh LoadPly(const char * path)
 		mesh.vertices.push_back(Vector3f(x, y, z));
 	}
 
-	mesh.triList.reserve(header.FaceCount * 3);
+	mesh.faces.reserve(header.FaceCount);
 	for (int i = 0; i != header.FaceCount; ++i)
 	{
-		int n, v1, v2, v3;
-		ply >> n >> v1 >> v2 >> v3;
+		int n, v0, v1, v2;
+		ply >> n >> v0 >> v1 >> v2;
 		if (n != 3)
 			throw runtime_error("encountered non-triangular face");
-		mesh.triList.push_back(v1);
-		mesh.triList.push_back(v2);
-		mesh.triList.push_back(v3);
+		mesh.faces.push_back(Mesh::Triangle(v0, v1, v2));
 	}
 
 	return mesh;

@@ -1,6 +1,7 @@
 #include "Color.h"
 #include "Image.h"
 #include "Mesh.h"
+#include "Timer.h"
 
 #include <Eigen/Dense>
 #include <Eigen/Geometry>
@@ -8,13 +9,21 @@
 #include <algorithm>
 #include <iostream>
 #include <cmath>
+#include <limits>
 
 using namespace std;
 using namespace Eigen;
 
 const float pi = 3.14159265359f;
 
-Matrix4f LookAtLH
+struct Triangle
+{
+	Vector3f v0;
+	Vector3f v1;
+	Vector3f v2;
+};
+
+Matrix4f LookAt
 	( const Vector3f & eye
 	, const Vector3f & at
 	, const Vector3f & up
@@ -26,10 +35,10 @@ Matrix4f LookAtLH
 
 	Matrix4f m;
 
-	m.block<1, 3>(0, 0) = xaxis;
-	m.block<1, 3>(1, 0) = yaxis;
-	m.block<1, 3>(2, 0) = zaxis;
-	m.block<1, 3>(3, 0) = Vector3f::Zero();
+	m.block<1, 3>(0, 0) = -xaxis;
+	m.block<1, 3>(1, 0) =  yaxis;
+	m.block<1, 3>(2, 0) =  zaxis;
+	m.block<1, 3>(3, 0) =  Vector3f::Zero();
 
 	m(0, 3) = -xaxis.dot(eye);
 	m(1, 3) = -yaxis.dot(eye);
@@ -39,85 +48,162 @@ Matrix4f LookAtLH
 	return m;
 }
 
-Matrix3f RayCast(float focalDistance, float pixelSpacing, float width, float height)
+Matrix3f RayCast(float width, float height, float focalDistance)
 {
+	// sx 0  -dx
+	// 0  xy -dy
+	// 0  0   f
+
+	const float w = 1.0f;
+	const float h = height / width;
 	const float f = focalDistance;
-	const float s = pixelSpacing;
-	const float w = width;
-	const float h = height;
+
+	const float sx = 1.0f / width;
 
 	Matrix3f m = Matrix3f::Zero();
 
-	m(0, 0) = s;
-	m(1, 1) = s;
-	m(0, 2) = -0.5f * (w - s);
-	m(1, 2) = -0.5f * (h - s);
-	m(2, 2) = f;
+	m(0, 0) =  sx;
+	m(1, 1) =  sx;
+	m(0, 2) = -0.5f * (w - sx);
+	m(1, 2) = -0.5f * (h - sx);
+	m(2, 2) =  f;
 
 	return m;
 }
 
-void Print(const Vector4f & v)
+float Intersect(const Triangle & tri, const Vector3f & ray)
 {
-	cout << "  " << v.hnormalized().transpose() << '\n';
+	// intersect ray with the plane
+	const Vector3f u = tri.v1 - tri.v0;
+	const Vector3f v = tri.v2 - tri.v0;
+
+	const Vector3f n = u.cross(v);
+	if (n.isZero())
+		return -1.0f;
+
+	const float r0 = n.dot(ray);
+	if (r0 == 0.0f)
+		return -1.0f;
+	const float r1 = n.dot(tri.v0) / r0;
+	if (r1 < 0.0f)
+		return -1.0f;
+	const Vector3f w = r1 * ray - tri.v0;
+
+	// compute barycentric coordinates
+	const float uu = u.dot(u);
+	const float uv = u.dot(v);
+	const float vv = v.dot(v);
+	const float wu = w.dot(u);
+	const float wv = w.dot(v);
+
+	float f = 1.0f / (uv * uv - uu * vv);
+
+	float s = f * (uv * wv - vv * wu);
+	if (s < 0.0f || s > 1.0f)
+		return -1.0f;
+
+	float t = f * (uv * wu - uu * wv);
+	if (t < 0.0f || s + t > 1.0f)
+		return -1.0f;
+
+	return r1;
 }
 
-int main(int argc, wchar_t * argv[])
+Vector3f Transform(const Matrix4f & m, const Vector3f & v)
 {
-	//----------------
-	// set up the view
-	//----------------
+	const float v0(v(0, 0)), v1(v(1, 0)), v2(v(2, 0));
+	const float f = 1.0f / (m(3, 0) * v0 + m(3, 1) * v1 + m(3, 2) * v2 + m(3, 3));
+	return Vector3f
+		( f * (m(0, 0) * v0 + m(0, 1) * v1 + m(0, 2) * v2 + m(0, 3))
+		, f * (m(1, 0) * v0 + m(1, 1) * v1 + m(1, 2) * v2 + m(1, 3))
+		, f * (m(2, 0) * v0 + m(2, 1) * v1 + m(2, 2) * v2 + m(2, 3))
+		);
+}
 
-	Matrix4f m;
+void Render
+	( const Matrix4f & world
+	, const Matrix3f & rayCast
+	,       size_t     w
+	,       size_t     h
+	,       Pixel    * buffer
+	, const Mesh     & mesh
+	)
+{
+	Timer timer("render", true);
 
-	m = LookAtLH
+	if (w == 0 && h == 0)
+		return;
+
+	vector<Triangle> faces(mesh.faces.size());
+	for (size_t i(0), size(mesh.faces.size()); i != size; ++i)
+	{
+		faces[i].v0 = ::Transform(world, mesh.vertices[mesh.faces[i].v0]);
+		faces[i].v1 = ::Transform(world, mesh.vertices[mesh.faces[i].v1]);
+		faces[i].v2 = ::Transform(world, mesh.vertices[mesh.faces[i].v2]);
+	}
+
+	const float noDepth(numeric_limits<float>::max());
+	vector<float> depth(w * h, noDepth);
+
+	for (size_t y(0); y != h; ++y)
+	for (size_t x(0); x != w; ++x)
+	{
+		const int index(y * w + x);
+
+		Vector3f ray(rayCast * Vector3f(static_cast<float>(x), static_cast<float>(y), 1.0f));
+		ray.normalize();
+
+		for (size_t i = 0; i != faces.size(); ++i)
+		{
+			Timer t(timer, "intersect");
+
+			const float z = Intersect(faces[i], ray);
+			if (z >= 0.0f)
+				depth[index] = min(depth[index], z);
+		}
+	}
+
+	float minDepth = numeric_limits<float>::max();
+	float maxDepth = numeric_limits<float>::min();
+	for (size_t i(0), size(w * h); i != size; ++i)
+	{
+		if (depth[i] != noDepth)
+		{
+			minDepth = min(minDepth, depth[i]);
+			maxDepth = max(maxDepth, depth[i]);
+		}
+	}
+	float depthFactor = 100.0f / (maxDepth - minDepth);
+	for (size_t i(0), size(w * h); i != size; ++i)
+	{
+		if (depth[i] != noDepth)
+		{
+			buffer[i].Alpha = 1.0f;
+			buffer[i].L = 100.0f - depthFactor * (depth[i] - minDepth);
+		}
+	}
+}
+
+int main()
+{
+	const size_t w(256), h(256);
+
+	Matrix4f world = LookAt
 		( Vector3f(10.0f, 0.0f, 0.0f) // eye
-		, Vector3f( 0.0f, 0.0f, 0.0f) // at
-		, Vector3f(0.0f, 0.0f, 1.0f)  // up
+		, Vector3f(00.0f, 0.0f, 0.0f) // at
+		, Vector3f(00.0f, 0.0f, 1.0f) // up
 		);
 
-	//-----------------
-	// set up the scene
-	//-----------------
+	Matrix3f rayCast = RayCast(static_cast<float>(w), static_cast<float>(h), 1.0);
 
 	Mesh mesh = LoadPly("C:\\Users\\Alexey\\Programming\\Colours visualization\\shell\\hull.ply");
 
-	//-------
-	// render
-	//-------
-
-	size_t w(256), h(256);
 	vector<Pixel> buffer(w * h);
-	for (size_t i(0), size(buffer.size()); i != size; ++i)
-		buffer[i].A = 0.0f;
+
+	Render(world, rayCast, w, h, buffer.data(), mesh);
 
 	const char * path("C:\\Users\\Alexey\\Programming\\Colours visualization\\render\\test.png");
 	SaveBuffer(path, w, h, buffer.data());
-
-	// cout << LabToRgb(Vector3f(47.1740f, 13.5540f, -23.8950f)).transpose() << endl;
-	// cout << RgbToLab(Vector3f(0.44706f, 0.41569f,  0.59608f)).transpose() << endl;
-
-	/*
-	Vector4f v1(2.63286f, -2.57869f,  2.49635f, 1.0f);
-	Vector4f v2(1.59699f,  2.40328f,  2.01660f, 1.0f);
-	Vector4f v3(0.96908f,  2.37590f, -3.23591f, 1.0f);
-
-	Matrix4f m = Perspective(35.0f, 0.1f, 100.0f) * LookAt
-		( Vector3f(10.0f, 0.0f, 0.0f) // eye
-		, Vector3f( 0.0f, 0.0f, 0.0f) // at
-		, Vector3f(0.0f, 0.0f, 1.0f)  // up
-		);
-
-	cout << (m * v1).hnormalized() << "\n\n";
-	cout << (m * v2).hnormalized() << "\n\n";
-	cout << (m * v3).hnormalized() << "\n\n";
-	// translate: 10, 0, 0
-	// 2.63286, -2.57869, 2.49635
-	// 1.59699, 2.40328, 2.0166
-	// 0.96908, 2.3759, -3.23591
-	// f: 35
-	// clip: 0.1, 100
-	*/
 
 	return 0;
 }
