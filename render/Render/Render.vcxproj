@@ -83,6 +83,8 @@
     <ClCompile Include="Image.cpp" />
     <ClCompile Include="Mesh.cpp" />
     <ClCompile Include="Render.cpp" />
+    <ClCompile Include="RenderMesh.cpp" />
+    <ClCompile Include="RenderVolume.cpp" />
     <ClCompile Include="Timer.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -92,6 +94,8 @@
     <ClInclude Include="FreeImagePlus.h" />
     <ClInclude Include="Image.h" />
     <ClInclude Include="Mesh.h" />
+    <ClInclude Include="RenderMesh.h" />
+    <ClInclude Include="RenderVolume.h" />
     <ClInclude Include="Timer.h" />
   </ItemGroup>
   <ItemGroup>

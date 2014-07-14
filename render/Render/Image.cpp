@@ -31,9 +31,9 @@ void SaveBuffer(const char * path, size_t width, size_t height, const Pixel * bu
 		{
 			const Pixel & pxl(*buffer++);
 			Vector3f rgb(LabToRgb(Vector3f(pxl.L, pxl.A, pxl.B)));
-			*scanline++ = FloatToByteChannel(rgb(0));
-			*scanline++ = FloatToByteChannel(rgb(1));
 			*scanline++ = FloatToByteChannel(rgb(2));
+			*scanline++ = FloatToByteChannel(rgb(1));
+			*scanline++ = FloatToByteChannel(rgb(0));
 			*scanline++ = FloatToByteChannel(pxl.Alpha);
 		}
 	}
