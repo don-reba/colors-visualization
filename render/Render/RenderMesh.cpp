@@ -59,10 +59,8 @@ void Integrate
 	for (float x(min); x <= max; x += step)
 	{
 		Vector3f lab = offset + x * ray;
-		Vector3f rgb = LabToRgb(lab, labToRgbLookup);
-		if (rgb.x() < 0.0f || rgb.x() > 1.0f) continue;
-		if (rgb.y() < 0.0f || rgb.y() > 1.0f) continue;
-		if (rgb.z() < 0.0f || rgb.z() > 1.0f) continue;
+		if (!IsValidLab(lab, labToRgbLookup))
+			continue;
 		pxl.Alpha = 1.0f;
 		pxl.L     = lab.x();
 		pxl.A     = lab.y();
