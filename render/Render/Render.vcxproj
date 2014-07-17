@@ -69,6 +69,7 @@
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;cimg_use_png;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <DisableLanguageExtensions>false</DisableLanguageExtensions>
       <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
+      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -76,15 +77,16 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <AdditionalDependencies>FreeImage.lib;FreeImagePlus.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <Profile>true</Profile>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Color.cpp" />
     <ClCompile Include="Image.cpp" />
     <ClCompile Include="Mesh.cpp" />
+    <ClCompile Include="ProjectMesh.cpp" />
     <ClCompile Include="Render.cpp" />
     <ClCompile Include="RenderMesh.cpp" />
-    <ClCompile Include="RenderVolume.cpp" />
     <ClCompile Include="Timer.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -94,8 +96,8 @@
     <ClInclude Include="FreeImagePlus.h" />
     <ClInclude Include="Image.h" />
     <ClInclude Include="Mesh.h" />
+    <ClInclude Include="ProjectMesh.h" />
     <ClInclude Include="RenderMesh.h" />
-    <ClInclude Include="RenderVolume.h" />
     <ClInclude Include="Timer.h" />
   </ItemGroup>
   <ItemGroup>

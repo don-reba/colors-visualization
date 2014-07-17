@@ -1,11 +1,10 @@
+#include "ProjectMesh.h"
 #include "RenderMesh.h"
-#include "RenderVolume.h"
 
 #include <Eigen/Dense>
 #include <Eigen/Geometry>
 
-#include <iostream>
-#include <cmath>
+#include <vector>
 
 using namespace std;
 using namespace Eigen;
@@ -42,6 +41,7 @@ Matrix4f Perspective(float focalDistance)
 	m(0, 0) = 1.0f;
 	m(1, 1) = 1.0f;
 	m(3, 2) = 1.0f / focalDistance;
+	m(3, 3) = 1.0f;
 
 	return m;
 }
@@ -71,27 +71,26 @@ Matrix3f RayCast(float width, float height, float focalDistance)
 
 int main()
 {
-	const size_t w(256), h(256);
+	const size_t w(1024), h(1024);
 
 	const float focalDistance(1.0f);
 
-	Matrix4f world = LookAt
-		( Vector3f(10.0f, 0.0f, 0.0f) // eye
-		, Vector3f(00.0f, 0.0f, 0.0f) // at
-		, Vector3f(00.0f, 0.0f, 1.0f) // up
-		);
+	const Vector3f eye (320.0f, 0.0f, 0.0f);
+	const Vector3f at  (00.0f,  0.0f, 0.0f);
+	const Vector3f up  (00.0f,  0.0f, 1.0f);
+	const Matrix4f world = LookAt(eye, at, up);
 
-	Matrix3f rayCast = RayCast(static_cast<float>(w), static_cast<float>(h), focalDistance);
+	const Matrix3f rayCast = RayCast(static_cast<float>(w), static_cast<float>(h), focalDistance);
 
-	Matrix4f projection = Perspective(focalDistance);
+	const Matrix4f projection = Perspective(focalDistance);
 
-	Mesh mesh = LoadPly("C:\\Users\\Alexey\\Programming\\Colours visualization\\shell\\hull.ply");
+	const Mesh mesh = LoadPly("C:\\Users\\Alexey\\Programming\\Colours visualization\\shell\\hull.ply");
 
 	vector<Pixel> buffer(w * h);
 
-	RenderMesh(world, rayCast, w, h, buffer.data(), mesh);
+	ProjectMesh(world, projection, w, h, buffer.data(), mesh);
 
-	RenderVolume(world, projection, w, h, buffer.data(), mesh);
+	RenderMesh(world, rayCast, w, h, buffer.data(), mesh);
 
 	const char * path("C:\\Users\\Alexey\\Programming\\Colours visualization\\render\\test.png");
 	SaveBuffer(path, w, h, buffer.data());

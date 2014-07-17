@@ -1,20 +1,22 @@
 #include "RenderMesh.h"
 
+#include "Color.h"
 #include "Timer.h"
 
+#include <iostream>
 #include <limits>
 
 using namespace Eigen;
 using namespace std;
 
-struct Triangle
+struct Triangle3f
 {
 	Vector3f v0;
 	Vector3f v1;
 	Vector3f v2;
 };
 
-float Intersect(const Triangle & tri, const Vector3f & ray)
+float DistanceToTri(const Triangle3f & tri, const Vector3f & ray)
 {
 	// intersect ray with the plane
 	const Vector3f u(tri.v1 - tri.v0);
@@ -30,25 +32,6 @@ float Intersect(const Triangle & tri, const Vector3f & ray)
 	const float r1 = n.dot(tri.v0) / r0;
 	if (r1 < 0.0f)
 		return -1.0f;
-	const Vector3f w = r1 * ray - tri.v0;
-
-	// compute barycentric coordinates
-	const float uu = u.dot(u);
-	const float uv = u.dot(v);
-	const float vv = v.dot(v);
-	const float wu = w.dot(u);
-	const float wv = w.dot(v);
-
-	float f = 1.0f / (uv * uv - uu * vv);
-
-	float s = f * (uv * wv - vv * wu);
-	if (s < 0.0f || s > 1.0f)
-		return -1.0f;
-
-	float t = f * (uv * wu - uu * wv);
-	if (t < 0.0f || s + t > 1.0f)
-		return -1.0f;
-
 	return r1;
 }
 
@@ -63,6 +46,31 @@ Vector3f Transform(const Matrix4f & m, const Vector3f & v)
 		);
 }
 
+LabToRgbLookup labToRgbLookup(65536);
+
+void Integrate
+	( const Vector3f & offset
+	, const Vector3f & ray
+	, float            step
+	, float            min
+	, float            max
+	, Pixel          & pxl)
+{
+	for (float x(min); x <= max; x += step)
+	{
+		Vector3f lab = offset + x * ray;
+		Vector3f rgb = LabToRgb(lab, labToRgbLookup);
+		if (rgb.x() < 0.0f || rgb.x() > 1.0f) continue;
+		if (rgb.y() < 0.0f || rgb.y() > 1.0f) continue;
+		if (rgb.z() < 0.0f || rgb.z() > 1.0f) continue;
+		pxl.Alpha = 1.0f;
+		pxl.L = lab.x();
+		pxl.A = lab.y();
+		pxl.B = lab.z();
+		return;
+	}
+}
+
 void RenderMesh
 	( const Matrix4f & world
 	, const Matrix3f & rayCast
@@ -72,12 +80,16 @@ void RenderMesh
 	, const Mesh     & mesh
 	)
 {
-	Timer timer("render", true);
+	Timer timer("RenderMesh", true);
 
 	if (w == 0 && h == 0)
 		return;
 
-	vector<Triangle> faces(mesh.faces.size());
+	const Matrix4f worldInverse(world.inverse());
+
+	// move the mesh into camera space
+
+	vector<Triangle3f> faces(mesh.faces.size());
 	for (size_t i(0), size(mesh.faces.size()); i != size; ++i)
 	{
 		faces[i].v0 = ::Transform(world, mesh.vertices[mesh.faces[i].v0]);
@@ -85,44 +97,40 @@ void RenderMesh
 		faces[i].v2 = ::Transform(world, mesh.vertices[mesh.faces[i].v2]);
 	}
 
-	const float noDepth(numeric_limits<float>::max());
-	vector<float> depth(w * h, noDepth);
+	// integrate inside the mesh
 
+	size_t i(0);
 	for (size_t y(0); y != h; ++y)
 	for (size_t x(0); x != w; ++x)
 	{
-		const int index(y * w + x);
+		Pixel & pxl(buffer[i++]);
+
+		if (pxl.A == 0.0f || pxl.B == 0.0f)
+			continue;
+
+		const size_t triIndex0(static_cast<size_t>(pxl.A) - 1);
+		const size_t triIndex1(static_cast<size_t>(pxl.B) - 1);
 
 		Vector3f ray(rayCast * Vector3f(static_cast<float>(x), static_cast<float>(y), 1.0f));
 		ray.normalize();
 
-		for (size_t i = 0; i != faces.size(); ++i)
-		{
-			Timer t(timer, "intersect");
+		float min, max;
 
-			const float z = Intersect(faces[i], ray);
-			if (z >= 0.0f)
-				depth[index] = min(depth[index], z);
+		{
+			Timer t(timer, "Intersect");
+			min = DistanceToTri(faces[triIndex0], ray); if (min < 0.0f) continue;
+			max = DistanceToTri(faces[triIndex1], ray); if (max < 0.0f) continue;
+			if (min > max)
+				swap(min, max);
 		}
-	}
 
-	float minDepth = numeric_limits<float>::max();
-	float maxDepth = numeric_limits<float>::min();
-	for (size_t i(0), size(w * h); i != size; ++i)
-	{
-		if (depth[i] != noDepth)
+		const float stepLength(0.1f);
+		const Vector3f offset   = ::Transform(worldInverse, Vector3f::Zero());
+		const Vector3f worldRay = ::Transform(worldInverse, ray) - offset;
+
 		{
-			minDepth = min(minDepth, depth[i]);
-			maxDepth = max(maxDepth, depth[i]);
-		}
-	}
-	float depthFactor = 100.0f / (maxDepth - minDepth);
-	for (size_t i(0), size(w * h); i != size; ++i)
-	{
-		if (depth[i] != noDepth)
-		{
-			buffer[i].Alpha = 1.0f;
-			buffer[i].L = 100.0f - depthFactor * (depth[i] - minDepth);
+			Timer t(timer, "Integrate");
+			Integrate(offset, worldRay, stepLength, min, max, pxl);
 		}
 	}
 }

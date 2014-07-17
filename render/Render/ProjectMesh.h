@@ -5,7 +5,7 @@
 
 #include <Eigen/Dense>
 
-void RenderVolume
+void ProjectMesh
 	( const Eigen::Matrix4f & world
 	, const Eigen::Matrix4f & projection
 	,       size_t            w

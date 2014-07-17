@@ -33,9 +33,6 @@ def ProcessSide(WriteVertex : double * double -> void)
 def WriteVertex(r, g, b)
 {
 	def (x, y, z) = (r, g, b) |> RgbToXyz |> XyzToLab;
-	def x = x / 50.0;
-	def y = y / 50.0;
-	def z = z / 50.0;
 	writer.WriteLine(string.Join(" ", array[x, y, z, r, g, b]))
 }
 

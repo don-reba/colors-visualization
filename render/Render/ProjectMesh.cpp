@@ -1,4 +1,4 @@
-#include "RenderVolume.h"
+#include "ProjectMesh.h"
 
 #include "Timer.h"
 
@@ -7,7 +7,14 @@
 using namespace Eigen;
 using namespace std;
 
-struct Triangle
+struct Triangle2i
+{
+	Vector2i v0;
+	Vector2i v1;
+	Vector2i v2;
+};
+
+struct Triangle2f
 {
 	Vector2f v0;
 	Vector2f v1;
@@ -15,7 +22,7 @@ struct Triangle
 };
 
 void SortTriangle
-	( const Triangle & tri
+	( const Triangle2f & tri
 	, const Vector2f * & v0
 	, const Vector2f * & v1
 	, const Vector2f * & v2
@@ -72,29 +79,28 @@ void SortTriangle
 			}
 		}
 	}
-	
 }
 
-void DrawLine(float sx, float sy, float ex, int w, int h, Pixel * buffer, Pixel value)
+void DrawLine(float sx, float sy, float ex, int w, int h, float id, Pixel * buffer)
 {
+	int y = static_cast<size_t>(sy);
+	if (y < 0 || y >= h)
+		return;
 	while (sx < ex + 1)
 	{
 		int x = static_cast<size_t>(sx);
-		int y = static_cast<size_t>(sy);
-		if (x >= 0 && x < w && y >= 0 && y < h)
-			buffer[y * w + x] = value;
+		if (x >= 0 && x < w)
+		{
+			Pixel & pxl(buffer[y * w + x]);
+			// we store pixel id in A and B components of the pixel
+			(pxl.A == 0.0f ? pxl.A : pxl.B) = id;
+		}
 		sx += 1.0f;
 	}
 }
 
-void Rasterize(const Triangle & tri, size_t w, size_t h, Pixel * buffer)
+void Rasterize(const Triangle2f & tri, float id, size_t w, size_t h, Pixel * buffer)
 {
-	Pixel pxl;
-	pxl.Alpha =   1.0f;
-	pxl.L     =  50.0f;
-	pxl.A     = -80.0f;
-	pxl.B     = -70.0f;
-
 	const Vector2f * v1;
 	const Vector2f * v2;
 	const Vector2f * v3;
@@ -121,14 +127,14 @@ void Rasterize(const Triangle & tri, size_t w, size_t h, Pixel * buffer)
 	{
 		while (sy <= y2)
 		{
-			DrawLine(sx, sy, ex, w, h, buffer, pxl);
+			DrawLine(sx, sy, ex, w, h, id, buffer);
 			sx += dx2; sy += 1.0f;
 			ex += dx1; ey += 1.0f;
 		}
 		ex = x2; ey = y2;
 		while (sy <= y3)
 		{
-			DrawLine(sx, sy, ex, w, h, buffer, pxl);
+			DrawLine(sx, sy, ex, w, h, id, buffer);
 			sx += dx2; sy += 1.0f;
 			ex += dx3; ey += 1.0f;
 		}
@@ -137,27 +143,96 @@ void Rasterize(const Triangle & tri, size_t w, size_t h, Pixel * buffer)
 	{
 		while (sy <= y2)
 		{
-			DrawLine(sx, sy, ex, w, h, buffer, pxl);
+			DrawLine(sx, sy, ex, w, h, id, buffer);
 			sx += dx1; sy += 1.0f;
 			ex += dx2; ey += 1.0f;
 		}
 		sx = x2; sy = y2;
 		while (sy <= y3)
 		{
-			DrawLine(sx, sy, ex, w, h, buffer, pxl);
+			DrawLine(sx, sy, ex, w, h, id, buffer);
 			sx += dx3; sy += 1.0f;
 			ex += dx2; ey += 1.0f;
 		}
 	}
 }
 
-Vector2f CameraToScreen(Vector2f v, size_t width, size_t height)
+int min3(int v0, int v1, int v2)
+{
+	return min(min(v0, v1), v2);
+}
+
+int max3(int v0, int v1, int v2)
+{
+	return max(max(v0, v1), v2);
+}
+
+int Orient2d(const Vector2i & a, const Vector2i & b, const Vector2i & c)
+{
+	return (b.x() - a.x()) * (c.y() - a.y()) - (b.y() - a.y()) * (c.x() - a.x());
+}
+
+void MakeCounterclockwise(Triangle2i & tri)
+{
+	if (Orient2d(tri.v0, tri.v1, tri.v2) < 0)
+		swap(tri.v1, tri.v2);
+}
+
+bool IsTopLeft(const Vector2i & a, const Vector2i & b)
+{
+	// left
+	if (a.y() > b.y())
+		return true;
+	// top
+	if (a.y() == b.y() && a.x() > b.x())
+		return true;
+	return false;
+}
+
+void Rasterize2(const Triangle2i & tri, float id, size_t w, size_t h, Pixel * buffer)
+{
+	// the triangle bounding box
+	int minX = min3(tri.v0.x(), tri.v1.x(), tri.v2.x());
+	int maxX = max3(tri.v0.x(), tri.v1.x(), tri.v2.x());
+	int minY = min3(tri.v0.y(), tri.v1.y(), tri.v2.y());
+	int maxY = max3(tri.v0.y(), tri.v1.y(), tri.v2.y());
+
+	// intersect with the screen
+	minX = max(minX, 0);
+	maxX = min(maxX, static_cast<int>(w - 1));
+	minY = max(minY, 0);
+	maxY = min(maxY, static_cast<int>(h - 1));
+
+	// rasterize
+	Vector2i p;
+	for (p.y() = minY; p.y() <= maxY; ++p.y())
+	for (p.x() = minX; p.x() <= maxX; ++p.x())
+	{
+		// bias implements the top-left fill rule
+		int bias0(IsTopLeft(tri.v1, tri.v2) ? 0 : -1);
+		int bias1(IsTopLeft(tri.v2, tri.v0) ? 0 : -1);
+		int bias2(IsTopLeft(tri.v0, tri.v1) ? 0 : -1);
+
+		int w0(Orient2d(tri.v1, tri.v2, p) + bias0);
+		int w1(Orient2d(tri.v2, tri.v0, p) + bias1);
+		int w2(Orient2d(tri.v0, tri.v1, p) + bias2);
+
+		if ((w0 | w1 | w2) >= 0)
+		{
+			Pixel & pxl(buffer[p.y() * w + p.x()]);
+			// we store pixel id in A and B components of the pixel
+			(pxl.A == 0.0f ? pxl.A : pxl.B) = id;
+		}
+	}
+}
+
+Vector2i CameraToScreen(Vector2f v, size_t width, size_t height)
 {
 	const float w(static_cast<float>(width));
 	const float h(static_cast<float>(height));
-	return Vector2f
-		( v.x() * w + 0.5f * w
-		, v.y() * w + 0.5f * h
+	return Vector2i
+		( static_cast<int>(v.x() * w + 0.5f * w)
+		, static_cast<int>(v.y() * w + 0.5f * h)
 		);
 
 }
@@ -172,7 +247,7 @@ Vector2f Transform(const Matrix4f & m, const Vector3f & v)
 		);
 }
 
-void RenderVolume
+void ProjectMesh
 	( const Matrix4f & world
 	, const Matrix4f & projection
 	,       size_t     w
@@ -181,9 +256,9 @@ void RenderVolume
 	, const Mesh     & mesh
 	)
 {
-	Timer timer("render", true);
+	Timer timer("ProjectMesh", true);
 
-	vector<Triangle> faces(mesh.faces.size());
+	vector<Triangle2i> faces(mesh.faces.size());
 
 	Matrix4f m = projection * world;
 
@@ -192,8 +267,12 @@ void RenderVolume
 		faces[i].v0 = CameraToScreen(::Transform(m, mesh.vertices[mesh.faces[i].v0]), w, h);
 		faces[i].v1 = CameraToScreen(::Transform(m, mesh.vertices[mesh.faces[i].v1]), w, h);
 		faces[i].v2 = CameraToScreen(::Transform(m, mesh.vertices[mesh.faces[i].v2]), w, h);
+		MakeCounterclockwise(faces[i]);
 	}
 
 	for (size_t i(0), size(faces.size()); i != size; ++i)
-		Rasterize(faces[i], w, h, buffer);
+	{
+		const float id(static_cast<float>(i + 1));
+		Rasterize2(faces[i], id, w, h, buffer);
+	}
 }
