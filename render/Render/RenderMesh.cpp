@@ -64,11 +64,15 @@ void Integrate
 		if (rgb.y() < 0.0f || rgb.y() > 1.0f) continue;
 		if (rgb.z() < 0.0f || rgb.z() > 1.0f) continue;
 		pxl.Alpha = 1.0f;
-		pxl.L = lab.x();
-		pxl.A = lab.y();
-		pxl.B = lab.z();
+		pxl.L     = lab.x();
+		pxl.A     = lab.y();
+		pxl.B     = lab.z();
 		return;
 	}
+	pxl.Alpha = 0.0f;
+	pxl.L     = 0.0f;
+	pxl.A     = 0.0f;
+	pxl.B     = 0.0f;
 }
 
 void RenderMesh
@@ -88,7 +92,6 @@ void RenderMesh
 	const Matrix4f worldInverse(world.inverse());
 
 	// move the mesh into camera space
-
 	vector<Triangle3f> faces(mesh.faces.size());
 	for (size_t i(0), size(mesh.faces.size()); i != size; ++i)
 	{
@@ -98,7 +101,6 @@ void RenderMesh
 	}
 
 	// integrate inside the mesh
-
 	size_t i(0);
 	for (size_t y(0); y != h; ++y)
 	for (size_t x(0); x != w; ++x)

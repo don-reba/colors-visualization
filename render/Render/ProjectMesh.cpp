@@ -14,149 +14,6 @@ struct Triangle2i
 	Vector2i v2;
 };
 
-struct Triangle2f
-{
-	Vector2f v0;
-	Vector2f v1;
-	Vector2f v2;
-};
-
-void SortTriangle
-	( const Triangle2f & tri
-	, const Vector2f * & v0
-	, const Vector2f * & v1
-	, const Vector2f * & v2
-	)
-{
-	float y0 = tri.v0.y();
-	float y1 = tri.v1.y();
-	float y2 = tri.v2.y();
-	if (y0 <= y1)
-	{
-		if (y1 <= y2)
-		{
-			v0 = &tri.v0;
-			v1 = &tri.v1;
-			v2 = &tri.v2;
-		}
-		else
-		{
-			if (y0 <= y2)
-			{
-				v0 = &tri.v0;
-				v1 = &tri.v2;
-				v2 = &tri.v1;
-			}
-			else
-			{
-				v0 = &tri.v2;
-				v1 = &tri.v0;
-				v2 = &tri.v1;
-			}
-		}
-	}
-	else
-	{
-		if (y0 <= y2)
-		{
-			v0 = &tri.v1;
-			v1 = &tri.v0;
-			v2 = &tri.v2;
-		}
-		else
-		{
-			if (y1 <= y2)
-			{
-				v0 = &tri.v1;
-				v1 = &tri.v2;
-				v2 = &tri.v0;
-			}
-			else
-			{
-				v0 = &tri.v2;
-				v1 = &tri.v1;
-				v2 = &tri.v0;
-			}
-		}
-	}
-}
-
-void DrawLine(float sx, float sy, float ex, int w, int h, float id, Pixel * buffer)
-{
-	int y = static_cast<size_t>(sy);
-	if (y < 0 || y >= h)
-		return;
-	while (sx < ex + 1)
-	{
-		int x = static_cast<size_t>(sx);
-		if (x >= 0 && x < w)
-		{
-			Pixel & pxl(buffer[y * w + x]);
-			// we store pixel id in A and B components of the pixel
-			(pxl.A == 0.0f ? pxl.A : pxl.B) = id;
-		}
-		sx += 1.0f;
-	}
-}
-
-void Rasterize(const Triangle2f & tri, float id, size_t w, size_t h, Pixel * buffer)
-{
-	const Vector2f * v1;
-	const Vector2f * v2;
-	const Vector2f * v3;
-	SortTriangle(tri, v1, v2, v3);
-	if (v1->y() > v2->y() || v2->y() > v3->y())
-		throw runtime_error("SortTriangle failed");
-
-	float x1 = v1->x();
-	float y1 = v1->y();
-	float x2 = v2->x();
-	float y2 = v2->y();
-	float x3 = v3->x();
-	float y3 = v3->y();
-
-	float dx1(y2 > y1 ? (x2 - x1) / (y2 - y1) : x2 - x1);
-	float dx2(y3 > y1 ? (x3 - x1) / (y3 - y1) : 0.0f);
-	float dx3(y3 > y2 ? (x3 - x2) / (y3 - y2) : 0.0f);
-
-	float sx = x1;
-	float sy = y1;
-	float ex = x1;
-	float ey = y1;
-	if(dx1 > dx2)
-	{
-		while (sy <= y2)
-		{
-			DrawLine(sx, sy, ex, w, h, id, buffer);
-			sx += dx2; sy += 1.0f;
-			ex += dx1; ey += 1.0f;
-		}
-		ex = x2; ey = y2;
-		while (sy <= y3)
-		{
-			DrawLine(sx, sy, ex, w, h, id, buffer);
-			sx += dx2; sy += 1.0f;
-			ex += dx3; ey += 1.0f;
-		}
-	}
-	else
-	{
-		while (sy <= y2)
-		{
-			DrawLine(sx, sy, ex, w, h, id, buffer);
-			sx += dx1; sy += 1.0f;
-			ex += dx2; ey += 1.0f;
-		}
-		sx = x2; sy = y2;
-		while (sy <= y3)
-		{
-			DrawLine(sx, sy, ex, w, h, id, buffer);
-			sx += dx3; sy += 1.0f;
-			ex += dx2; ey += 1.0f;
-		}
-	}
-}
-
 int min3(int v0, int v1, int v2)
 {
 	return min(min(v0, v1), v2);
@@ -189,7 +46,7 @@ bool IsTopLeft(const Vector2i & a, const Vector2i & b)
 	return false;
 }
 
-void Rasterize2(const Triangle2i & tri, float id, size_t w, size_t h, Pixel * buffer)
+void Rasterize(const Triangle2i & tri, float id, size_t w, size_t h, Pixel * buffer)
 {
 	// the triangle bounding box
 	int minX = min3(tri.v0.x(), tri.v1.x(), tri.v2.x());
@@ -273,6 +130,6 @@ void ProjectMesh
 	for (size_t i(0), size(faces.size()); i != size; ++i)
 	{
 		const float id(static_cast<float>(i + 1));
-		Rasterize2(faces[i], id, w, h, buffer);
+		Rasterize(faces[i], id, w, h, buffer);
 	}
 }
