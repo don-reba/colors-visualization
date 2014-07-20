@@ -8,10 +8,9 @@ struct LabToRgbLookup
 {
 	LabToRgbLookup(size_t size);
 
-	inline float GetValue(float x) const;
+	inline int GetValue(float x) const;
 
-private:
-	std::vector<float> t;
+	std::vector<int> t;
 	float offset, factor;
 };
 

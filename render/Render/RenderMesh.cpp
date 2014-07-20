@@ -5,6 +5,7 @@
 
 #include <iostream>
 #include <limits>
+#include <thread>
 
 using namespace Eigen;
 using namespace std;
@@ -48,29 +49,102 @@ Vector3f Transform(const Matrix4f & m, const Vector3f & v)
 
 LabToRgbLookup labToRgbLookup(65536);
 
+float Refine
+	( const Vector3f & offset
+	, const Vector3f & ray
+	, float            step
+	, float            min
+	, float            max
+	)
+{
+	// refine the (min, max) range with ever finer step
+	// integrate the range, unless it is empty
+
+	bool isValid(false);
+
+	float x(min);
+	for (size_t i(0); i != 4;)
+	{
+		x += step;
+
+		if (IsValidLab(offset + x * ray, labToRgbLookup))
+		{
+			isValid = true;
+			min = x - step;
+			x = min;
+			step *= 0.5f;
+			++i;
+		}
+		if (x >= max)
+		{
+			x = min;
+			step *= 0.5f;
+			++i;
+		}
+	}
+
+	return isValid ? min : -1.0f;
+}
+
 void Integrate
 	( const Vector3f & offset
 	, const Vector3f & ray
 	, float            step
 	, float            min
 	, float            max
-	, Pixel          & pxl)
+	, Pixel          & pxl
+	)
 {
-	for (float x(min); x <= max; x += step)
+	min = Refine(offset, ray, step, min, max);
+	if (min >= 0.0f)
 	{
-		Vector3f lab = offset + x * ray;
-		if (!IsValidLab(lab, labToRgbLookup))
-			continue;
-		pxl.Alpha = 1.0f;
-		pxl.L     = lab.x();
-		pxl.A     = lab.y();
-		pxl.B     = lab.z();
-		return;
+		pxl.Set(1.0f, offset + min * ray);
 	}
-	pxl.Alpha = 0.0f;
-	pxl.L     = 0.0f;
-	pxl.A     = 0.0f;
-	pxl.B     = 0.0f;
+	else
+	{
+		pxl.Set(0.0f, Vector3f::Zero());
+	}
+}
+
+void RenderMeshImp
+	( const Matrix4f           & worldInverse
+	, const Matrix3f           & rayCast
+	,       size_t               w
+	,       size_t               h
+	,       Pixel              * buffer
+	, const vector<Triangle3f> & faces
+	, size_t                     firstLine
+	, size_t                     lineMultiplesOf
+	)
+{
+	// integrate inside the mesh
+	for (size_t y(firstLine); y <  h; y += lineMultiplesOf)
+	for (size_t x(0); x != w; ++x)
+	{
+		Pixel & pxl(buffer[y * w + x]);
+
+		if (pxl.A == 0.0f || pxl.B == 0.0f)
+			continue;
+
+		const size_t triIndex0(static_cast<size_t>(pxl.A) - 1);
+		const size_t triIndex1(static_cast<size_t>(pxl.B) - 1);
+
+		Vector3f ray(rayCast * Vector3f(static_cast<float>(x), static_cast<float>(y), 1.0f));
+		ray.normalize();
+
+		float min, max;
+
+		min = DistanceToTri(faces[triIndex0], ray); if (min < 0.0f) continue;
+		max = DistanceToTri(faces[triIndex1], ray); if (max < 0.0f) continue;
+		if (min > max)
+			swap(min, max);
+
+		const float stepLength(0.5f);
+		const Vector3f offset   = ::Transform(worldInverse, Vector3f::Zero());
+		const Vector3f worldRay = ::Transform(worldInverse, ray) - offset;
+
+		Integrate(offset, worldRay, stepLength, min, max, pxl);
+	}
 }
 
 void RenderMesh
@@ -99,38 +173,8 @@ void RenderMesh
 	}
 
 	// integrate inside the mesh
-	size_t i(0);
-	for (size_t y(0); y != h; ++y)
-	for (size_t x(0); x != w; ++x)
-	{
-		Pixel & pxl(buffer[i++]);
-
-		if (pxl.A == 0.0f || pxl.B == 0.0f)
-			continue;
-
-		const size_t triIndex0(static_cast<size_t>(pxl.A) - 1);
-		const size_t triIndex1(static_cast<size_t>(pxl.B) - 1);
-
-		Vector3f ray(rayCast * Vector3f(static_cast<float>(x), static_cast<float>(y), 1.0f));
-		ray.normalize();
-
-		float min, max;
-
-		{
-			Timer t(timer, "Intersect");
-			min = DistanceToTri(faces[triIndex0], ray); if (min < 0.0f) continue;
-			max = DistanceToTri(faces[triIndex1], ray); if (max < 0.0f) continue;
-			if (min > max)
-				swap(min, max);
-		}
-
-		const float stepLength(0.1f);
-		const Vector3f offset   = ::Transform(worldInverse, Vector3f::Zero());
-		const Vector3f worldRay = ::Transform(worldInverse, ray) - offset;
-
-		{
-			Timer t(timer, "Integrate");
-			Integrate(offset, worldRay, stepLength, min, max, pxl);
-		}
-	}
+	thread t0(RenderMeshImp, ref(worldInverse), ref(rayCast), w, h, buffer, ref(faces), 0, 2);
+	thread t1(RenderMeshImp, ref(worldInverse), ref(rayCast), w, h, buffer, ref(faces), 1, 2);
+	t0.join();
+	t1.join();
 }

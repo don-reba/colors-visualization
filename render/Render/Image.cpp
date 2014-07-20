@@ -16,10 +16,6 @@ BYTE FloatToByteChannel(float x)
 	return static_cast<BYTE>(x * 255.0f);
 }
 
-Pixel::Pixel() : Alpha(0.0f), L(0.0f), A(0.0f), B(0.0f)
-{
-}
-
 void SaveBuffer(const char * path, size_t width, size_t height, const Pixel * buffer)
 {
 	size_t bpp(32);

@@ -16,15 +16,24 @@ LabToRgbLookup::LabToRgbLookup(size_t size)
 		const float d = i / (size - 1.0f);
 		const float x = (1.0f - d) * min + d * max;
 
-		t[i] = (x > 0.0031308f) ? 1.055f * pow(x, 1.0f / 2.4f) - 0.055f : x * 12.92f;
+		const float value = (x > 0.0031308f) ? 1.055f * pow(x, 1.0f / 2.4f) - 0.055f : x * 12.92f;
+		t[i] = value < 0 || value > 1;
 	}
 
 	this->offset = -min; this->factor = (size - 1.0f) / (max - min);
 }
 
-float LabToRgbLookup::GetValue(float x) const
+int LabToRgbLookup::GetValue(float x) const
 {
-	return t[static_cast<size_t>(factor * (x + offset))];
+	const float position = factor * (x + offset);
+	int index;
+	// sensitive to rounding mode
+	__asm
+	{
+		fld   position
+		fistp index
+	}
+	return t[index];
 }
 
 Vector3f LabToRgb(Vector3f lab)
@@ -123,16 +132,12 @@ bool IsValidLab(Vector3f lab, const LabToRgbLookup & lookup)
 	y  = (y * y * y > 0.008856f) ? y * y * y  : (y - 16.0f / 116.0f) / 7.787f;
 	z  = (z * z * z > 0.008856f) ? z * z * z  : (z - 16.0f / 116.0f) / 7.787f;
 
-	const float refX = 0.95047f;
-	const float refY = 1.00000f;
-	const float refZ = 1.08883f;
-
-	x *= refX;
-	y *= refY;
-	z *= refZ;
+	// multiply by reference point
+	x *= 0.95047f;
+	y *= 1.00000f;
+	z *= 1.08883f;
 
 	// XYZ to sRGB
-
 	float r = x *  3.2406f + y * -1.5372f + z * -0.4986f;
 	float g = x * -0.9689f + y *  1.8758f + z *  0.0415f;
 	float b = x *  0.0557f + y * -0.2040f + z *  1.0570f;
@@ -141,9 +146,9 @@ bool IsValidLab(Vector3f lab, const LabToRgbLookup & lookup)
 	if (g < -0.0806535781744183f || g > 1.51646331806568f) return false;
 	if (b < -0.0706201022919949f || b > 4.04958281711443f) return false;
 
-	r = lookup.GetValue(r); if (r < 0 || r > 1) return false;
-	g = lookup.GetValue(g); if (g < 0 || g > 1) return false;
-	b = lookup.GetValue(b); if (b < 0 || b > 1) return false;
+	if (lookup.GetValue(r)) return false;
+	if (lookup.GetValue(g)) return false;
+	if (lookup.GetValue(b)) return false;
 
 	return true;
 }
