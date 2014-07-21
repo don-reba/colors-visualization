@@ -1,0 +1,78 @@
+// REFERENCE: System.Drawing.dll
+// REFERENCE: ConvertColor.dll
+
+#define TRACE
+
+using ConvertColor;
+
+using System.Collections.Generic;
+using System.Console;
+using System.Drawing;
+using System.Diagnostics;
+using System.Globalization;
+using System.Math;
+using System.IO;
+
+[ Record ]
+struct Entry
+{
+	public Color : Color;
+	public Votes : int;
+}
+
+def lRange = (   0.0, 100.0);
+def aRange = ( -86.0,  99.0);
+def bRange = (-108.0,  96.0);
+def cellSize = 20.0f;
+
+def GetEntries(path)
+{
+	using (txt = File.OpenText(path))
+	{
+		// skip header
+		def header = txt.ReadLine();
+		Trace.Assert(header == "index\trank\thex\tvotes\tcomments\thearts", "header");
+
+		def entries = List();
+		for (mutable line = txt.ReadLine(); line != null; line = txt.ReadLine())
+		{
+			def parts = line.Split(array['\t']);
+			def color = Color.FromArgb(int.Parse(parts[2], NumberStyles.HexNumber));
+			def votes = int.Parse(parts[3]);
+			entries.Add(Entry(color, votes));
+		}
+		entries;
+	}
+}
+
+def Voxelize(entries)
+{
+	def nx = (Floor((lRange[1] - lRange[0]) / cellSize) :> int) + 1;
+	def ny = (Floor((aRange[1] - aRange[0]) / cellSize) :> int) + 1;
+	def nz = (Floor((bRange[1] - bRange[0]) / cellSize) :> int) + 1;
+
+	def volume : array[int] = array(nx * ny * nz);
+	foreach (entry in entries)
+	{
+		def (l, a, b) = entry.Color |> ColorToRgb |> RgbToXyz |> XyzToLab;
+		def l = ((l - lRange[0]) / cellSize) :> int;
+		def a = ((a - aRange[0]) / cellSize) :> int;
+		def b = ((b - bRange[0]) / cellSize) :> int;
+		++volume[l + a * nx  + b * nx * ny];
+	}
+	(nx, ny, nz, volume);
+}
+
+def Save((nx, ny, nz, volume), path)
+{
+	using (w = BinaryWriter(File.Create(path)))
+	{
+		w.Write(nx);
+		w.Write(ny);
+		w.Write(nz);
+		for (mutable i = 0; i != volume.Length; ++i)
+			w.Write(volume[i]);
+	}
+}
+
+Save(Voxelize(GetEntries(@"..\get colors\data.txt")), "volume.dat");

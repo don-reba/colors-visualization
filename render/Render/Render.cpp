@@ -1,9 +1,11 @@
 #include "ProjectMesh.h"
 #include "RenderMesh.h"
+#include "Volume.h"
 
 #include <Eigen/Dense>
 #include <Eigen/Geometry>
 
+#include <iostream>
 #include <vector>
 
 using namespace std;
@@ -71,11 +73,14 @@ Matrix3f RayCast(float width, float height, float focalDistance)
 
 int main()
 {
-	const size_t w(1024), h(1024);
+	//Volume v(LoadVolume("C:\\Users\\Alexey\\Programming\\Colours visualization\\voxelize\\volume.dat"));
+	//cout << "volume: " << v.Nx << 'x' << v.Ny << 'x' << v.Nz << '\r';
+
+	const size_t w(1280), h(720);
 
 	const float focalDistance(1.0f);
 
-	const Vector3f eye (320.0f, 0.0f, 0.0f);
+	const Vector3f eye (450.0f, 0.0f, 0.0f);
 	const Vector3f at  (00.0f,  0.0f, 0.0f);
 	const Vector3f up  (00.0f,  0.0f, 1.0f);
 	const Matrix4f world = LookAt(eye, at, up);

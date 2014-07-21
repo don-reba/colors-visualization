@@ -104,6 +104,7 @@
     <ClCompile Include="Render.cpp" />
     <ClCompile Include="RenderMesh.cpp" />
     <ClCompile Include="Timer.cpp" />
+    <ClCompile Include="Volume.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="CImg.h" />
@@ -115,6 +116,7 @@
     <ClInclude Include="ProjectMesh.h" />
     <ClInclude Include="RenderMesh.h" />
     <ClInclude Include="Timer.h" />
+    <ClInclude Include="Volume.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="FreeImage.dll">
