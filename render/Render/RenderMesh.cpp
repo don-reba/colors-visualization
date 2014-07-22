@@ -132,26 +132,46 @@ void Integrate
 	, Vector4f       & pxl
 	)
 {
-	min = RefineMin(offset, ray, step, min, max);
+	const float searchStep(0.5f);
+
+	// determine boundaries
+
+	min = RefineMin(offset, ray, searchStep, min, max);
 	if (min < 0.0f)
 	{
 		pxl = Vector4f::Zero();
 		return;
 	}
 
-	max = RefineMax(offset, ray, step, min, max);
+	max = RefineMax(offset, ray, searchStep, min, max);
 	if (max < 0.0f)
 	{
 		pxl = Vector4f::Zero();
 		return;
 	}
 
-	Vector3f lab(offset + min * ray);
+	// integrate
 
-	pxl.x() = lab.x();
-	pxl.y() = lab.y();
-	pxl.z() = lab.z();
-	pxl.w() = 1.0f;
+	const float maxAlpha(1.0f - 1.0f / 256.0f);
+	const float opacity(10.0f);
+	const float alphaConst(1.0f - pow(1.0f - 0.8f, step / opacity));
+
+	float    alpha(0.0f);
+	Vector3f color(Vector3f::Zero());
+
+	for (float x(min); x < max && alpha <= maxAlpha; x += step)
+	{
+		const float nextAlpha(alphaConst * (1.0f - alpha));
+		color += nextAlpha * (offset + x * ray);
+		alpha += nextAlpha;
+	}
+
+	color /= alpha;
+
+	pxl.x() = color.x();
+	pxl.y() = color.y();
+	pxl.z() = color.z();
+	pxl.w() = alpha;
 }
 
 void RenderMeshImp
@@ -187,7 +207,7 @@ void RenderMeshImp
 		if (min > max)
 			swap(min, max);
 
-		const float stepLength(0.5f);
+		const float stepLength(0.1f);
 		const Vector3f offset   = ::Transform(worldInverse, Vector3f::Zero());
 		const Vector3f worldRay = ::Transform(worldInverse, ray) - offset;
 

@@ -91,7 +91,7 @@ int main()
 
 	const Mesh mesh = LoadPly("C:\\Users\\Alexey\\Programming\\Colours visualization\\shell\\hull.ply");
 
-	vector<Vector4f> buffer(w * h);
+	vector<Vector4f> buffer(w * h, Vector4f::Zero());
 
 	ProjectMesh(world, projection, w, h, buffer.data(), mesh);
 
