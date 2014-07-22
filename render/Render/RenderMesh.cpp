@@ -123,6 +123,11 @@ float RefineMax
 	return isValid ? max : -1.0f;
 }
 
+inline float MakeAlphaFactor(float alpha, float step, float transparency)
+{
+	return 1.0f - pow(1.0f - alpha, step / transparency);
+}
+
 void Integrate
 	( const Vector3f & offset
 	, const Vector3f & ray
@@ -153,15 +158,20 @@ void Integrate
 	// integrate
 
 	const float maxAlpha(1.0f - 1.0f / 256.0f);
-	const float opacity(10.0f);
-	const float alphaConst(1.0f - pow(1.0f - 0.8f, step / opacity));
+	const float transparency(10.0f);
 
 	float    alpha(0.0f);
 	Vector3f color(Vector3f::Zero());
 
-	for (float x(min); x < max && alpha <= maxAlpha; x += step)
+	float factor(MakeAlphaFactor(0.8f, step, transparency));
+
+	for (float x(min); x < max && alpha + step <= maxAlpha; x += step)
 	{
-		const float nextAlpha(alphaConst * (1.0f - alpha));
+		const float nextAlpha
+			( x + step < max
+			? (1.0f - alpha) * factor
+			: (1.0f - alpha) * MakeAlphaFactor(0.8f, max - x, transparency)
+			);
 		color += nextAlpha * (offset + x * ray);
 		alpha += nextAlpha;
 	}
