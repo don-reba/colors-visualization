@@ -46,7 +46,7 @@ bool IsTopLeft(const Vector2i & a, const Vector2i & b)
 	return false;
 }
 
-void Rasterize(const Triangle2i & tri, float id, size_t w, size_t h, Pixel * buffer)
+void Rasterize(const Triangle2i & tri, float id, size_t w, size_t h, Vector4f * buffer)
 {
 	// the triangle bounding box
 	int minX = min3(tri.v0.x(), tri.v1.x(), tri.v2.x());
@@ -76,9 +76,9 @@ void Rasterize(const Triangle2i & tri, float id, size_t w, size_t h, Pixel * buf
 
 		if ((w0 | w1 | w2) >= 0)
 		{
-			Pixel & pxl(buffer[p.y() * w + p.x()]);
+			Vector4f & pxl(buffer[p.y() * w + p.x()]);
 			// we store pixel id in A and B components of the pixel
-			(pxl.A == 0.0f ? pxl.A : pxl.B) = id;
+			(pxl.x() == 0.0f ? pxl.x() : pxl.y()) = id;
 		}
 	}
 }
@@ -109,7 +109,7 @@ void ProjectMesh
 	, const Matrix4f & projection
 	,       size_t     w
 	,       size_t     h
-	,       Pixel    * buffer
+	,       Vector4f * buffer
 	, const Mesh     & mesh
 	)
 {

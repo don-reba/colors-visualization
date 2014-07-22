@@ -10,6 +10,6 @@ void RenderMesh
 	, const Eigen::Matrix3f & rayCast
 	,       size_t            w
 	,       size_t            h
-	,       Pixel           * buffer
+	,       Eigen::Vector4f * buffer
 	, const Mesh            & mesh
 	);

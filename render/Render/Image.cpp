@@ -16,7 +16,7 @@ BYTE FloatToByteChannel(float x)
 	return static_cast<BYTE>(x * 255.0f);
 }
 
-void SaveBuffer(const char * path, size_t width, size_t height, const Pixel * buffer)
+void SaveBuffer(const char * path, size_t width, size_t height, const Vector4f * buffer)
 {
 	size_t bpp(32);
 	fipImage img(FIT_BITMAP, width, height, bpp);
@@ -25,12 +25,12 @@ void SaveBuffer(const char * path, size_t width, size_t height, const Pixel * bu
 		BYTE * scanline(img.getScanLine(y));
 		for (size_t x(0); x !=  width; ++x)
 		{
-			const Pixel & pxl(*buffer++);
-			Vector3f rgb(LabToRgb(Vector3f(pxl.L, pxl.A, pxl.B)));
+			const Vector4f & pxl(*buffer++);
+			Vector3f rgb(LabToRgb(Vector3f(pxl.x(), pxl.y(), pxl.z())));
 			*scanline++ = FloatToByteChannel(rgb(2));
 			*scanline++ = FloatToByteChannel(rgb(1));
 			*scanline++ = FloatToByteChannel(rgb(0));
-			*scanline++ = FloatToByteChannel(pxl.Alpha);
+			*scanline++ = FloatToByteChannel(pxl.w());
 		}
 	}
 	img.save(path);

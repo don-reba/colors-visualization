@@ -10,6 +10,6 @@ void ProjectMesh
 	, const Eigen::Matrix4f & projection
 	,       size_t            w
 	,       size_t            h
-	,       Pixel           * buffer
+	,       Eigen::Vector4f * buffer
 	, const Mesh            & mesh
 	);

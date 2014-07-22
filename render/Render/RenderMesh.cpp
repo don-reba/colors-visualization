@@ -49,7 +49,7 @@ Vector3f Transform(const Matrix4f & m, const Vector3f & v)
 
 LabToRgbLookup labToRgbLookup(65536);
 
-float Refine
+float RefineMin
 	( const Vector3f & offset
 	, const Vector3f & ray
 	, float            step
@@ -86,24 +86,72 @@ float Refine
 	return isValid ? min : -1.0f;
 }
 
+float RefineMax
+	( const Vector3f & offset
+	, const Vector3f & ray
+	, float            step
+	, float            min
+	, float            max
+	)
+{
+	// refine the (min, max) range with ever finer step
+	// integrate the range, unless it is empty
+
+	bool isValid(false);
+
+	float x(max);
+	for (size_t i(0); i != 4;)
+	{
+		x -= step;
+
+		if (IsValidLab(offset + x * ray, labToRgbLookup))
+		{
+			isValid = true;
+			max = x + step;
+			x = max;
+			step *= 0.5f;
+			++i;
+		}
+		if (x <= min)
+		{
+			x = max;
+			step *= 0.5f;
+			++i;
+		}
+	}
+
+	return isValid ? max : -1.0f;
+}
+
 void Integrate
 	( const Vector3f & offset
 	, const Vector3f & ray
 	, float            step
 	, float            min
 	, float            max
-	, Pixel          & pxl
+	, Vector4f       & pxl
 	)
 {
-	min = Refine(offset, ray, step, min, max);
-	if (min >= 0.0f)
+	min = RefineMin(offset, ray, step, min, max);
+	if (min < 0.0f)
 	{
-		pxl.Set(1.0f, offset + min * ray);
+		pxl = Vector4f::Zero();
+		return;
 	}
-	else
+
+	max = RefineMax(offset, ray, step, min, max);
+	if (max < 0.0f)
 	{
-		pxl.Set(0.0f, Vector3f::Zero());
+		pxl = Vector4f::Zero();
+		return;
 	}
+
+	Vector3f lab(offset + min * ray);
+
+	pxl.x() = lab.x();
+	pxl.y() = lab.y();
+	pxl.z() = lab.z();
+	pxl.w() = 1.0f;
 }
 
 void RenderMeshImp
@@ -111,7 +159,7 @@ void RenderMeshImp
 	, const Matrix3f           & rayCast
 	,       size_t               w
 	,       size_t               h
-	,       Pixel              * buffer
+	,       Vector4f           * buffer
 	, const vector<Triangle3f> & faces
 	, size_t                     firstLine
 	, size_t                     lineMultiplesOf
@@ -121,13 +169,13 @@ void RenderMeshImp
 	for (size_t y(firstLine); y <  h; y += lineMultiplesOf)
 	for (size_t x(0); x != w; ++x)
 	{
-		Pixel & pxl(buffer[y * w + x]);
+		Vector4f & pxl(buffer[y * w + x]);
 
-		if (pxl.A == 0.0f || pxl.B == 0.0f)
+		if (pxl.x() == 0.0f || pxl.y() == 0.0f)
 			continue;
 
-		const size_t triIndex0(static_cast<size_t>(pxl.A) - 1);
-		const size_t triIndex1(static_cast<size_t>(pxl.B) - 1);
+		const size_t triIndex0(static_cast<size_t>(pxl.x()) - 1);
+		const size_t triIndex1(static_cast<size_t>(pxl.y()) - 1);
 
 		Vector3f ray(rayCast * Vector3f(static_cast<float>(x), static_cast<float>(y), 1.0f));
 		ray.normalize();
@@ -152,7 +200,7 @@ void RenderMesh
 	, const Matrix3f & rayCast
 	,       size_t     w
 	,       size_t     h
-	,       Pixel    * buffer
+	,       Vector4f * buffer
 	, const Mesh     & mesh
 	)
 {
