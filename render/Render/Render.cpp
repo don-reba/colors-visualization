@@ -1,3 +1,4 @@
+#include "Animation.h"
 #include "ProjectMesh.h"
 #include "RenderMesh.h"
 #include "Volume.h"
@@ -5,7 +6,9 @@
 #include <Eigen/Dense>
 #include <Eigen/Geometry>
 
-#include <iostream>
+#include <algorithm>
+#include <sstream>
+#include <string>
 #include <vector>
 
 using namespace std;
@@ -73,32 +76,46 @@ Matrix3f RayCast(float width, float height, float focalDistance)
 
 int main()
 {
-	//Volume v(LoadVolume("C:\\Users\\Alexey\\Programming\\Colours visualization\\voxelize\\volume.dat"));
-	//cout << "volume: " << v.Nx << 'x' << v.Ny << 'x' << v.Nz << '\r';
+	const string projectRoot("C:\\Users\\Alexey\\Programming\\Colours visualization\\");
+
+	Volume v(LoadVolume((projectRoot + "voxelize\\volume.dat").c_str()));
+
+	const Mesh mesh(LoadPly((projectRoot + "shell\\hull.ply").c_str()));
 
 	const size_t w(1280), h(720);
+	vector<Vector4f> buffer(w * h);
 
 	const float focalDistance(1.0f);
 
-	const Vector3f eye (450.0f, 0.0f, 0.0f);
-	const Vector3f at  (00.0f,  0.0f, 0.0f);
-	const Vector3f up  (00.0f,  0.0f, 1.0f);
-	const Matrix4f world = LookAt(eye, at, up);
+	const Matrix3f rayCast(RayCast(static_cast<float>(w), static_cast<float>(h), focalDistance));
 
-	const Matrix3f rayCast = RayCast(static_cast<float>(w), static_cast<float>(h), focalDistance);
+	const Matrix4f projection(Perspective(focalDistance));
 
-	const Matrix4f projection = Perspective(focalDistance);
+	RotationAnimation animation(Vector3f(460.0f, 0.0f, 0.0f));
 
-	const Mesh mesh = LoadPly("C:\\Users\\Alexey\\Programming\\Colours visualization\\shell\\hull.ply");
+	size_t frameCount(1);
 
-	vector<Vector4f> buffer(w * h, Vector4f::Zero());
+	for (size_t i(0); i != frameCount; ++i)
+	{
+		fill(buffer.begin(), buffer.end(), Vector4f::Zero());
 
-	ProjectMesh(world, projection, w, h, buffer.data(), mesh);
+		// set up the camera
+		const Vector3f at(0.0f, 0.0f, 0.0f);
+		const Vector3f up(0.0f, 0.0f, 1.0f);
+		const Matrix4f world = LookAt(animation.Eye(i, frameCount), at, up);
 
-	RenderMesh(world, rayCast, w, h, buffer.data(), mesh);
+		// render
+		ProjectMesh(world, projection, w, h, buffer.data(), mesh);
+		RenderMesh(world, rayCast, w, h, buffer.data(), mesh);
 
-	const char * path("C:\\Users\\Alexey\\Programming\\Colours visualization\\render\\test.png");
-	SaveBuffer(path, w, h, buffer.data());
+		// save
+		//ostringstream pathName;
+		//pathName << projectRoot << "render\\animation\\" << i << ".png";
+		//SaveBuffer(pathName.str().c_str(), w, h, buffer.data());
+		string pathName(projectRoot + "test.png");
+
+		SaveBuffer((projectRoot + "test.png").c_str(), w, h, buffer.data());
+	}
 
 	return 0;
 }
