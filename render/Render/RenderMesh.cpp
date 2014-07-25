@@ -129,7 +129,8 @@ inline float MakeAlphaFactor(float alpha, float step, float transparency)
 }
 
 void Integrate
-	( const Vector3f & offset
+	( const Volume   & volume
+	, const Vector3f & offset
 	, const Vector3f & ray
 	, float            step
 	, float            min
@@ -163,16 +164,18 @@ void Integrate
 	float    alpha(0.0f);
 	Vector3f color(Vector3f::Zero());
 
-	float factor(MakeAlphaFactor(0.8f, step, transparency));
-
 	for (float x(min); x < max && alpha + step <= maxAlpha; x += step)
 	{
-		const float nextAlpha
-			( x + step < max
-			? (1.0f - alpha) * factor
-			: (1.0f - alpha) * MakeAlphaFactor(0.8f, max - x, transparency)
+		Vector3f nextColor(offset + x * ray);
+
+		const float alphaFactor = MakeAlphaFactor
+			( volume[nextColor]
+			, (x + step < max) ? step : max - x
+			, transparency
 			);
-		color += nextAlpha * (offset + x * ray);
+
+		const float nextAlpha((1.0f - alpha) * alphaFactor);
+		color += nextAlpha * nextColor;
 		alpha += nextAlpha;
 	}
 
@@ -191,6 +194,7 @@ void RenderMeshImp
 	,       size_t               h
 	,       Vector4f           * buffer
 	, const vector<Triangle3f> & faces
+	, const Volume             & volume
 	, size_t                     firstLine
 	, size_t                     lineMultiplesOf
 	)
@@ -217,11 +221,11 @@ void RenderMeshImp
 		if (min > max)
 			swap(min, max);
 
-		const float stepLength(0.1f);
+		const float stepLength(0.01f);
 		const Vector3f offset   = ::Transform(worldInverse, Vector3f::Zero());
 		const Vector3f worldRay = ::Transform(worldInverse, ray) - offset;
 
-		Integrate(offset, worldRay, stepLength, min, max, pxl);
+		Integrate(volume, offset, worldRay, stepLength, min, max, pxl);
 	}
 }
 
@@ -232,6 +236,7 @@ void RenderMesh
 	,       size_t     h
 	,       Vector4f * buffer
 	, const Mesh     & mesh
+	, const Volume   & volume
 	)
 {
 	Timer timer("RenderMesh", true);
@@ -251,8 +256,8 @@ void RenderMesh
 	}
 
 	// integrate inside the mesh
-	thread t0(RenderMeshImp, ref(worldInverse), ref(rayCast), w, h, buffer, ref(faces), 0, 2);
-	thread t1(RenderMeshImp, ref(worldInverse), ref(rayCast), w, h, buffer, ref(faces), 1, 2);
+	thread t0(RenderMeshImp, ref(worldInverse), ref(rayCast), w, h, buffer, ref(faces), ref(volume), 0, 2);
+	thread t1(RenderMeshImp, ref(worldInverse), ref(rayCast), w, h, buffer, ref(faces), ref(volume), 1, 2);
 	t0.join();
 	t1.join();
 }

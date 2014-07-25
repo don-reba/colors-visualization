@@ -10,7 +10,7 @@ RotationAnimation::RotationAnimation(Vector3f eye)
 {
 }
 
-Vector3f RotationAnimation::Eye(size_t step, size_t count)
+Vector3f RotationAnimation::Eye(size_t step, size_t count) const
 {
 	float a(6.28318530718f * static_cast<float>(step) / static_cast<float>(count));
 

@@ -55,10 +55,10 @@ def Voxelize(entries)
 	foreach (entry in entries)
 	{
 		def (l, a, b) = entry.Color |> ColorToRgb |> RgbToXyz |> XyzToLab;
-		def l = ((l - lRange[0]) / cellSize) :> int;
-		def a = ((a - aRange[0]) / cellSize) :> int;
-		def b = ((b - bRange[0]) / cellSize) :> int;
-		++volume[l + a * nx  + b * nx * ny];
+		def x = ((l - lRange[0]) / cellSize) :> int;
+		def y = ((a - aRange[0]) / cellSize) :> int;
+		def z = ((b - bRange[0]) / cellSize) :> int;
+		++volume[x + nx * y  + nx * ny * z];
 	}
 	(nx, ny, nz, volume);
 }

@@ -74,11 +74,20 @@ Matrix3f RayCast(float width, float height, float focalDistance)
 	return m;
 }
 
+string MakeAnimationFilename(const string & root, size_t i)
+{
+	ostringstream s;
+	s << root << "render\\animation\\" << i << ".png";
+	return s.str();
+}
+
 int main()
 {
+	const bool animate(true);
+
 	const string projectRoot("C:\\Users\\Alexey\\Programming\\Colours visualization\\");
 
-	Volume v(LoadVolume((projectRoot + "voxelize\\volume.dat").c_str()));
+	Volume volume(LoadVolume((projectRoot + "voxelize\\volume.dat").c_str()));
 
 	const Mesh mesh(LoadPly((projectRoot + "shell\\hull.ply").c_str()));
 
@@ -93,7 +102,7 @@ int main()
 
 	RotationAnimation animation(Vector3f(460.0f, 0.0f, 0.0f));
 
-	size_t frameCount(1);
+	size_t frameCount(animate ? 120 : 1);
 
 	for (size_t i(0); i != frameCount; ++i)
 	{
@@ -106,15 +115,11 @@ int main()
 
 		// render
 		ProjectMesh(world, projection, w, h, buffer.data(), mesh);
-		RenderMesh(world, rayCast, w, h, buffer.data(), mesh);
+		RenderMesh(world, rayCast, w, h, buffer.data(), mesh, volume);
 
 		// save
-		//ostringstream pathName;
-		//pathName << projectRoot << "render\\animation\\" << i << ".png";
-		//SaveBuffer(pathName.str().c_str(), w, h, buffer.data());
-		string pathName(projectRoot + "test.png");
-
-		SaveBuffer((projectRoot + "test.png").c_str(), w, h, buffer.data());
+		string path(animate ? MakeAnimationFilename(projectRoot, i) : projectRoot + "render\\test.png");
+		SaveBuffer(path.c_str(), w, h, buffer.data());
 	}
 
 	return 0;

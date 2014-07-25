@@ -12,5 +12,5 @@ public:
 
 	RotationAnimation(Eigen::Vector3f eye);
 
-	Eigen::Vector3f Eye(size_t step, size_t count);
+	Eigen::Vector3f Eye(size_t step, size_t count) const;
 };
