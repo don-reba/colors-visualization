@@ -7,10 +7,11 @@ class RotationAnimation
 private:
 
 	Eigen::Vector3f eye;
+	Eigen::Vector3f at;
 
 public:
 
-	RotationAnimation(Eigen::Vector3f eye);
+	RotationAnimation(Eigen::Vector3f eye, Eigen::Vector3f at);
 
 	Eigen::Vector3f Eye(size_t step, size_t count) const;
 };

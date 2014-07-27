@@ -3,6 +3,7 @@
 #include "Color.h"
 #include "Timer.h"
 
+#include <cmath>
 #include <iostream>
 #include <limits>
 #include <thread>
@@ -128,6 +129,13 @@ inline float MakeAlphaFactor(float alpha, float step, float transparency)
 	return 1.0f - pow(1.0f - alpha, step / transparency);
 }
 
+inline float Wrap(float n, float mod)
+{
+	if (n >= 0)
+		return n - floor(n / mod) * mod;
+	return n + ceil(-n / mod) * mod;
+}
+
 void Integrate
 	( const Volume   & volume
 	, const Vector3f & offset
@@ -135,6 +143,8 @@ void Integrate
 	, float            step
 	, float            min
 	, float            max
+	, float            planeOffset
+	, float            planeStep
 	, Vector4f       & pxl
 	)
 {
@@ -158,6 +168,8 @@ void Integrate
 
 	// integrate
 
+	const Vector3f planeColor(79.0f, 13.0f, 74.5f);
+
 	const float maxAlpha(1.0f - 1.0f / 256.0f);
 	const float transparency(10.0f);
 
@@ -168,18 +180,26 @@ void Integrate
 	{
 		Vector3f nextColor(offset + x * ray);
 
-		const float alphaFactor = MakeAlphaFactor
+		float alphaFactor = MakeAlphaFactor
 			( volume[nextColor]
 			, (x + step < max) ? step : max - x
 			, transparency
 			);
+
+		if (Wrap(nextColor.x() + nextColor.y() - planeOffset, planeStep) <= 1.0f)
+		//if (fmod(nextColor.norm() - planeOffset, planeStep) <= 1.0f)
+		{
+			nextColor = planeColor;
+			alphaFactor *= 2.0f;
+		}
 
 		const float nextAlpha((1.0f - alpha) * alphaFactor);
 		color += nextAlpha * nextColor;
 		alpha += nextAlpha;
 	}
 
-	color /= alpha;
+	if (alpha != 0.0f)
+		color /= alpha;
 
 	pxl.x() = color.x();
 	pxl.y() = color.y();
@@ -188,19 +208,20 @@ void Integrate
 }
 
 void RenderMeshImp
-	( const Matrix4f           & worldInverse
+	( const Matrix4f           & world
 	, const Matrix3f           & rayCast
 	,       size_t               w
 	,       size_t               h
 	,       Vector4f           * buffer
 	, const vector<Triangle3f> & faces
 	, const Volume             & volume
-	, size_t                     firstLine
-	, size_t                     lineMultiplesOf
+	,       size_t               firstLine
+	,       size_t               lineMultiplesOf
+	,       float                planeOffset
 	)
 {
 	// integrate inside the mesh
-	for (size_t y(firstLine); y <  h; y += lineMultiplesOf)
+	for (size_t y(firstLine); y < h; y += lineMultiplesOf)
 	for (size_t x(0); x != w; ++x)
 	{
 		Vector4f & pxl(buffer[y * w + x]);
@@ -211,32 +232,34 @@ void RenderMeshImp
 		const size_t triIndex0(static_cast<size_t>(pxl.x()) - 1);
 		const size_t triIndex1(static_cast<size_t>(pxl.y()) - 1);
 
-		Vector3f ray(rayCast * Vector3f(static_cast<float>(x), static_cast<float>(y), 1.0f));
-		ray.normalize();
+		Vector3f cameraRay(rayCast * Vector3f(static_cast<float>(x), static_cast<float>(y), 1.0f));
+		cameraRay.normalize();
 
 		float min, max;
 
-		min = DistanceToTri(faces[triIndex0], ray); if (min < 0.0f) continue;
-		max = DistanceToTri(faces[triIndex1], ray); if (max < 0.0f) continue;
+		min = DistanceToTri(faces[triIndex0], cameraRay); if (min < 0.0f) continue;
+		max = DistanceToTri(faces[triIndex1], cameraRay); if (max < 0.0f) continue;
 		if (min > max)
 			swap(min, max);
 
-		const float stepLength(0.01f);
-		const Vector3f offset   = ::Transform(worldInverse, Vector3f::Zero());
-		const Vector3f worldRay = ::Transform(worldInverse, ray) - offset;
+		const float stepLength (0.1f);
+		const float planeStep  (25.0f);
+		const Vector3f offset (::Transform(world, Vector3f::Zero()));
+		const Vector3f ray    (::Transform(world, cameraRay) - offset);
 
-		Integrate(volume, offset, worldRay, stepLength, min, max, pxl);
+		Integrate(volume, offset, ray, stepLength, min, max, planeOffset, planeStep, pxl);
 	}
 }
 
 void RenderMesh
-	( const Matrix4f & world
+	( const Matrix4f & camera
 	, const Matrix3f & rayCast
 	,       size_t     w
 	,       size_t     h
 	,       Vector4f * buffer
 	, const Mesh     & mesh
 	, const Volume   & volume
+	,       float      planeOffset
 	)
 {
 	Timer timer("RenderMesh", true);
@@ -244,20 +267,20 @@ void RenderMesh
 	if (w == 0 && h == 0)
 		return;
 
-	const Matrix4f worldInverse(world.inverse());
+	const Matrix4f world(camera.inverse());
 
 	// move the mesh into camera space
 	vector<Triangle3f> faces(mesh.faces.size());
 	for (size_t i(0), size(mesh.faces.size()); i != size; ++i)
 	{
-		faces[i].v0 = ::Transform(world, mesh.vertices[mesh.faces[i].v0]);
-		faces[i].v1 = ::Transform(world, mesh.vertices[mesh.faces[i].v1]);
-		faces[i].v2 = ::Transform(world, mesh.vertices[mesh.faces[i].v2]);
+		faces[i].v0 = ::Transform(camera, mesh.vertices[mesh.faces[i].v0]);
+		faces[i].v1 = ::Transform(camera, mesh.vertices[mesh.faces[i].v1]);
+		faces[i].v2 = ::Transform(camera, mesh.vertices[mesh.faces[i].v2]);
 	}
 
 	// integrate inside the mesh
-	thread t0(RenderMeshImp, ref(worldInverse), ref(rayCast), w, h, buffer, ref(faces), ref(volume), 0, 2);
-	thread t1(RenderMeshImp, ref(worldInverse), ref(rayCast), w, h, buffer, ref(faces), ref(volume), 1, 2);
+	thread t0(RenderMeshImp, ref(world), ref(rayCast), w, h, buffer, ref(faces), ref(volume), 0, 2, planeOffset);
+	thread t1(RenderMeshImp, ref(world), ref(rayCast), w, h, buffer, ref(faces), ref(volume), 1, 2, planeOffset);
 	t0.join();
 	t1.join();
 }

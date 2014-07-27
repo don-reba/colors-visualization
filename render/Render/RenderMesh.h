@@ -7,11 +7,12 @@
 #include <Eigen/Dense>
 
 void RenderMesh
-	( const Eigen::Matrix4f & world
+	( const Eigen::Matrix4f & camera
 	, const Eigen::Matrix3f & rayCast
 	,       size_t            w
 	,       size_t            h
 	,       Eigen::Vector4f * buffer
 	, const Mesh            & mesh
 	, const Volume          & volume
+	,       float             planeOffset
 	);

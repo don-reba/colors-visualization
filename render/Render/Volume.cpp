@@ -49,7 +49,7 @@ float Volume::operator [] (const Vector3f & lab) const
 	size_t y = static_cast<size_t>(aFactor * (lab.y() - minA));
 	size_t z = static_cast<size_t>(bFactor * (lab.z() - minB));
 
-	return (x + y + z) % 2 ? 0.0f : 1.0f;
+	return (x + y + z) % 2 ? 0.0f : 0.9f;
 
 	//return Values[x + Nx * y + Nx * Ny * z];
 }

@@ -7,6 +7,7 @@
 #include <Eigen/Geometry>
 
 #include <algorithm>
+#include <iostream>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -21,15 +22,15 @@ Matrix4f LookAt
 	)
 {
 	Vector3f zaxis = (at - eye).normalized();
-	Vector3f xaxis = up.cross(zaxis).normalized();
-	Vector3f yaxis = zaxis.cross(xaxis);
+	Vector3f xaxis = zaxis.cross(up).normalized();
+	Vector3f yaxis = xaxis.cross(zaxis);
 
 	Matrix4f m;
 
-	m.block<1, 3>(0, 0) = -xaxis;
-	m.block<1, 3>(1, 0) =  yaxis;
-	m.block<1, 3>(2, 0) =  zaxis;
-	m.block<1, 3>(3, 0) =  Vector3f::Zero();
+	m.block<1, 3>(0, 0) = xaxis;
+	m.block<1, 3>(1, 0) = yaxis;
+	m.block<1, 3>(2, 0) = zaxis;
+	m.block<1, 3>(3, 0) = Vector3f::Zero();
 
 	m(0, 3) = -xaxis.dot(eye);
 	m(1, 3) = -yaxis.dot(eye);
@@ -100,22 +101,29 @@ int main()
 
 	const Matrix4f projection(Perspective(focalDistance));
 
-	RotationAnimation animation(Vector3f(460.0f, 0.0f, 0.0f));
+	// set up the camera animation
+	const Vector3f eye (500.0f, 0.0f, 0.0f);
+	const Vector3f at  ( 50.0f, 0.0f, 0.0f);
+	const Vector3f up  (  0.0f, 0.0f, 1.0f);
+	RotationAnimation animation(eye, at);
 
-	size_t frameCount(animate ? 120 : 1);
+	size_t frameCount(animate ? 360 : 1);
 
 	for (size_t i(0); i != frameCount; ++i)
 	{
+		cout << "frame " << i << " out of " << frameCount << endl;
+
 		fill(buffer.begin(), buffer.end(), Vector4f::Zero());
 
 		// set up the camera
-		const Vector3f at(0.0f, 0.0f, 0.0f);
-		const Vector3f up(0.0f, 0.0f, 1.0f);
-		const Matrix4f world = LookAt(animation.Eye(i, frameCount), at, up);
+		const Matrix4f camera = LookAt(animation.Eye(i, frameCount), at, up);
+
+		// aim for 30 FPS
+		const float planeOffset(40.0f / 30.0f * static_cast<float>(i));
 
 		// render
-		ProjectMesh(world, projection, w, h, buffer.data(), mesh);
-		RenderMesh(world, rayCast, w, h, buffer.data(), mesh, volume);
+		ProjectMesh(camera, projection, w, h, buffer.data(), mesh);
+		RenderMesh(camera, rayCast, w, h, buffer.data(), mesh, volume, planeOffset);
 
 		// save
 		string path(animate ? MakeAnimationFilename(projectRoot, i) : projectRoot + "render\\test.png");
