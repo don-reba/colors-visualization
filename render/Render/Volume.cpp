@@ -49,14 +49,12 @@ float Volume::operator [] (const Vector3f & lab) const
 	size_t y = static_cast<size_t>(aFactor * (lab.y() - minA));
 	size_t z = static_cast<size_t>(bFactor * (lab.z() - minB));
 
-	return (x + y + z) % 2 ? 0.0f : 0.9f;
-
-	//return Values[x + Nx * y + Nx * Ny * z];
+	return Values[x + Nx * y + Nx * Ny * z];
 }
 
 Volume LoadVolume(const char * path)
 {
-	ifstream f(path);
+	ifstream f(path, ios::binary);
 	if (!f)
 		throw runtime_error("File could not be opened.");
 
@@ -68,13 +66,16 @@ Volume LoadVolume(const char * path)
 
 	const size_t n(nx * ny * nz);
 	vector<int32_t> counts(n);
-	f.read(reinterpret_cast<char*>(counts.data()), nx * ny * nz * sizeof(int32_t));
+	f.read(reinterpret_cast<char*>(counts.data()), n * sizeof(int32_t));
+	if (f.fail())
+		throw runtime_error("File could not be read");
 
 	// compute alpha volume
 	Volume v(nx, ny, nz);
 	v.Values.reserve(n);
 	for (size_t i(0); i != n; ++i)
-		v.Values.push_back(log(static_cast<float>(counts[i] + 1)));
+		//v.Values.push_back(counts[i] ? log(static_cast<float>(counts[i])) : 0.0f);
+		v.Values.push_back(static_cast<float>(counts[i]));
 
 	const float max    (*max_element(v.Values.begin(), v.Values.end()));
 	const float factor (max == 0.0f ? 0.0f : (1.0f / static_cast<float>(max)));

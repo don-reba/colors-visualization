@@ -118,12 +118,9 @@ int main()
 		// set up the camera
 		const Matrix4f camera = LookAt(animation.Eye(i, frameCount), at, up);
 
-		// aim for 30 FPS
-		const float planeOffset(40.0f / 30.0f * static_cast<float>(i));
-
 		// render
 		ProjectMesh(camera, projection, w, h, buffer.data(), mesh);
-		RenderMesh(camera, rayCast, w, h, buffer.data(), mesh, volume, planeOffset);
+		RenderMesh(camera, rayCast, w, h, buffer.data(), mesh, volume);
 
 		// save
 		string path(animate ? MakeAnimationFilename(projectRoot, i) : projectRoot + "render\\test.png");

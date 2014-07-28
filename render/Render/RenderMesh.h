@@ -14,5 +14,4 @@ void RenderMesh
 	,       Eigen::Vector4f * buffer
 	, const Mesh            & mesh
 	, const Volume          & volume
-	,       float             planeOffset
 	);

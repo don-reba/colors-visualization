@@ -1,7 +1,5 @@
 #include "ProjectMesh.h"
 
-#include "Timer.h"
-
 #include <stdexcept>
 
 using namespace Eigen;
@@ -113,8 +111,6 @@ void ProjectMesh
 	, const Mesh     & mesh
 	)
 {
-	Timer timer("ProjectMesh", true);
-
 	vector<Triangle2i> faces(mesh.faces.size());
 
 	Matrix4f m = projection * world;

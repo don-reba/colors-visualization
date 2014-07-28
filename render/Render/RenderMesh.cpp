@@ -143,8 +143,6 @@ void Integrate
 	, float            step
 	, float            min
 	, float            max
-	, float            planeOffset
-	, float            planeStep
 	, Vector4f       & pxl
 	)
 {
@@ -168,10 +166,8 @@ void Integrate
 
 	// integrate
 
-	const Vector3f planeColor(79.0f, 13.0f, 74.5f);
-
 	const float maxAlpha(1.0f - 1.0f / 256.0f);
-	const float transparency(10.0f);
+	const float transparency(1.0f);
 
 	float    alpha(0.0f);
 	Vector3f color(Vector3f::Zero());
@@ -185,13 +181,6 @@ void Integrate
 			, (x + step < max) ? step : max - x
 			, transparency
 			);
-
-		if (Wrap(nextColor.x() + nextColor.y() - planeOffset, planeStep) <= 1.0f)
-		//if (fmod(nextColor.norm() - planeOffset, planeStep) <= 1.0f)
-		{
-			nextColor = planeColor;
-			alphaFactor *= 2.0f;
-		}
 
 		const float nextAlpha((1.0f - alpha) * alphaFactor);
 		color += nextAlpha * nextColor;
@@ -217,7 +206,6 @@ void RenderMeshImp
 	, const Volume             & volume
 	,       size_t               firstLine
 	,       size_t               lineMultiplesOf
-	,       float                planeOffset
 	)
 {
 	// integrate inside the mesh
@@ -241,13 +229,14 @@ void RenderMeshImp
 		max = DistanceToTri(faces[triIndex1], cameraRay); if (max < 0.0f) continue;
 		if (min > max)
 			swap(min, max);
+		if (max > 1000.0f)
+			continue;
 
 		const float stepLength (0.1f);
-		const float planeStep  (25.0f);
 		const Vector3f offset (::Transform(world, Vector3f::Zero()));
 		const Vector3f ray    (::Transform(world, cameraRay) - offset);
 
-		Integrate(volume, offset, ray, stepLength, min, max, planeOffset, planeStep, pxl);
+		Integrate(volume, offset, ray, stepLength, min, max, pxl);
 	}
 }
 
@@ -259,7 +248,6 @@ void RenderMesh
 	,       Vector4f * buffer
 	, const Mesh     & mesh
 	, const Volume   & volume
-	,       float      planeOffset
 	)
 {
 	Timer timer("RenderMesh", true);
@@ -279,8 +267,8 @@ void RenderMesh
 	}
 
 	// integrate inside the mesh
-	thread t0(RenderMeshImp, ref(world), ref(rayCast), w, h, buffer, ref(faces), ref(volume), 0, 2, planeOffset);
-	thread t1(RenderMeshImp, ref(world), ref(rayCast), w, h, buffer, ref(faces), ref(volume), 1, 2, planeOffset);
+	thread t0(RenderMeshImp, ref(world), ref(rayCast), w, h, buffer, ref(faces), ref(volume), 0, 2);
+	thread t1(RenderMeshImp, ref(world), ref(rayCast), w, h, buffer, ref(faces), ref(volume), 1, 2);
 	t0.join();
 	t1.join();
 }
