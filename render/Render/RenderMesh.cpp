@@ -124,7 +124,7 @@ float RefineMax
 	return isValid ? max : -1.0f;
 }
 
-inline float MakeAlphaFactor(float alpha, float step, float transparency)
+inline float ScaleAlpha(float alpha, float step, float transparency)
 {
 	return 1.0f - pow(1.0f - alpha, step / transparency);
 }
@@ -164,36 +164,49 @@ void Integrate
 		return;
 	}
 
-	// integrate
+	// integrate by stepping through [min, max - step]
+	// stop if the colour becomes sufficintly opaque
 
-	const float maxAlpha(1.0f - 1.0f / 256.0f);
-	const float transparency(1.0f);
+	const float minAmount(1.0f / 256.0f);
+	const float opacity(1.0f);
 
-	float    alpha(0.0f);
+	float    amount(1.0f);
 	Vector3f color(Vector3f::Zero());
 
-	for (float x(min); x < max && alpha + step <= maxAlpha; x += step)
+	float x(min);
+	for (; x <= max - step && amount >= minAmount; x += step)
 	{
 		Vector3f nextColor(offset + x * ray);
 
-		float alphaFactor = MakeAlphaFactor
-			( volume[nextColor]
-			, (x + step < max) ? step : max - x
-			, transparency
-			);
+		float transparency(pow(1.0f - volume[nextColor], step / opacity));
 
-		const float nextAlpha((1.0f - alpha) * alphaFactor);
-		color += nextAlpha * nextColor;
-		alpha += nextAlpha;
+		color += amount * (1.0f - transparency) * nextColor;
+
+		amount *= opacity;
 	}
 
-	if (alpha != 0.0f)
-		color /= alpha;
+	// add the remaining half-step
+	// the formula works even for zero remainder
+
+	Vector3f nextColor(offset + x * ray);
+
+	float transparency(pow(1.0f - volume[nextColor], (max - x) / opacity));
+
+	color += amount * (1.0f - opacity) * nextColor;
+
+	amount *= transparency;
+
+	// rescale colour
+
+	if (amount != 1.0f)
+		color /= 1.0f - amount;
+
+	// set pixel value
 
 	pxl.x() = color.x();
 	pxl.y() = color.y();
 	pxl.z() = color.z();
-	pxl.w() = alpha;
+	pxl.w() = 1.0f - amount;
 }
 
 void RenderMeshImp
