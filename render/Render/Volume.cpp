@@ -1,6 +1,7 @@
 #include "Volume.h"
 
 #include <algorithm>
+#include <cassert>
 #include <cstdint>
 #include <fstream>
 #include <stdexcept>
@@ -43,11 +44,22 @@ void Read(ifstream & stream, T * data)
 	stream.read(reinterpret_cast<char*>(data), sizeof(T));
 }
 
+inline int FastFloatToInt(float f)
+{
+	int n;
+	__asm
+	{
+		fld    f
+		fisttp n
+	}
+	return n;
+}
+
 float Volume::operator [] (const Vector3f & lab) const
 {
-	size_t x = static_cast<size_t>(lFactor * (lab.x() - minL));
-	size_t y = static_cast<size_t>(aFactor * (lab.y() - minA));
-	size_t z = static_cast<size_t>(bFactor * (lab.z() - minB));
+	const int x = FastFloatToInt(lFactor * (lab.x() - minL));
+	const int y = FastFloatToInt(aFactor * (lab.y() - minA));
+	const int z = FastFloatToInt(bFactor * (lab.z() - minB));
 
 	return Values[x + Nx * y + Nx * Ny * z];
 }

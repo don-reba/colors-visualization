@@ -30,8 +30,8 @@ int LabToRgbLookup::GetValue(float x) const
 	// sensitive to rounding mode
 	__asm
 	{
-		fld   position
-		fistp index
+		fld    position
+		fisttp index
 	}
 	return t[index];
 }

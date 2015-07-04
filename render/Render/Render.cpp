@@ -1,3 +1,5 @@
+#define ANIMATE
+
 #include "Animation.h"
 #include "ProjectMesh.h"
 #include "RenderMesh.h"
@@ -7,9 +9,13 @@
 #include <Eigen/Geometry>
 
 #include <algorithm>
+#include <iomanip>
 #include <iostream>
+#include <mutex>
+#include <numeric>
 #include <sstream>
 #include <string>
+#include <thread>
 #include <vector>
 
 using namespace std;
@@ -75,6 +81,8 @@ Matrix3f RayCast(float width, float height, float focalDistance)
 	return m;
 }
 
+#ifdef ANIMATE
+
 string MakeAnimationFilename(const string & root, size_t i)
 {
 	ostringstream s;
@@ -82,20 +90,21 @@ string MakeAnimationFilename(const string & root, size_t i)
 	return s.str();
 }
 
+#endif
+
 int main()
 {
-	const bool animate(true);
+	Eigen::initParallel();
 
-	const string projectRoot("C:\\Users\\Alexey\\Programming\\Colours visualization\\");
+	const string projectRoot("D:\\Programming\\Colours visualization\\");
 
-	Volume volume(LoadVolume((projectRoot + "voxelize\\volume.dat").c_str()));
+	const Volume volume(LoadVolume((projectRoot + "voxelize\\volume.dat").c_str()));
 
 	const Mesh mesh(LoadPly((projectRoot + "shell\\hull.ply").c_str()));
 
-	const size_t w(1280), h(720);
-	vector<Vector4f> buffer(w * h);
-
 	const float focalDistance(1.0f);
+
+	const size_t w(1280), h(720);
 
 	const Matrix3f rayCast(RayCast(static_cast<float>(w), static_cast<float>(h), focalDistance));
 
@@ -105,27 +114,61 @@ int main()
 	const Vector3f eye (500.0f, 0.0f, 0.0f);
 	const Vector3f at  ( 50.0f, 0.0f, 0.0f);
 	const Vector3f up  (  0.0f, 0.0f, 1.0f);
-	RotationAnimation animation(eye, at);
+	const RotationAnimation animation(eye, at);
 
-	size_t frameCount(animate ? 360 : 1);
+#ifdef ANIMATE
+	const size_t frameCount(360);
+#else
+	const size_t frameCount(1);
+#endif
 
-	for (size_t i(0); i != frameCount; ++i)
+	vector<size_t> frames(frameCount);
+	iota(frames.rbegin(), frames.rend(), 0);
+
+	mutex frameMutex;
+
+	auto ProcessFrame = [&]()
 	{
-		cout << "frame " << i << " out of " << frameCount << endl;
+		vector<Vector4f> buffer(w * h);
 
-		fill(buffer.begin(), buffer.end(), Vector4f::Zero());
+		for (;;)
+		{
+			size_t frame;
+			{
+				lock_guard<mutex> guard(frameMutex);
+				if (frames.empty())
+					break;
+				frame = frames.back();
+				frames.pop_back();
+			}
 
-		// set up the camera
-		const Matrix4f camera = LookAt(animation.Eye(i, frameCount), at, up);
+			ostringstream msg;
+			msg << "frame " << frame << " out of " << frameCount << '\n';
+			cout << msg.str() << flush;
 
-		// render
-		ProjectMesh(camera, projection, w, h, buffer.data(), mesh);
-		RenderMesh(camera, rayCast, w, h, buffer.data(), mesh, volume);
+			fill(buffer.begin(), buffer.end(), Vector4f::Zero());
 
-		// save
-		string path(animate ? MakeAnimationFilename(projectRoot, i) : projectRoot + "render\\test.png");
-		SaveBuffer(path.c_str(), w, h, buffer.data());
-	}
+			// set up the camera
+			const Matrix4f camera = LookAt(animation.Eye(frame, frameCount), at, up);
+
+			// render
+			ProjectMesh(camera, projection, w, h, buffer.data(), mesh);
+			RenderMesh(camera, rayCast, w, h, buffer.data(), mesh, volume);
+
+			// save
+			#ifdef ANIMATE
+				SaveBuffer(MakeAnimationFilename(projectRoot, frame).c_str(), w, h, buffer.data());
+			#else
+				SaveBuffer((projectRoot + "render\\test.png").c_str(), w, h, buffer.data());
+			#endif
+		}
+	};
+
+	vector<thread> threads(4);
+	for (auto & t : threads)
+		t = thread(ProcessFrame);
+	for (auto & t : threads)
+		t.join();
 
 	return 0;
 }

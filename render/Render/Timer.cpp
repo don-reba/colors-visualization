@@ -3,9 +3,8 @@
 #include <algorithm>
 #include <cmath>
 #include <iostream>
+#include <sstream>
 #include <string>
-
-#include <boost/timer.hpp>
 
 using namespace std;
 
@@ -76,16 +75,19 @@ Timer::~Timer()
 			for (Iterator i(children.begin()), end(children.end()); i != end; ++i)
 				nameLength = max(nameLength, i->first.size());
 
-			cout << name << " timings\n";
+			ostringstream msg;
+			msg << name << " timings\n";
 			for (Iterator i(children.begin()), end(children.end()); i != end; ++i)
 			{
 				string pad(nameLength + 1 - i->first.size(), ' ');
-				cout << "  " << i->first << ':' << pad;
-				Print(cout, i->second, total);
-				cout << '\n';
+				msg << "  " << i->first << ':' << pad;
+				Print(msg, i->second, total);
+				msg << '\n';
 			}
 
-			cout << "  total: " << total << "\n" << flush;
+			msg << "  total: " << total << "\n";
+
+			cout << msg.str() << flush;
 		}
 	}
 	catch (...)

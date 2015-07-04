@@ -18,7 +18,7 @@ BYTE FloatToByteChannel(float x)
 
 void SaveBuffer(const char * path, size_t width, size_t height, const Vector4f * buffer)
 {
-	Vector3f back(100.0f, 0.0f, 0.0f);
+	Vector3f back(14.0f, 0.0f, 0.0f);
 
 	size_t bpp(32);
 	fipImage img(FIT_BITMAP, width, height, bpp);

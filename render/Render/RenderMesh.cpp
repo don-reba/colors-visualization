@@ -168,7 +168,7 @@ void Integrate
 	// stop if the colour becomes sufficintly opaque
 
 	const float minAmount(1.0f / 256.0f);
-	const float opacity(1.0f);
+	const float attenuation(0.5f);
 
 	float    amount(1.0f);
 	Vector3f color(Vector3f::Zero());
@@ -178,11 +178,11 @@ void Integrate
 	{
 		Vector3f nextColor(offset + x * ray);
 
-		float transparency(pow(1.0f - volume[nextColor], step / opacity));
+		float transparency(pow(1.0f - volume[nextColor], step / attenuation));
 
 		color += amount * (1.0f - transparency) * nextColor;
 
-		amount *= opacity;
+		amount *= transparency;
 	}
 
 	// add the remaining half-step
@@ -190,9 +190,9 @@ void Integrate
 
 	Vector3f nextColor(offset + x * ray);
 
-	float transparency(pow(1.0f - volume[nextColor], (max - x) / opacity));
+	float transparency(pow(1.0f - volume[nextColor], (max - x) / attenuation));
 
-	color += amount * (1.0f - opacity) * nextColor;
+	color += amount * (1.0f - transparency) * nextColor;
 
 	amount *= transparency;
 
