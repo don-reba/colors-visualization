@@ -2,6 +2,7 @@
 
 #include "Image.h"
 #include "Mesh.h"
+#include "Profiler.h"
 #include "Volume.h"
 
 #include <Eigen/Dense>
@@ -14,4 +15,5 @@ void RenderMesh
 	,       Eigen::Vector4f * buffer
 	, const Mesh            & mesh
 	, const Volume          & volume
+	,       Profiler        & profiler
 	);

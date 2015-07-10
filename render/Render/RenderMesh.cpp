@@ -1,7 +1,6 @@
 #include "RenderMesh.h"
 
 #include "Color.h"
-#include "Timer.h"
 
 #include <cmath>
 #include <iostream>
@@ -261,9 +260,10 @@ void RenderMesh
 	,       Vector4f * buffer
 	, const Mesh     & mesh
 	, const Volume   & volume
+	,       Profiler & profiler
 	)
 {
-	Timer timer("RenderMesh", true);
+	Profiler::Timer timer(profiler, "RenderMesh");
 
 	if (w == 0 && h == 0)
 		return;

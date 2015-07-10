@@ -1,6 +1,7 @@
 #define ANIMATE
 
 #include "Animation.h"
+#include "Profiler.h"
 #include "ProjectMesh.h"
 #include "RenderMesh.h"
 #include "Volume.h"
@@ -81,6 +82,48 @@ Matrix3f RayCast(float width, float height, float focalDistance)
 	return m;
 }
 
+void PrintFrameInfo(size_t frameIndex, size_t frameCount, const Profiler & profiler)
+{
+	ostringstream msg;
+	msg << "frame " << (frameIndex + 1) << " out of " << frameCount << '\n';
+
+	size_t nameLength = 0u;
+	for (const auto & timerStat : profiler.timerStats)
+		nameLength = max(nameLength, timerStat.first.size());
+
+	double total = 0.0;
+	for (const auto & timerStat : profiler.timerStats)
+		total += timerStat.second.sum;
+
+	auto oldFlags = msg.setf(ios::fixed, ios::floatfield);
+	auto oldPrec  = msg.precision(6);
+
+	for (const auto & timerStat : profiler.timerStats)
+	{
+		const std::string     & name  = timerStat.first;
+		const Profiler::Stats & stats = timerStat.second;
+
+		string pad(nameLength + 1 - name.size(), ' ');
+		msg << "  " << name << ':' << pad;
+
+		msg << stats.mean;
+		if (stats.n > 1)
+			msg << "(" << stats.StDev() << ")";
+		msg << "s";
+		if (stats.n > 1)
+			msg << " x" << stats.n;
+		msg.precision(2);
+		msg << " " << (100.0 * stats.sum / total) << '%';
+
+		msg << '\n';
+	}
+
+	msg.flags(oldFlags);
+	msg.precision(oldPrec);
+
+	cout << msg.str() << flush;
+}
+
 #ifdef ANIMATE
 
 string MakeAnimationFilename(const string & root, size_t i)
@@ -142,9 +185,7 @@ int main()
 				frames.pop_back();
 			}
 
-			ostringstream msg;
-			msg << "frame " << frame << " out of " << frameCount << '\n';
-			cout << msg.str() << flush;
+			Profiler profiler;
 
 			fill(buffer.begin(), buffer.end(), Vector4f::Zero());
 
@@ -153,7 +194,7 @@ int main()
 
 			// render
 			ProjectMesh(camera, projection, w, h, buffer.data(), mesh);
-			RenderMesh(camera, rayCast, w, h, buffer.data(), mesh, volume);
+			RenderMesh(camera, rayCast, w, h, buffer.data(), mesh, volume, profiler);
 
 			// save
 			#ifdef ANIMATE
@@ -161,6 +202,8 @@ int main()
 			#else
 				SaveBuffer((projectRoot + "render\\test.png").c_str(), w, h, buffer.data());
 			#endif
+
+			PrintFrameInfo(frame, frameCount, profiler);
 		}
 	};
 

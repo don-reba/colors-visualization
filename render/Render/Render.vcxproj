@@ -104,7 +104,7 @@
     <ClCompile Include="ProjectMesh.cpp" />
     <ClCompile Include="Render.cpp" />
     <ClCompile Include="RenderMesh.cpp" />
-    <ClCompile Include="Timer.cpp" />
+    <ClCompile Include="Profiler.cpp" />
     <ClCompile Include="Volume.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -117,7 +117,7 @@
     <ClInclude Include="Mesh.h" />
     <ClInclude Include="ProjectMesh.h" />
     <ClInclude Include="RenderMesh.h" />
-    <ClInclude Include="Timer.h" />
+    <ClInclude Include="Profiler.h" />
     <ClInclude Include="Volume.h" />
   </ItemGroup>
   <ItemGroup>
