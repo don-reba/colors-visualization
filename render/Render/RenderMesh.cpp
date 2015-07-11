@@ -5,7 +5,6 @@
 #include <cmath>
 #include <iostream>
 #include <limits>
-#include <thread>
 
 using namespace Eigen;
 using namespace std;
@@ -208,50 +207,6 @@ void Integrate
 	pxl.w() = 1.0f - amount;
 }
 
-void RenderMeshImp
-	( const Matrix4f           & world
-	, const Matrix3f           & rayCast
-	,       size_t               w
-	,       size_t               h
-	,       Vector4f           * buffer
-	, const vector<Triangle3f> & faces
-	, const Volume             & volume
-	,       size_t               firstLine
-	,       size_t               lineMultiplesOf
-	)
-{
-	// integrate inside the mesh
-	for (size_t y(firstLine); y < h; y += lineMultiplesOf)
-	for (size_t x(0); x != w; ++x)
-	{
-		Vector4f & pxl(buffer[y * w + x]);
-
-		if (pxl.x() == 0.0f || pxl.y() == 0.0f)
-			continue;
-
-		const size_t triIndex0(static_cast<size_t>(pxl.x()) - 1);
-		const size_t triIndex1(static_cast<size_t>(pxl.y()) - 1);
-
-		Vector3f cameraRay(rayCast * Vector3f(static_cast<float>(x), static_cast<float>(y), 1.0f));
-		cameraRay.normalize();
-
-		float min, max;
-
-		min = DistanceToTri(faces[triIndex0], cameraRay); if (min < 0.0f) continue;
-		max = DistanceToTri(faces[triIndex1], cameraRay); if (max < 0.0f) continue;
-		if (min > max)
-			swap(min, max);
-		if (max > 1000.0f)
-			continue;
-
-		const float stepLength (0.1f);
-		const Vector3f offset (::Transform(world, Vector3f::Zero()));
-		const Vector3f ray    (::Transform(world, cameraRay) - offset);
-
-		Integrate(volume, offset, ray, stepLength, min, max, pxl);
-	}
-}
-
 void RenderMesh
 	( const Matrix4f & camera
 	, const Matrix3f & rayCast
@@ -280,8 +235,33 @@ void RenderMesh
 	}
 
 	// integrate inside the mesh
-	thread t0(RenderMeshImp, ref(world), ref(rayCast), w, h, buffer, ref(faces), ref(volume), 0, 2);
-	thread t1(RenderMeshImp, ref(world), ref(rayCast), w, h, buffer, ref(faces), ref(volume), 1, 2);
-	t0.join();
-	t1.join();
+	for (size_t y(0); y != h; ++y)
+	for (size_t x(0); x != w; ++x)
+	{
+		Vector4f & pxl(buffer[y * w + x]);
+
+		if (pxl.x() == 0.0f || pxl.y() == 0.0f)
+			continue;
+
+		const size_t triIndex0(static_cast<size_t>(pxl.x()) - 1);
+		const size_t triIndex1(static_cast<size_t>(pxl.y()) - 1);
+
+		Vector3f cameraRay(rayCast * Vector3f(static_cast<float>(x), static_cast<float>(y), 1.0f));
+		cameraRay.normalize();
+
+		float min, max;
+
+		min = DistanceToTri(faces[triIndex0], cameraRay); if (min < 0.0f) continue;
+		max = DistanceToTri(faces[triIndex1], cameraRay); if (max < 0.0f) continue;
+		if (min > max)
+			swap(min, max);
+		if (max > 1000.0f)
+			continue;
+
+		const float stepLength (0.1f);
+		const Vector3f offset (::Transform(world, Vector3f::Zero()));
+		const Vector3f ray    (::Transform(world, cameraRay) - offset);
+
+		Integrate(volume, offset, ray, stepLength, min, max, pxl);
+	}
 }

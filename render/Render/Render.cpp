@@ -82,44 +82,50 @@ Matrix3f RayCast(float width, float height, float focalDistance)
 	return m;
 }
 
-void PrintFrameInfo(size_t frameIndex, size_t frameCount, const Profiler & profiler)
+void PrintProfilerNode(ostream & msg, size_t level, Profiler::Node * node)
 {
-	ostringstream msg;
-	msg << "frame " << (frameIndex + 1) << " out of " << frameCount << '\n';
-
-	size_t nameLength = 0u;
-	for (const auto & timerStat : profiler.timerStats)
-		nameLength = max(nameLength, timerStat.first.size());
-
-	double total = 0.0;
-	for (const auto & timerStat : profiler.timerStats)
-		total += timerStat.second.sum;
-
-	auto oldFlags = msg.setf(ios::fixed, ios::floatfield);
-	auto oldPrec  = msg.precision(6);
-
-	for (const auto & timerStat : profiler.timerStats)
+	size_t nameLength (0u);
+	double total      (0.0);
+	for (const auto & timerStat : node->children)
 	{
-		const std::string     & name  = timerStat.first;
-		const Profiler::Stats & stats = timerStat.second;
+		nameLength = max(nameLength, timerStat.first.size());
+		total += timerStat.second->stats.Total();
+	}
+
+	for (const auto & timerStat : node->children)
+	{
+		const std::string     & name = timerStat.first;
+		const Profiler::Stats & stat = timerStat.second->stats;
+
+		for (size_t i = 0; i != level; ++i)
+			msg << "  ";
 
 		string pad(nameLength + 1 - name.size(), ' ');
 		msg << "  " << name << ':' << pad;
 
-		msg << stats.mean;
-		if (stats.n > 1)
-			msg << "(" << stats.StDev() << ")";
+		msg << setprecision(6) << stat.Mean();
+		if (stat.Count() > 1)
+			msg << "(" << setprecision(6) << stat.StDev() << ")";
 		msg << "s";
-		if (stats.n > 1)
-			msg << " x" << stats.n;
-		msg.precision(2);
-		msg << " " << (100.0 * stats.sum / total) << '%';
+		if (stat.Count() > 1)
+			msg << " x" << stat.Count();
+		if (node->children.size() > 1)
+			msg << " " << setprecision(2) << (100.0 * stat.Total() / total) << '%';
 
 		msg << '\n';
-	}
 
-	msg.flags(oldFlags);
-	msg.precision(oldPrec);
+		PrintProfilerNode(msg, level + 1, timerStat.second.get());
+	}
+}
+
+void PrintFrameInfo(size_t frameIndex, size_t frameCount, const Profiler & profiler)
+{
+	ostringstream msg;
+	msg.setf(ios::fixed, ios::floatfield);
+
+	msg << "frame " << (frameIndex + 1) << " out of " << frameCount << '\n';
+
+	PrintProfilerNode(msg, 0, profiler.current);
 
 	cout << msg.str() << flush;
 }
@@ -187,21 +193,25 @@ int main()
 
 			Profiler profiler;
 
-			fill(buffer.begin(), buffer.end(), Vector4f::Zero());
+			{
+				Profiler::Timer timer(profiler, "Total");
 
-			// set up the camera
-			const Matrix4f camera = LookAt(animation.Eye(frame, frameCount), at, up);
+				fill(buffer.begin(), buffer.end(), Vector4f::Zero());
 
-			// render
-			ProjectMesh(camera, projection, w, h, buffer.data(), mesh);
-			RenderMesh(camera, rayCast, w, h, buffer.data(), mesh, volume, profiler);
+				// set up the camera
+				const Matrix4f camera = LookAt(animation.Eye(frame, frameCount), at, up);
 
-			// save
-			#ifdef ANIMATE
-				SaveBuffer(MakeAnimationFilename(projectRoot, frame).c_str(), w, h, buffer.data());
-			#else
-				SaveBuffer((projectRoot + "render\\test.png").c_str(), w, h, buffer.data());
-			#endif
+				// render
+				ProjectMesh(camera, projection, w, h, buffer.data(), mesh);
+				RenderMesh(camera, rayCast, w, h, buffer.data(), mesh, volume, profiler);
+
+				// save
+				#ifdef ANIMATE
+					SaveBuffer(MakeAnimationFilename(projectRoot, frame).c_str(), w, h, buffer.data());
+				#else
+					SaveBuffer((projectRoot + "render\\test.png").c_str(), w, h, buffer.data());
+				#endif
+			}
 
 			PrintFrameInfo(frame, frameCount, profiler);
 		}

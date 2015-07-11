@@ -5,6 +5,16 @@
 using namespace std;
 using namespace std::chrono;
 
+//---------
+// Profiler
+//---------
+
+Profiler::Profiler()
+	: root    (new Node(nullptr))
+	, current (root.get())
+{
+}
+
 //----------------
 // Profiler::Stats
 //----------------
@@ -24,9 +34,14 @@ void Profiler::Stats::Add(double x)
 	sum  += x;
 }
 
-double Profiler::Stats::Var() const
+int Profiler::Stats::Count() const
 {
-	return m2 / (n - 1);
+	return n;
+}
+
+double Profiler::Stats::Mean() const
+{
+	return mean;
 }
 
 double Profiler::Stats::StDev() const
@@ -34,19 +49,36 @@ double Profiler::Stats::StDev() const
 	return sqrt(Var());
 }
 
+double Profiler::Stats::Total() const
+{
+	return sum;
+}
+
+double Profiler::Stats::Var() const
+{
+	return m2 / (n - 1);
+}
+
 //----------------
 // Profiler::Timer
 //----------------
 
 Profiler::Timer::Timer(Profiler & profiler, const char * name)
-	: name     (name)
-	, profiler (profiler)
+	: profiler (profiler)
 	, start    (clock::now())
 {
+	auto i = profiler.current->children.find(name);
+	if (i == profiler.current->children.end())
+	{
+		unique_ptr<Node> node(new Profiler::Node(profiler.current));
+		i = profiler.current->children.insert(make_pair(name, move(node))).first;
+	}
+	profiler.current = i->second.get();
 }
 
 Profiler::Timer::~Timer()
 {
-	double secondsElapsed = duration_cast<duration<double>>(clock::now() - start).count();
-	profiler.timerStats[name].Add(secondsElapsed);
+	double secondsElapsed(duration_cast<duration<double>>(clock::now() - start).count());
+	profiler.current->stats.Add(secondsElapsed);
+	profiler.current = profiler.current->parent;
 }
