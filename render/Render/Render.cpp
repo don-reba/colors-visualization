@@ -1,5 +1,3 @@
-#define ANIMATE
-
 #include "Animation.h"
 #include "Profiler.h"
 #include "ProjectMesh.h"
@@ -130,16 +128,12 @@ void PrintFrameInfo(size_t frameIndex, size_t frameCount, const Profiler & profi
 	cout << msg.str() << flush;
 }
 
-#ifdef ANIMATE
-
 string MakeAnimationFilename(const string & root, size_t i)
 {
 	ostringstream s;
 	s << root << "render\\animation\\" << i << ".png";
 	return s.str();
 }
-
-#endif
 
 int main()
 {
@@ -165,11 +159,7 @@ int main()
 	const Vector3f up  (  0.0f, 0.0f, 1.0f);
 	const RotationAnimation animation(eye, at);
 
-#ifdef ANIMATE
-	const size_t frameCount(360);
-#else
 	const size_t frameCount(1);
-#endif
 
 	vector<size_t> frames(frameCount);
 	iota(frames.rbegin(), frames.rend(), 0);
@@ -199,18 +189,14 @@ int main()
 				fill(buffer.begin(), buffer.end(), Vector4f::Zero());
 
 				// set up the camera
-				const Matrix4f camera = LookAt(animation.Eye(frame, frameCount), at, up);
+				const Matrix4f camera(LookAt(animation.Eye(frame, frameCount), at, up));
 
 				// render
 				ProjectMesh(camera, projection, w, h, buffer.data(), mesh);
 				RenderMesh(camera, rayCast, w, h, buffer.data(), mesh, volume, profiler);
 
 				// save
-				#ifdef ANIMATE
-					SaveBuffer(MakeAnimationFilename(projectRoot, frame).c_str(), w, h, buffer.data());
-				#else
-					SaveBuffer((projectRoot + "render\\test.png").c_str(), w, h, buffer.data());
-				#endif
+				SaveBuffer(MakeAnimationFilename(projectRoot, frame).c_str(), w, h, buffer.data());
 			}
 
 			PrintFrameInfo(frame, frameCount, profiler);

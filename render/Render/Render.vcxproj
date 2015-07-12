@@ -56,6 +56,7 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;EIGEN_DONT_PARALLELIZE;_DEBUG;_CONSOLE;cimg_use_png;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <DisableLanguageExtensions>false</DisableLanguageExtensions>
+      <FloatingPointModel>Strict</FloatingPointModel>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -82,6 +83,7 @@
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <StringPooling>true</StringPooling>
       <BufferSecurityCheck>false</BufferSecurityCheck>
+      <FloatingPointModel>Strict</FloatingPointModel>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -115,6 +117,7 @@
     <ClInclude Include="FreeImagePlus.h" />
     <ClInclude Include="Image.h" />
     <ClInclude Include="Mesh.h" />
+    <ClInclude Include="Pow.h" />
     <ClInclude Include="ProjectMesh.h" />
     <ClInclude Include="RenderMesh.h" />
     <ClInclude Include="Profiler.h" />

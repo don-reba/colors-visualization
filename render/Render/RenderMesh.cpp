@@ -1,6 +1,7 @@
 #include "RenderMesh.h"
 
 #include "Color.h"
+#include "Pow.h"
 
 #include <cmath>
 #include <iostream>
@@ -122,11 +123,6 @@ float RefineMax
 	return isValid ? max : -1.0f;
 }
 
-inline float ScaleAlpha(float alpha, float step, float transparency)
-{
-	return 1.0f - pow(1.0f - alpha, step / transparency);
-}
-
 inline float Wrap(float n, float mod)
 {
 	if (n >= 0)
@@ -172,11 +168,39 @@ void Integrate
 	Vector3f color(Vector3f::Zero());
 
 	float x(min);
-	for (; x <= max - step && amount >= minAmount; x += step)
-	{
-		Vector3f nextColor(offset + x * ray);
 
-		float transparency(pow(1.0f - volume[nextColor], step / attenuation));
+	while (x <= max - 4 * step && amount >= minAmount)
+	{
+		Vector3f nextColors[4];
+		for (size_t i(0); i != 4; ++i)
+		{
+			nextColors[i] = ray;
+			nextColors[i] *= x;
+			nextColors[i] += offset;
+			x += step;
+		}
+
+		float samples[4];
+		for (size_t i(0); i != 4; ++i)
+			samples[i] = 1.0f - volume[nextColors[i]];
+
+		float transparencies[4];
+		_mm_store_ps(transparencies, powf4(_mm_load_ps(samples), _mm_set1_ps(step / attenuation)));
+
+		for (size_t i(0); i != 4; ++i)
+		{
+			nextColors[i] *= amount * (1.0f - transparencies[i]);
+			color +=  nextColors[i];
+			amount *= transparencies[i];
+		}
+	}
+	while (x <= max - step && amount >= minAmount)
+	{
+		Vector3f nextColor(offset + x * ray); x += step;
+
+		float sample(volume[nextColor]);
+
+		float transparency(pow(1.0f - sample, step / attenuation));
 
 		color += amount * (1.0f - transparency) * nextColor;
 
@@ -249,16 +273,14 @@ void RenderMesh
 		Vector3f cameraRay(rayCast * Vector3f(static_cast<float>(x), static_cast<float>(y), 1.0f));
 		cameraRay.normalize();
 
-		float min, max;
-
-		min = DistanceToTri(faces[triIndex0], cameraRay); if (min < 0.0f) continue;
-		max = DistanceToTri(faces[triIndex1], cameraRay); if (max < 0.0f) continue;
+		float min = DistanceToTri(faces[triIndex0], cameraRay); if (min < 0.0f) continue;
+		float max = DistanceToTri(faces[triIndex1], cameraRay); if (max < 0.0f) continue;
 		if (min > max)
 			swap(min, max);
 		if (max > 1000.0f)
 			continue;
 
-		const float stepLength (0.1f);
+		const float stepLength (0.2f);
 		const Vector3f offset (::Transform(world, Vector3f::Zero()));
 		const Vector3f ray    (::Transform(world, cameraRay) - offset);
 
