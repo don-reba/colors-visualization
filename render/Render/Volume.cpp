@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cassert>
+#include <cmath>
 #include <cstdint>
 #include <fstream>
 #include <stdexcept>
@@ -44,17 +45,7 @@ void Read(ifstream & stream, T * data)
 	stream.read(reinterpret_cast<char*>(data), sizeof(T));
 }
 
-inline int FastFloatToInt(float f)
-{
-	int n;
-	__asm
-	{
-		fld    f
-		fisttp n
-	}
-	return n;
-}
-
+/*
 float Volume::operator [] (const Vector3f & lab) const
 {
 	const int x = FastFloatToInt(lFactor * (lab.x() - minL));
@@ -62,6 +53,47 @@ float Volume::operator [] (const Vector3f & lab) const
 	const int z = FastFloatToInt(bFactor * (lab.z() - minB));
 
 	return Values[x + Nx * y + Nx * Ny * z];
+}
+*/
+
+float Volume::operator [] (const Vector3f & lab) const
+{
+	// trlinear interpolation
+
+	const float fx(lFactor * (lab.x() - minL));
+	const float fy(aFactor * (lab.y() - minA));
+	const float fz(bFactor * (lab.z() - minB));
+
+	const int x((int)(fx));
+	const int y((int)(fy));
+	const int z((int)(fz));
+
+	if (x < 0 || x > Nx - 2) return 0.0f;
+	if (y < 0 || y > Ny - 2) return 0.0f;
+	if (z < 0 || z > Nz - 2) return 0.0f;
+
+	const float dx(fx - floor(fx));
+	const float dy(fy - floor(fy));
+	const float dz(fz - floor(fz));
+
+	const float v000(Values[(x + 0) + Nx * (y + 0) + Nx * Ny * (z + 0)]);
+	const float v001(Values[(x + 0) + Nx * (y + 0) + Nx * Ny * (z + 1)]);
+	const float v010(Values[(x + 0) + Nx * (y + 1) + Nx * Ny * (z + 0)]);
+	const float v011(Values[(x + 0) + Nx * (y + 1) + Nx * Ny * (z + 1)]);
+	const float v100(Values[(x + 1) + Nx * (y + 0) + Nx * Ny * (z + 0)]);
+	const float v101(Values[(x + 1) + Nx * (y + 0) + Nx * Ny * (z + 1)]);
+	const float v110(Values[(x + 1) + Nx * (y + 1) + Nx * Ny * (z + 0)]);
+	const float v111(Values[(x + 1) + Nx * (y + 1) + Nx * Ny * (z + 1)]);
+
+	const float v00((1.0f - dx) * v000 + dx * v001);
+	const float v01((1.0f - dx) * v010 + dx * v011);
+	const float v10((1.0f - dx) * v100 + dx * v101);
+	const float v11((1.0f - dx) * v110 + dx * v111);
+
+	const float v0((1.0f - dy) * v00 + dy * v01);
+	const float v1((1.0f - dy) * v10 + dy * v11);
+
+	return (1.0f - dz) * v0 + dz * v1;
 }
 
 Volume LoadVolume(const char * path)

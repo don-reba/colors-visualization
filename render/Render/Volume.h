@@ -8,9 +8,9 @@ class Volume
 {
 public:
 
-	size_t Nx;
-	size_t Ny;
-	size_t Nz;
+	int Nx;
+	int Ny;
+	int Nz;
 
 	std::vector<float> Values;
 

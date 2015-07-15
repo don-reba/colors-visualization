@@ -1,5 +1,6 @@
 #include "ProjectMesh.h"
 
+#include <iostream>
 #include <stdexcept>
 
 using namespace Eigen;
@@ -47,10 +48,10 @@ bool IsTopLeft(const Vector2i & a, const Vector2i & b)
 void Rasterize(const Triangle2i & tri, float id, size_t w, size_t h, Vector4f * buffer)
 {
 	// the triangle bounding box
-	int minX = min3(tri.v0.x(), tri.v1.x(), tri.v2.x());
-	int maxX = max3(tri.v0.x(), tri.v1.x(), tri.v2.x());
-	int minY = min3(tri.v0.y(), tri.v1.y(), tri.v2.y());
-	int maxY = max3(tri.v0.y(), tri.v1.y(), tri.v2.y());
+	int minX(min3(tri.v0.x(), tri.v1.x(), tri.v2.x()));
+	int maxX(max3(tri.v0.x(), tri.v1.x(), tri.v2.x()));
+	int minY(min3(tri.v0.y(), tri.v1.y(), tri.v2.y()));
+	int maxY(max3(tri.v0.y(), tri.v1.y(), tri.v2.y()));
 
 	// intersect with the screen
 	minX = max(minX, 0);
@@ -64,18 +65,19 @@ void Rasterize(const Triangle2i & tri, float id, size_t w, size_t h, Vector4f * 
 	for (p.x() = minX; p.x() <= maxX; ++p.x())
 	{
 		// bias implements the top-left fill rule
-		int bias0(IsTopLeft(tri.v1, tri.v2) ? 0 : -1);
-		int bias1(IsTopLeft(tri.v2, tri.v0) ? 0 : -1);
-		int bias2(IsTopLeft(tri.v0, tri.v1) ? 0 : -1);
+		const int bias0(IsTopLeft(tri.v1, tri.v2) ? 0 : -1);
+		const int bias1(IsTopLeft(tri.v2, tri.v0) ? 0 : -1);
+		const int bias2(IsTopLeft(tri.v0, tri.v1) ? 0 : -1);
 
-		int w0(Orient2d(tri.v1, tri.v2, p) + bias0);
-		int w1(Orient2d(tri.v2, tri.v0, p) + bias1);
-		int w2(Orient2d(tri.v0, tri.v1, p) + bias2);
+		const int w0(Orient2d(tri.v1, tri.v2, p) + bias0);
+		const int w1(Orient2d(tri.v2, tri.v0, p) + bias1);
+		const int w2(Orient2d(tri.v0, tri.v1, p) + bias2);
 
 		if ((w0 | w1 | w2) >= 0)
 		{
 			Vector4f & pxl(buffer[p.y() * w + p.x()]);
 			// we store pixel id in A and B components of the pixel
+			// this assumed the volume is convex
 			(pxl.x() == 0.0f ? pxl.x() : pxl.y()) = id;
 		}
 	}
@@ -95,7 +97,7 @@ Vector2i CameraToScreen(Vector2f v, size_t width, size_t height)
 Vector2f Transform(const Matrix4f & m, const Vector3f & v)
 {
 	const float v0(v(0, 0)), v1(v(1, 0)), v2(v(2, 0));
-	const float f = 1.0f / (m(3, 0) * v0 + m(3, 1) * v1 + m(3, 2) * v2 + m(3, 3));
+	const float f(1.0f / (m(3, 0) * v0 + m(3, 1) * v1 + m(3, 2) * v2 + m(3, 3)));
 	return Vector2f
 		( f * (m(0, 0) * v0 + m(0, 1) * v1 + m(0, 2) * v2 + m(0, 3))
 		, f * (m(1, 0) * v0 + m(1, 1) * v1 + m(1, 2) * v2 + m(1, 3))
@@ -111,21 +113,18 @@ void ProjectMesh
 	, const Mesh     & mesh
 	)
 {
-	vector<Triangle2i> faces(mesh.faces.size());
-
-	Matrix4f m = projection * world;
+	const Matrix4f m(projection * world);
 
 	for (size_t i(0), size(mesh.faces.size()); i != size; ++i)
 	{
-		faces[i].v0 = CameraToScreen(::Transform(m, mesh.vertices[mesh.faces[i].v0]), w, h);
-		faces[i].v1 = CameraToScreen(::Transform(m, mesh.vertices[mesh.faces[i].v1]), w, h);
-		faces[i].v2 = CameraToScreen(::Transform(m, mesh.vertices[mesh.faces[i].v2]), w, h);
-		MakeCounterclockwise(faces[i]);
-	}
+		Triangle2i face;
 
-	for (size_t i(0), size(faces.size()); i != size; ++i)
-	{
+		face.v0 = CameraToScreen(::Transform(m, mesh.vertices[mesh.faces[i].v0]), w, h);
+		face.v1 = CameraToScreen(::Transform(m, mesh.vertices[mesh.faces[i].v1]), w, h);
+		face.v2 = CameraToScreen(::Transform(m, mesh.vertices[mesh.faces[i].v2]), w, h);
+		MakeCounterclockwise(face);
+
 		const float id(static_cast<float>(i + 1));
-		Rasterize(faces[i], id, w, h, buffer);
+		Rasterize(face, id, w, h, buffer);
 	}
 }

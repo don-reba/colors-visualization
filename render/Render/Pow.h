@@ -1,6 +1,8 @@
 #include <xmmintrin.h>
 #include <emmintrin.h>
 
+// copied from http://jrfonseca.blogspot.com.es/2008/09/fast-sse2-pow-tables-or-polynomials.html
+
 // exp2
 
 #define EXP_POLY_DEGREE 3

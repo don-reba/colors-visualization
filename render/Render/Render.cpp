@@ -26,9 +26,9 @@ Matrix4f LookAt
 	, const Vector3f & up
 	)
 {
-	Vector3f zaxis = (at - eye).normalized();
-	Vector3f xaxis = zaxis.cross(up).normalized();
-	Vector3f yaxis = xaxis.cross(zaxis);
+	const Vector3f zaxis((at - eye).normalized());
+	const Vector3f xaxis(zaxis.cross(up).normalized());
+	const Vector3f yaxis(xaxis.cross(zaxis));
 
 	Matrix4f m;
 
@@ -95,7 +95,7 @@ void PrintProfilerNode(ostream & msg, size_t level, Profiler::Node * node)
 		const std::string     & name = timerStat.first;
 		const Profiler::Stats & stat = timerStat.second->stats;
 
-		for (size_t i = 0; i != level; ++i)
+		for (size_t i(0); i != level; ++i)
 			msg << "  ";
 
 		string pad(nameLength + 1 - name.size(), ' ');
@@ -121,7 +121,7 @@ void PrintFrameInfo(size_t frameIndex, size_t frameCount, const Profiler & profi
 	ostringstream msg;
 	msg.setf(ios::fixed, ios::floatfield);
 
-	msg << "frame " << (frameIndex + 1) << " out of " << frameCount << '\n';
+	msg << "frame " << frameIndex << " out of " << frameCount << '\n';
 
 	PrintProfilerNode(msg, 0, profiler.current);
 
@@ -159,10 +159,11 @@ int main()
 	const Vector3f up  (  0.0f, 0.0f, 1.0f);
 	const RotationAnimation animation(eye, at);
 
-	const size_t frameCount(1);
+	const size_t frameCount(360);
 
 	vector<size_t> frames(frameCount);
 	iota(frames.rbegin(), frames.rend(), 0);
+	//frames.push_back(337);
 
 	mutex frameMutex;
 
