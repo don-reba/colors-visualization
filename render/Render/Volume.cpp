@@ -45,17 +45,24 @@ void Read(ifstream & stream, T * data)
 	stream.read(reinterpret_cast<char*>(data), sizeof(T));
 }
 
-/*
 float Volume::operator [] (const Vector3f & lab) const
 {
-	const int x = FastFloatToInt(lFactor * (lab.x() - minL));
-	const int y = FastFloatToInt(aFactor * (lab.y() - minA));
-	const int z = FastFloatToInt(bFactor * (lab.z() - minB));
+	const float fx(lFactor * (lab.x() - minL));
+	const float fy(aFactor * (lab.y() - minA));
+	const float fz(bFactor * (lab.z() - minB));
+
+	const int x((int)(fx));
+	const int y((int)(fy));
+	const int z((int)(fz));
+
+	if (x < 0 || x > Nx - 1) return 0.0f;
+	if (y < 0 || y > Ny - 1) return 0.0f;
+	if (z < 0 || z > Nz - 1) return 0.0f;
 
 	return Values[x + Nx * y + Nx * Ny * z];
 }
-*/
 
+/*
 float Volume::operator [] (const Vector3f & lab) const
 {
 	// trlinear interpolation
@@ -95,6 +102,7 @@ float Volume::operator [] (const Vector3f & lab) const
 
 	return (1.0f - dz) * v0 + dz * v1;
 }
+*/
 
 Volume LoadVolume(const char * path)
 {

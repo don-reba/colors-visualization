@@ -163,6 +163,7 @@ int main()
 
 	vector<size_t> frames(frameCount);
 	iota(frames.rbegin(), frames.rend(), 0);
+	//vector<size_t> frames;
 	//frames.push_back(337);
 
 	mutex frameMutex;
