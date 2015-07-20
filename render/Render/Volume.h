@@ -16,9 +16,9 @@ public:
 
 private:
 
-	float lFactor;
-	float aFactor;
-	float bFactor;
+	float xFactor;
+	float yFactor;
+	float zFactor;
 
 public:
 
