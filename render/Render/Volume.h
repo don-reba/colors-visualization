@@ -26,6 +26,7 @@ public:
 	Volume(Volume && other);
 
 	float operator [] (const Eigen::Vector3f & lab) const;
-};
 
-Volume LoadVolume(const char * path);
+	static Volume MakeTest();
+	static Volume Load(const char * path);
+};

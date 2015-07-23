@@ -50,7 +50,6 @@ Volume::Volume(Volume && other)
 }
 
 
-/*
 float Volume::operator [] (const Vector3f & p) const
 {
 	const float fx(xFactor * (p.x() - minX));
@@ -67,8 +66,8 @@ float Volume::operator [] (const Vector3f & p) const
 
 	return Values[x + Nx * y + Nx * Ny * z];
 }
-*/
 
+/*
 float Volume::operator [] (const Vector3f & p) const
 {
 	// trlinear interpolation
@@ -108,6 +107,7 @@ float Volume::operator [] (const Vector3f & p) const
 
 	return (1.0f - dz) * v0 + dz * v1;
 }
+*/
 
 Volume Volume::MakeTest()
 {
@@ -149,8 +149,8 @@ Volume Volume::Load(const char * path)
 	Volume v(nx, ny, nz);
 	v.Values.reserve(n);
 	for (size_t i(0); i != n; ++i)
-		//v.Values.push_back(log(static_cast<float>(values[i]) + 1.0f));
-		v.Values.push_back(static_cast<float>(values[i]));
+		v.Values.push_back(log(static_cast<float>(values[i]) + 1.0f));
+		//v.Values.push_back(static_cast<float>(values[i]));
 
 	const float max    (*max_element(v.Values.begin(), v.Values.end()));
 	const float factor (max == 0.0f ? 0.0f : (1.0f / static_cast<float>(max)));
