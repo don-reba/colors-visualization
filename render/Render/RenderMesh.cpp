@@ -4,8 +4,6 @@
 #include "Pow.h"
 
 #include <cmath>
-#include <iostream>
-#include <limits>
 
 using namespace Eigen;
 using namespace std;
@@ -68,7 +66,7 @@ void Integrate
 	// stop if the colour becomes sufficintly opaque
 
 	const float minAmount(1.0f / 256.0f);
-	const float attenuation(0.01f);
+	const float attenuation(1.0f);
 
 	float    amount(1.0f);
 	Vector3f color(Vector3f::Zero());
@@ -77,18 +75,18 @@ void Integrate
 
 	while (x <= max && amount >= minAmount)
 	{
-		Vector3f nextColors[4];
+		Vector3f values[4];
 		for (size_t i(0); i != 4; ++i)
 		{
-			nextColors[i] = ray;
-			nextColors[i] *= x;
-			nextColors[i] += offset;
+			values[i] = ray;
+			values[i] *= x;
+			values[i] += offset;
 			x += step;
 		}
 
 		float samples[4];
 		for (size_t i(0); i != 4; ++i)
-			samples[i] = 1.0f - volume[nextColors[i]];
+			samples[i] = 1.0f - volume[values[i]];
 
 		float transparencies[4];
 		_mm_store_ps(transparencies, powf4(_mm_load_ps(samples), _mm_set1_ps(step / attenuation)));
@@ -96,25 +94,13 @@ void Integrate
 		for (size_t i(0); i != 4; ++i)
 		{
 			transparencies[i] = std::min(transparencies[i], 1.0f);
-			nextColors[i] *= amount * (1.0f - transparencies[i]);
-			color +=  nextColors[i];
+			values[i] *= amount * (1.0f - transparencies[i]);
+			color += values[i];
 			amount *= transparencies[i];
 		}
 	}
 
-	// add the remaining half-step
-	// the formula works even for zero remainder
-
-	Vector3f nextColor(offset + x * ray);
-
-	float transparency(pow(1.0f - volume[nextColor], (max - x) / attenuation));
-
-	color += amount * (1.0f - transparency) * nextColor;
-
-	amount *= transparency;
-
 	// rescale colour
-
 	if (amount != 1.0f)
 		color /= 1.0f - amount;
 

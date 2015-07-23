@@ -141,7 +141,7 @@ int main()
 
 	const string projectRoot("D:\\Programming\\Colours visualization\\");
 
-	const Volume volume(LoadVolume((projectRoot + "voxelize\\volume.dat").c_str()));
+	const Volume volume(Volume::Load((projectRoot + "voxelize\\volume.dat").c_str()));
 
 	const Mesh mesh(LoadPly((projectRoot + "shell\\hull.ply").c_str()));
 
@@ -165,6 +165,8 @@ int main()
 	iota(frames.rbegin(), frames.rend(), 0);
 	//vector<size_t> frames;
 	//frames.push_back(337);
+
+	cout << volume.Nx << "x" << volume.Ny << "x" << volume.Nz << " volume" << endl;
 
 	mutex frameMutex;
 

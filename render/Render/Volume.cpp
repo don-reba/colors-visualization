@@ -11,6 +11,16 @@
 using namespace Eigen;
 using namespace std;
 
+
+namespace
+{
+	template <typename T>
+	void Read(ifstream & stream, T * data)
+	{
+		stream.read(reinterpret_cast<char*>(data), sizeof(T));
+	}
+}
+
 //--------------------------------------
 // lab ranges
 //--------------------------------------
@@ -39,11 +49,6 @@ Volume::Volume(Volume && other)
 	swap(Values, other.Values);
 }
 
-template <typename T>
-void Read(ifstream & stream, T * data)
-{
-	stream.read(reinterpret_cast<char*>(data), sizeof(T));
-}
 
 /*
 float Volume::operator [] (const Vector3f & p) const
@@ -104,7 +109,25 @@ float Volume::operator [] (const Vector3f & p) const
 	return (1.0f - dz) * v0 + dz * v1;
 }
 
-Volume LoadVolume(const char * path)
+Volume Volume::MakeTest()
+{
+	float stepSize(30.0f);
+
+	size_t nx(static_cast<size_t>((maxX - minX + 0.5f) / stepSize));
+	size_t ny(static_cast<size_t>((maxY - minY + 0.5f) / stepSize));
+	size_t nz(static_cast<size_t>((maxZ - minZ + 0.5f) / stepSize));
+
+	Volume v(nx, ny, nz);
+	v.Values.resize(nx * ny * nz);
+	for (size_t x = 0; x != nx; ++x)
+	for (size_t y = 0; y != ny; ++y)
+	for (size_t z = 0; z != nz; ++z)
+		if ((x + y + z) % 2 == 0)
+		v.Values[x + nx * y + nx * ny * z] = 0.5;
+	return v;
+}
+
+Volume Volume::Load(const char * path)
 {
 	ifstream f(path, ios::binary);
 	if (!f)
