@@ -45,11 +45,19 @@ Vector3f Transform(const Matrix4f & m, const Vector3f & v)
 		);
 }
 
-inline float Wrap(float n, float mod)
+void RefineRange
+	( const Vector3f & offset
+	, const Vector3f & ray
+	, float            step
+	, float          & min
+	, float          & max
+	)
 {
-	if (n >= 0)
-		return n - floor(n / mod) * mod;
-	return n + ceil(-n / mod) * mod;
+	static LabToRgbLookup lookup(1024);
+	while (min < max && !IsValidLab(offset + min * ray, lookup))
+		min += step;
+	while (min < max && !IsValidLab(offset + max * ray, lookup))
+		max -= step;
 }
 
 void Integrate
@@ -66,7 +74,7 @@ void Integrate
 	// stop if the colour becomes sufficintly opaque
 
 	const float minAmount(1.0f / 256.0f);
-	const float attenuation(1.0f);
+	const float unitWidth(1.0f);
 
 	float    amount(1.0f);
 	Vector3f color(Vector3f::Zero());
@@ -89,7 +97,7 @@ void Integrate
 			samples[i] = 1.0f - volume[values[i]];
 
 		float transparencies[4];
-		_mm_store_ps(transparencies, powf4(_mm_load_ps(samples), _mm_set1_ps(step / attenuation)));
+		_mm_store_ps(transparencies, powf4(_mm_load_ps(samples), _mm_set1_ps(step / unitWidth)));
 
 		for (size_t i(0); i != 4; ++i)
 		{
@@ -163,6 +171,9 @@ void RenderMesh
 		const Vector3f offset (::Transform(world, Vector3f::Zero()));
 		const Vector3f ray    (::Transform(world, cameraRay) - offset);
 
-		Integrate(volume, offset, ray, stepLength, min, max, pxl);
+		//RefineRange(offset, ray, stepLength, min, max);
+
+		if (min < max)
+			Integrate(volume, offset, ray, stepLength, min, max, pxl);
 	}
 }
