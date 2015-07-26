@@ -61,13 +61,14 @@ void RefineRange
 }
 
 void Integrate
-	( const Volume   & volume
-	, const Vector3f & offset
-	, const Vector3f & ray
-	, float            step
-	, float            min
-	, float            max
-	, Vector4f       & pxl
+	( const Volume       & volume
+	, const Vector3f     & offset
+	, const Vector3f     & ray
+	, float                step
+	, float                min
+	, float                max
+	, const BezierLookup & spline
+	, Vector4f           & pxl
 	)
 {
 	// integrate by stepping through [min, max - step]
@@ -79,22 +80,24 @@ void Integrate
 	float    amount(1.0f);
 	Vector3f color(Vector3f::Zero());
 
-	float x(min);
+	float t(min);
 
-	while (x <= max && amount >= minAmount)
+	// t is incremented 4 steps at a time for SIMD to be effective
+	// it could go up to 3 steps past max — usually an imperceptible error
+	while (t <= max && amount >= minAmount)
 	{
 		Vector3f values[4];
 		for (size_t i(0); i != 4; ++i)
 		{
 			values[i] = ray;
-			values[i] *= x;
+			values[i] *= t;
 			values[i] += offset;
-			x += step;
+			t += step;
 		}
 
 		float samples[4];
 		for (size_t i(0); i != 4; ++i)
-			samples[i] = 1.0f - volume[values[i]];
+			samples[i] = 1.0f - spline[volume[values[i]]];
 
 		float transparencies[4];
 		_mm_store_ps(transparencies, powf4(_mm_load_ps(samples), _mm_set1_ps(step / unitWidth)));
@@ -121,14 +124,15 @@ void Integrate
 }
 
 void RenderMesh
-	( const Matrix4f & camera
-	, const Matrix3f & rayCast
-	,       size_t     w
-	,       size_t     h
-	,       Vector4f * buffer
-	, const Mesh     & mesh
-	, const Volume   & volume
-	,       Profiler & profiler
+	( const Matrix4f     & camera
+	, const Matrix3f     & rayCast
+	,       size_t         w
+	,       size_t         h
+	,       Vector4f     * buffer
+	, const Mesh         & mesh
+	, const Volume       & volume
+	, const BezierLookup & spline
+	,       Profiler     & profiler
 	)
 {
 	Profiler::Timer timer(profiler, "RenderMesh");
@@ -171,9 +175,9 @@ void RenderMesh
 		const Vector3f offset (::Transform(world, Vector3f::Zero()));
 		const Vector3f ray    (::Transform(world, cameraRay) - offset);
 
-		//RefineRange(offset, ray, stepLength, min, max);
+		RefineRange(offset, ray, stepLength, min, max);
 
 		if (min < max)
-			Integrate(volume, offset, ray, stepLength, min, max, pxl);
+			Integrate(volume, offset, ray, stepLength, min, max, spline, pxl);
 	}
 }

@@ -5,6 +5,7 @@
 #include <cmath>
 #include <cstdint>
 #include <fstream>
+#include <limits>
 #include <stdexcept>
 #include <vector>
 
@@ -127,7 +128,15 @@ Volume Volume::MakeTest()
 	return v;
 }
 
-Volume Volume::Load(const char * path)
+void PrintStats(const Volume & volume, const char * path)
+{
+	ofstream f(path);
+	for (float x : volume.Values)
+		f << x << '\n';
+	f.flush();
+}
+
+Volume Volume::Load(const char * path, Volume::Postprocess method)
 {
 	ifstream f(path, ios::binary);
 	if (!f)
@@ -148,14 +157,25 @@ Volume Volume::Load(const char * path)
 	// compute alpha volume
 	Volume v(nx, ny, nz);
 	v.Values.reserve(n);
-	for (size_t i(0); i != n; ++i)
-		v.Values.push_back(log(static_cast<float>(values[i]) + 1.0f));
-		//v.Values.push_back(static_cast<float>(values[i]));
+	switch (method)
+	{
+	case PostprocessNone:
+		for (size_t i(0); i != n; ++i)
+			v.Values.push_back(static_cast<float>(values[i]));
+		break;
+	case PostprocessLog:
+		for (size_t i(0); i != n; ++i)
+			v.Values.push_back(log(static_cast<float>(values[i]) + 1.0f));
+		break;
+	}
 
+	//PrintStats(v, "D:\\Programming\\Colours visualization\\analysis\\volume values.txt");
+
+	const float min    (*min_element(v.Values.begin(), v.Values.end()));
 	const float max    (*max_element(v.Values.begin(), v.Values.end()));
-	const float factor (max == 0.0f ? 0.0f : (1.0f / static_cast<float>(max)));
-	for (size_t i(0); i != n; ++i)
-		v.Values[i] *= 0.01f * factor;
+	const float factor (min == max ? 0.0f : 1.0f / (max - min));
+	for (float & x : v.Values)
+		x = factor * (x - min);
 
 	return v;
 }

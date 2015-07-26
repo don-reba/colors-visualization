@@ -41,7 +41,7 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>$(BOOST_BUILD);D:\Programming\Eigen;$(IncludePath)</IncludePath>
+    <IncludePath>$(BOOST_BUILD);D:\Programming\libpng;D:\Programming\Eigen;$(IncludePath)</IncludePath>
     <LibraryPath>$(BOOST_BUILD)\stage\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -100,6 +100,8 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Animation.cpp" />
+    <ClCompile Include="Bezier.cpp" />
+    <ClCompile Include="BezierLookup.cpp" />
     <ClCompile Include="Color.cpp" />
     <ClCompile Include="Image.cpp" />
     <ClCompile Include="Mesh.cpp" />
@@ -111,6 +113,8 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Animation.h" />
+    <ClInclude Include="Bezier.h" />
+    <ClInclude Include="BezierLookup.h" />
     <ClInclude Include="CImg.h" />
     <ClInclude Include="Color.h" />
     <ClInclude Include="FreeImage.h" />

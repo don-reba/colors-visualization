@@ -8,6 +8,14 @@ class Volume
 {
 public:
 
+	enum Postprocess
+	{
+		PostprocessLog,
+		PostprocessNone
+	};
+
+public:
+
 	int Nx;
 	int Ny;
 	int Nz;
@@ -28,5 +36,5 @@ public:
 	float operator [] (const Eigen::Vector3f & lab) const;
 
 	static Volume MakeTest();
-	static Volume Load(const char * path);
+	static Volume Load(const char * path, Postprocess method);
 };

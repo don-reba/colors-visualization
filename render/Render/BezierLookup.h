@@ -8,11 +8,9 @@ class BezierLookup
 {
 public:
 
-	// Solve for x ± epsilon.
 	BezierLookup
 		( Eigen::Vector2f p1
 		, Eigen::Vector2f p2
-		, float           epsilon
 		, size_t          size
 		);
 

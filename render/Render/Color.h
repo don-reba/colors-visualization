@@ -4,11 +4,15 @@
 
 #include <vector>
 
-struct LabToRgbLookup
+class LabToRgbLookup
 {
+public:
+
 	LabToRgbLookup(size_t size);
 
-	inline int GetValue(float x) const;
+	inline int operator[] (float x) const;
+
+private:
 
 	std::vector<int> t;
 	float offset, factor;

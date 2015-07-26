@@ -4,7 +4,7 @@ setlocal
 set PATH=%PATH%;"C:\Program Files\ffmpeg\bin"
 
 set in=animation\%%d.png
-set out=animation.mkv
+set out=animation.mp4
 
 :: 5 mbps for 720p, 8 mbps for 1080p, 16 mbps for 2k, 35-45 mbps for 4k
 :: presets: ultrafast,superfast, veryfast, faster, fast, medium, slow, slower, veryslow, placebo

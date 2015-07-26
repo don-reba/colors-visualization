@@ -6,9 +6,10 @@
 
 using namespace Eigen;
 
-BezierLookup::BezierLookup(Vector2f p1, Vector2f p2, float epsilon, size_t size)
+BezierLookup::BezierLookup(Vector2f p1, Vector2f p2, size_t size)
 	: t(size + 1)
 {
+	float epsilon(0.5f / size);
 	Bezier b(p1, p2);
 	for (size_t i(0); i != size; ++i)
 		t[i] = b.Solve(1.0f * i / size, epsilon);

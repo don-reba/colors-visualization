@@ -23,7 +23,7 @@ LabToRgbLookup::LabToRgbLookup(size_t size)
 	this->offset = -min; this->factor = (size - 1.0f) / (max - min);
 }
 
-int LabToRgbLookup::GetValue(float x) const
+int LabToRgbLookup::operator[] (float x) const
 {
 	const float position = factor * (x + offset);
 	int index;
@@ -146,9 +146,9 @@ bool IsValidLab(Vector3f lab, const LabToRgbLookup & lookup)
 	if (g < -0.0806535781744183f || g > 1.51646331806568f) return false;
 	if (b < -0.0706201022919949f || b > 4.04958281711443f) return false;
 
-	if (lookup.GetValue(r)) return false;
-	if (lookup.GetValue(g)) return false;
-	if (lookup.GetValue(b)) return false;
+	if (lookup[r]) return false;
+	if (lookup[g]) return false;
+	if (lookup[b]) return false;
 
 	return true;
 }

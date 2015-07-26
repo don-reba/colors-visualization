@@ -8,6 +8,7 @@
 #include <Eigen/Geometry>
 
 #include <algorithm>
+#include <fstream>
 #include <iomanip>
 #include <iostream>
 #include <mutex>
@@ -141,7 +142,8 @@ int main()
 
 	const string projectRoot("D:\\Programming\\Colours visualization\\");
 
-	const Volume volume(Volume::Load((projectRoot + "voxelize\\volume.dat").c_str()));
+	const Volume volume(Volume::Load((projectRoot + "voxelize\\volume.dat").c_str(), Volume::PostprocessNone));
+	//const Volume volume(Volume::MakeTest());
 
 	const Mesh mesh(LoadPly((projectRoot + "shell\\hull.ply").c_str()));
 
@@ -187,6 +189,8 @@ int main()
 
 			Profiler profiler;
 
+			BezierLookup spline({0.3f, 0.0f}, {0.0f, 1.0f}, 1024);
+
 			{
 				Profiler::Timer timer(profiler, "Total");
 
@@ -197,7 +201,7 @@ int main()
 
 				// render
 				ProjectMesh(camera, projection, w, h, buffer.data(), mesh);
-				RenderMesh(camera, rayCast, w, h, buffer.data(), mesh, volume, profiler);
+				RenderMesh(camera, rayCast, w, h, buffer.data(), mesh, volume, spline, profiler);
 
 				// save
 				SaveBuffer(MakeAnimationFilename(projectRoot, frame).c_str(), w, h, buffer.data());
