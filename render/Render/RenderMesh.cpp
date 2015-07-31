@@ -1,6 +1,6 @@
 #include "RenderMesh.h"
 
-#include "LabValidator.h"
+#include "Color.h"
 #include "Pow.h"
 
 #include <cmath>
@@ -47,7 +47,6 @@ namespace
 			);
 	}
 
-	LabValidator validator(1 << 20);
 	void RefineRange
 		( const Vector3f & offset
 		, const Vector3f & ray
@@ -56,9 +55,9 @@ namespace
 		, float          & max
 		)
 	{
-		while (min < max && !validator.Check(offset + min * ray))
+		while (min < max && !::IsValidLab(offset + min * ray))
 			min += step;
-		while (min < max && !validator.Check(offset + max * ray))
+		while (min < max && !::IsValidLab(offset + max * ray))
 			max -= step;
 	}
 

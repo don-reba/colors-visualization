@@ -104,7 +104,6 @@
     <ClCompile Include="BezierLookup.cpp" />
     <ClCompile Include="Color.cpp" />
     <ClCompile Include="Image.cpp" />
-    <ClCompile Include="LabValidator.cpp" />
     <ClCompile Include="Mesh.cpp" />
     <ClCompile Include="ProjectMesh.cpp" />
     <ClCompile Include="Render.cpp" />
@@ -120,7 +119,6 @@
     <ClInclude Include="FreeImage.h" />
     <ClInclude Include="FreeImagePlus.h" />
     <ClInclude Include="Image.h" />
-    <ClInclude Include="LabValidator.h" />
     <ClInclude Include="Mesh.h" />
     <ClInclude Include="Pow.h" />
     <ClInclude Include="ProjectMesh.h" />

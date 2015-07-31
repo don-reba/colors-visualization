@@ -27,8 +27,10 @@ BOOST_AUTO_TEST_CASE(BezierLookup_Range)
 
 		for (float x(0.0f); x <= 1.0f; x += 0.125f)
 		{
-			float y(spline[x]);
-			BOOST_CHECK_MESSAGE(InRange(y, 0.0f, 1.0f), y << " not in [0,1] for " << x << " at " << size << " steps");
+			BOOST_CHECK_MESSAGE
+				( InRange(spline[x], 0.0f, 1.0f)
+				, spline[x] << " not in [0,1] for " << x << " at " << size << " steps"
+				);
 		}
 	}
 }

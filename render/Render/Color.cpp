@@ -82,3 +82,39 @@ Vector3f RgbToLab(Vector3f rgb)
 
 	return Vector3f(l_, a_, b_);
 }
+
+bool IsValidLab(Vector3f lab)
+{
+	// adapted from http://www.easyrgb.com
+
+	// Lab to XYZ
+	// Observer. = 2°; Illuminant = D65
+	float l_ = lab(0);
+	float a_ = lab(1);
+	float b_ = lab(2);
+
+	float y =  (l_ + 16.0f) / 116.0f;
+	float x = a_ / 500.0f + y;
+	float z = y - b_ / 200.0f;
+
+	x  = (x * x * x > 0.008856f) ? x * x * x  : (x - 16.0f / 116.0f) / 7.787f;
+	y  = (y * y * y > 0.008856f) ? y * y * y  : (y - 16.0f / 116.0f) / 7.787f;
+	z  = (z * z * z > 0.008856f) ? z * z * z  : (z - 16.0f / 116.0f) / 7.787f;
+
+	// multiply by reference point
+	x *= 0.95047f;
+	y *= 1.00000f;
+	z *= 1.08883f;
+
+	// XYZ to sRGB
+	const float r = x *  3.2406f + y * -1.5372f + z * -0.4986f;
+	const float g = x * -0.9689f + y *  1.8758f + z *  0.0415f;
+	const float b = x *  0.0557f + y * -0.2040f + z *  1.0570f;
+
+	// skip a monotonous-increasing transformation from [0,1] to [0,1]
+	if (r < 0.0f || r > 1.0f) return false;
+	if (g < 0.0f || g > 1.0f) return false;
+	if (b < 0.0f || b > 1.0f) return false;
+
+	return true;
+}
