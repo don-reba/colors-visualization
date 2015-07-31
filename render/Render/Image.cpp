@@ -9,17 +9,24 @@
 using namespace Eigen;
 using namespace std;
 
-BYTE FloatToByteChannel(float x)
+namespace
 {
-	if (x <= 0.0f) return 0x00;
-	if (x >= 1.0f) return 0xFF;
-	return static_cast<BYTE>(x * 255.0f);
+	BYTE FloatToByteChannel(float x)
+	{
+		if (x <= 0.0f) return 0x00;
+		if (x >= 1.0f) return 0xFF;
+		return static_cast<BYTE>(x * 255.0f);
+	}
 }
 
-void SaveBuffer(const char * path, size_t width, size_t height, const Vector4f * buffer)
+void SaveBuffer
+	( const char     * path
+	, size_t           width
+	, size_t           height
+	, const Vector4f * buffer
+	, Vector3f         bgColor
+	)
 {
-	Vector3f back(14.0f, 0.0f, 0.0f);
-
 	size_t bpp(32);
 	fipImage img(FIT_BITMAP, width, height, bpp);
 	for (size_t y(0); y != height; ++y)
@@ -29,7 +36,7 @@ void SaveBuffer(const char * path, size_t width, size_t height, const Vector4f *
 		{
 			const Vector4f & pxl(*buffer++);
 			Vector3f fore(Vector3f(pxl.x(), pxl.y(), pxl.z()));
-			Vector3f rgb(LabToRgb(pxl.w() * fore + (1.0f - pxl.w()) * back));
+			Vector3f rgb(LabToRgb(pxl.w() * fore + (1.0f - pxl.w()) * bgColor));
 			*scanline++ = FloatToByteChannel(rgb(2));
 			*scanline++ = FloatToByteChannel(rgb(1));
 			*scanline++ = FloatToByteChannel(rgb(0));

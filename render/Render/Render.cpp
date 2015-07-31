@@ -167,6 +167,7 @@ int main()
 	iota(frames.rbegin(), frames.rend(), 0);
 	//vector<size_t> frames;
 	//frames.push_back(337);
+	//frames.push_back(172);
 
 	cout << volume.Nx << "x" << volume.Ny << "x" << volume.Nz << " volume" << endl;
 
@@ -175,6 +176,8 @@ int main()
 	auto ProcessFrame = [&]()
 	{
 		vector<Vector4f> buffer(w * h);
+
+		const Vector3f white(100.0f, 0.005f, -0.01f);
 
 		for (;;)
 		{
@@ -189,7 +192,7 @@ int main()
 
 			Profiler profiler;
 
-			BezierLookup spline({0.3f, 0.0f}, {0.0f, 1.0f}, 1024);
+			BezierLookup spline({0.1f, 0.0f}, {0.0f, 1.0f}, 1 << 20);
 
 			{
 				Profiler::Timer timer(profiler, "Total");
@@ -204,7 +207,7 @@ int main()
 				RenderMesh(camera, rayCast, w, h, buffer.data(), mesh, volume, spline, profiler);
 
 				// save
-				SaveBuffer(MakeAnimationFilename(projectRoot, frame).c_str(), w, h, buffer.data());
+				SaveBuffer(MakeAnimationFilename(projectRoot, frame).c_str(), w, h, buffer.data(), white);
 			}
 
 			PrintFrameInfo(frame, frameCount, profiler);
