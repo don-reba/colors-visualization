@@ -18,9 +18,9 @@ using System.Threading;
 def lRange     = (   0.0, 100.0);
 def aRange     = ( -86.0,  99.0);
 def bRange     = (-108.0,  96.0);
-def cellSize   = 2.0f;
+def cellSize   = 1.0f;
 def σ          = 1.0f;
-def maxEntries = 1_000_000;
+def maxEntries = 10_000_000;
 
 def Load(path)
 {
@@ -65,6 +65,21 @@ def GenerateData()
 }
 */
 
+def CreateThreads(dataCount, threadCount, f)
+{
+	def threads = array(threadCount);
+	mutable prev = 0;
+	for (mutable i = 0; i != threadCount; ++i)
+	{
+		def fi    = i;
+		def begin = prev;
+		def end   = dataCount * (i + 1) / threadCount;
+		threads[i] = Thread(() => f(fi, begin, end));
+		prev = end;
+	}
+	threads;
+}
+
 def Voxelize(data)
 {
 	def nx = (Floor((lRange[1] - lRange[0]) / cellSize) :> int) + 1;
@@ -75,7 +90,7 @@ def Voxelize(data)
 
 	def volume : array[double] = array(nx * ny * nz);
 
-	def VoxelizeZRange(threadID, start, finish)
+	def VoxelizeRange(threadID, start, finish)
 	{
 		def scale = -0.5 / σ / σ;
 
@@ -94,19 +109,19 @@ def Voxelize(data)
 				watch.Restart();
 			}
 
-			def (tx, ty, tz, n) = data[i];
-			def n = (n : int) :> double;
+			def (tx, ty, tz, n) : double * double * double * int = data[i];
+			def n = n :> double;
 			for (mutable z = 0; z != nz; ++z)
 			{
-				def δzSq = tz - (z :> double);
+				def δzSq = tz - z;
 				def δzSq = δzSq * δzSq;
 				for (mutable y = 0; y != ny; ++y)
 				{
-					def δySq = ty - (y :> double);
+					def δySq = ty - y;
 					def δySq = δySq * δySq;
 					for (mutable x = 0; x != nx; ++x)
 					{
-						def δxSq = tx - (x :> double);
+						def δxSq = tx - x;
 						def δxSq = δxSq * δxSq;
 						vol[x + nx * y  + nx * ny * z] += n * Exp(scale * (δxSq + δySq + δzSq));
 					}
@@ -120,13 +135,7 @@ def Voxelize(data)
 		}
 	}
 
-	def n = data.Count;
-	def threads =
-		[ Thread(() => VoxelizeZRange(0, 0,         n * 1 / 4))
-		, Thread(() => VoxelizeZRange(1, n * 1 / 4, n * 2 / 4))
-		, Thread(() => VoxelizeZRange(2, n * 2 / 4, n * 3 / 4))
-		, Thread(() => VoxelizeZRange(3, n * 3 / 4, n))
-		];
+	def threads = CreateThreads(data.Count, 3, VoxelizeRange);
 	foreach (t in threads)
 		t.Start();
 	foreach (t in threads)
