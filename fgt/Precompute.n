@@ -1,0 +1,149 @@
+// REFERENCE: ConvertColor.dll
+// REFERENCE: FGT.dll
+// PLATFORM: x86
+
+using ConvertColor;
+using FGT;
+using Nemerle.Collections;
+using System.Collections.Generic;
+using System.Console;
+using System.Diagnostics;
+using System.IO;
+using System.Math;
+using System.Threading;
+using System;
+
+def Load(path, domain, maxEntries)
+{
+	using (txt = File.OpenText(path))
+	{
+		WriteLine("Reading data...");
+		def watch = Stopwatch.StartNew();
+
+		// skip header
+		def header = txt.ReadLine();
+		Trace.Assert(header == "index\trank\thex\tvotes\tcomments\thearts", "header");
+
+		mutable (min, max) = (int.MaxValue, int.MinValue);
+
+		def entries = List();
+		for (mutable line = txt.ReadLine(); line != null && entries.Count < maxEntries; line = txt.ReadLine())
+		{
+			def parts = line.Split(array['\t']);
+			def color = Drawing.Color.FromArgb(int.Parse(parts[2], Globalization.NumberStyles.HexNumber));
+			def votes = int.Parse(parts[3]);
+
+			def p = color |> ColorToRgb |> RgbToXyz |> XyzToLab;
+			Trace.Assert(p[0] >= domain.x[0] && p[0] <= domain.x[1]);
+			Trace.Assert(p[1] >= domain.y[0] && p[1] <= domain.y[1]);
+			Trace.Assert(p[2] >= domain.z[0] && p[2] <= domain.z[1]);
+			when (votes < min) min = votes;
+			when (votes > max) max = votes;
+			entries.Add(Value3D(p, votes :> double));
+		}
+		WriteLine("Loaded {0:N0} entries {1:N0}-{2:N0} in {3} seconds", entries.Count, min, max, watch.Elapsed.TotalSeconds);
+		entries.ToArray();
+	}
+}
+
+def MakeTargets(rand, domain, n)
+{
+	def Pick(min, max)
+	{
+		min + (max - min) * rand.NextDouble();
+	}
+	array(n).Map(_ => (Pick(domain.x), Pick(domain.y), Pick(domain.z)));
+}
+
+def Approximate(sources, targets, σ, α, n)
+{
+	def domain = Domain3D
+		( (   0.0, 100.0)
+		, ( -86.0,  99.0)
+		, (-108.0,  96.0)
+		);
+	def a = Preprocess(sources, σ, α, domain);
+
+	targets.Map(FastGaussianTransform(a, _, n));
+}
+
+def Exact(sources, targets, σ)
+{
+	def results = array(targets.Length);
+	foreach ((x, y, z) in targets with i)
+	foreach (val in sources)
+	{
+		def dx = val.p[0] - x;
+		def dy = val.p[1] - y;
+		def dz = val.p[2] - z;
+		results[i] += val.q * System.Math.Exp(-(dx * dx + dy * dy + dz * dz) / (σ * σ));
+	}
+	results;
+}
+
+def OpenReport(path)
+{
+	if (File.Exists(path))
+		StreamWriter(path, true);
+	else
+	{
+		def writer = StreamWriter(path, true);
+		writer.WriteLine("sigma\talpha\tn\tx\ty\tz\texact\tapproximate");
+		writer;
+	}
+}
+
+def domain = Domain3D
+	( (   0.0, 100.0)
+	, ( -87.0,  99.0)
+	, (-108.0,  96.0)
+	);
+
+def s = Load(@"..\get colors\data.txt", domain, 10_000_000);
+
+def σ = (4.0, 10.0);
+def α = (4.0, 9.0);
+def n = (1.0, 2.0);
+
+def rand = Random();
+def Pick(min, max) { min + (max - min) * rand.NextDouble() }
+
+def watch = Stopwatch.StartNew();
+
+def GatherStats(report)
+{
+	while (watch.Elapsed.TotalHours < 3)
+	{
+		Title = watch.Elapsed.ToString();
+
+		def σ = Pick(σ);
+		def α = Pick(α) :> int;
+		def n = (α * Pick(n)) :> int;
+
+		def t = MakeTargets(rand, domain, 20);
+		def a = Approximate(s, t, σ, α, n);
+		def e = Exact(s, t, σ);
+
+		Write('*');
+
+		for (mutable i; i != t.Length; ++i)
+		{
+			def (x, y, z) = t[i];
+			lock (report)
+				report.WriteLine("{0}\t{1}\t{2}\t{3}\t{4}\t{5}\t{6}\t{7}", σ, α, n, x, y, z, e[i], a[i]);
+		}
+	}
+}
+
+{
+	using (report = OpenReport( "report.tsv"))
+	{
+		def threads = array(3);
+		for (mutable i; i != threads.Length; ++i)
+			threads[i] = Thread(() => GatherStats(report));
+		foreach (t in threads)
+			t.Start();
+		foreach (t in threads)
+			t.Join();
+	}
+}
