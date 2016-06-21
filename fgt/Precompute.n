@@ -10,7 +10,6 @@ using System.Console;
 using System.Diagnostics;
 using System.IO;
 using System.Math;
-using System.Threading;
 using System;
 
 def Load(path, domain, maxEntries)
@@ -46,50 +45,25 @@ def Load(path, domain, maxEntries)
 	}
 }
 
-def MakeTargets(rand, domain, n)
+def Save(path, a)
 {
-	def Pick(min, max)
+	def mem = sizeof(double) * a.n[0] * a.n[1] * a.n[2] * a.pd;
+	WriteLine("Saving {0}x{1}x{2}x{3} ({4:N0} bytes)...", a.n[0], a.n[1], a.n[2], a.pd, mem);
+
+	using (w = BinaryWriter(File.Create(path)))
 	{
-		min + (max - min) * rand.NextDouble();
-	}
-	array(n).Map(_ => (Pick(domain.x), Pick(domain.y), Pick(domain.z)));
-}
-
-def Approximate(sources, targets, σ, α, n)
-{
-	def domain = Domain3D
-		( (   0.0, 100.0)
-		, ( -86.0,  99.0)
-		, (-108.0,  96.0)
-		);
-	def a = Preprocess(sources, σ, α, domain);
-
-	targets.Map(FastGaussianTransform(a, _, n));
-}
-
-def Exact(sources, targets, σ)
-{
-	def results = array(targets.Length);
-	foreach ((x, y, z) in targets with i)
-	foreach (val in sources)
-	{
-		def dx = val.p[0] - x;
-		def dy = val.p[1] - y;
-		def dz = val.p[2] - z;
-		results[i] += val.q * System.Math.Exp(-(dx * dx + dy * dy + dz * dz) / (σ * σ));
-	}
-	results;
-}
-
-def OpenReport(path)
-{
-	if (File.Exists(path))
-		StreamWriter(path, true);
-	else
-	{
-		def writer = StreamWriter(path, true);
-		writer.WriteLine("sigma\talpha\tn\tx\ty\tz\texact\tapproximate");
-		writer;
+		w.Write(a.σ    : double);
+		w.Write(a.α    : int);
+		w.Write(a.pd   : int);
+		w.Write(a.side : double);
+		w.Write(a.domain.x[0] : double);
+		w.Write(a.domain.x[1] : double);
+		w.Write(a.domain.y[0] : double);
+		w.Write(a.domain.y[1] : double);
+		w.Write(a.domain.z[0] : double);
+		w.Write(a.domain.z[1] : double);
+		for (mutable i; i != a.coef.Length; ++i)
+			w.Write(a.coef[i] : double);
 	}
 }
 
@@ -99,51 +73,10 @@ def domain = Domain3D
 	, (-108.0,  96.0)
 	);
 
-def s = Load(@"..\get colors\data.txt", domain, 10_000_000);
+def iPath = @"..\get colors\data.txt";
+def oPath = "coef.dat";
+def count = 10_000_000;
+def σ     = 5.0;
+def α     = 5;
 
-def σ = (4.0, 10.0);
-def α = (4.0, 9.0);
-def n = (1.0, 2.0);
-
-def rand = Random();
-def Pick(min, max) { min + (max - min) * rand.NextDouble() }
-
-def watch = Stopwatch.StartNew();
-
-def GatherStats(report)
-{
-	while (watch.Elapsed.TotalHours < 3)
-	{
-		Title = watch.Elapsed.ToString();
-
-		def σ = Pick(σ);
-		def α = Pick(α) :> int;
-		def n = (α * Pick(n)) :> int;
-
-		def t = MakeTargets(rand, domain, 20);
-		def a = Approximate(s, t, σ, α, n);
-		def e = Exact(s, t, σ);
-
-		Write('*');
-
-		for (mutable i; i != t.Length; ++i)
-		{
-			def (x, y, z) = t[i];
-			lock (report)
-				report.WriteLine("{0}\t{1}\t{2}\t{3}\t{4}\t{5}\t{6}\t{7}", σ, α, n, x, y, z, e[i], a[i]);
-		}
-	}
-}
-
-{
-	using (report = OpenReport( "report.tsv"))
-	{
-		def threads = array(3);
-		for (mutable i; i != threads.Length; ++i)
-			threads[i] = Thread(() => GatherStats(report));
-		foreach (t in threads)
-			t.Start();
-		foreach (t in threads)
-			t.Join();
-	}
-}
+Save(oPath, Preprocess(Load(iPath, domain, count), σ, α, domain));
