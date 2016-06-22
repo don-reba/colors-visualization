@@ -23,13 +23,10 @@ Vector3f LabToRgb(Vector3f lab)
 	y  = (y * y * y > 0.008856f) ? y * y * y  : (y - 16.0f / 116.0f) / 7.787f;
 	z  = (z * z * z > 0.008856f) ? z * z * z  : (z - 16.0f / 116.0f) / 7.787f;
 
-	const float refX = 0.95047f;
-	const float refY = 1.00000f;
-	const float refZ = 1.08883f;
-
-	x *= refX;
-	y *= refY;
-	z *= refZ;
+	// multiply by reference point
+	x *= 0.95047f;
+	y *= 1.00000f;
+	z *= 1.08883f;
 
 	// XYZ to sRGB
 
@@ -64,13 +61,10 @@ Vector3f RgbToLab(Vector3f rgb)
 	float z = r * 0.0193f + g * 0.1192f + b * 0.9505f;
 
 	// XYZ to Lab
-	const float refX = 0.95047f;
-	const float refY = 1.00000f;
-	const float refZ = 1.08883f;
-
-	x /= refX;
-	y /= refY;
-	z /= refZ;
+	// divide by reference point
+	x /= 0.95047f;
+	y /= 1.00000f;
+	z /= 1.08883f;
 
 	x = (x > 0.008856) ? pow(x, 1.0f / 3.0f) : 7.787f * x + 16.0f / 116.0f;
 	y = (y > 0.008856) ? pow(y, 1.0f / 3.0f) : 7.787f * y + 16.0f / 116.0f;

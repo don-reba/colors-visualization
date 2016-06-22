@@ -1,13 +1,14 @@
 #include "Animation.h"
 #include "Profiler.h"
+#include "Projection.h"
 #include "ProjectMesh.h"
 #include "RenderMesh.h"
 #include "Volume.h"
 
 #include <Eigen/Dense>
-#include <Eigen/Geometry>
 
 #include <algorithm>
+#include <array>
 #include <fstream>
 #include <iomanip>
 #include <iostream>
@@ -20,66 +21,6 @@
 
 using namespace std;
 using namespace Eigen;
-
-Matrix4f LookAt
-	( const Vector3f & eye
-	, const Vector3f & at
-	, const Vector3f & up
-	)
-{
-	const Vector3f zaxis((at - eye).normalized());
-	const Vector3f xaxis(zaxis.cross(up).normalized());
-	const Vector3f yaxis(xaxis.cross(zaxis));
-
-	Matrix4f m;
-
-	m.block<1, 3>(0, 0) = xaxis;
-	m.block<1, 3>(1, 0) = yaxis;
-	m.block<1, 3>(2, 0) = zaxis;
-	m.block<1, 3>(3, 0) = Vector3f::Zero();
-
-	m(0, 3) = -xaxis.dot(eye);
-	m(1, 3) = -yaxis.dot(eye);
-	m(2, 3) = -zaxis.dot(eye);
-	m(3, 3) = 1.0f;
-
-	return m;
-}
-
-Matrix4f Perspective(float focalDistance)
-{
-	Matrix4f m(Matrix4f::Zero());
-
-	m(0, 0) = 1.0f;
-	m(1, 1) = 1.0f;
-	m(3, 2) = 1.0f / focalDistance;
-	m(3, 3) = 1.0f;
-
-	return m;
-}
-
-Matrix3f RayCast(float width, float height, float focalDistance)
-{
-	// sx 0  -dx
-	// 0  xy -dy
-	// 0  0   f
-
-	const float w(1.0f);
-	const float h(height / width);
-	const float f(focalDistance);
-
-	const float sx(1.0f / width);
-
-	Matrix3f m(Matrix3f::Zero());
-
-	m(0, 0) =  sx;
-	m(1, 1) =  sx;
-	m(0, 2) = -0.5f * (w - sx);
-	m(1, 2) = -0.5f * (h - sx);
-	m(2, 2) =  f;
-
-	return m;
-}
 
 void PrintProfilerNode(ostream & msg, size_t level, Profiler::Node * node)
 {
@@ -136,11 +77,19 @@ string MakeAnimationFilename(const string & root, size_t i)
 	return s.str();
 }
 
+struct Resolution
+{
+	size_t w, h;
+	Resolution(size_t width, size_t height) : w(width), h(height) {}
+};
+const Resolution res1080p (1920, 1080);
+const Resolution res720p  (1280, 720);
+
 int main()
 {
 	Eigen::initParallel();
 
-	const string projectRoot("D:\\Programming\\Colours visualization\\");
+	const string projectRoot("C:\\Users\\Alexey\\Projects\\Colours visualization\\");
 
 	const Volume volume(Volume::Load((projectRoot + "voxelize\\volume.dat").c_str(), Volume::PostprocessNone));
 	//const Volume volume(Volume::MakeTest());
@@ -149,9 +98,9 @@ int main()
 
 	const float focalDistance(1.0f);
 
-	const size_t w(1280), h(720);
+	const Resolution res(res720p);
 
-	const Matrix3f rayCast(RayCast(static_cast<float>(w), static_cast<float>(h), focalDistance));
+	const Matrix3f rayCast(RayCast(static_cast<float>(res.w), static_cast<float>(res.h), focalDistance));
 
 	const Matrix4f projection(Perspective(focalDistance));
 
@@ -175,7 +124,7 @@ int main()
 
 	auto ProcessFrame = [&]()
 	{
-		vector<Vector4f> buffer(w * h);
+		vector<Vector4f> buffer(res.w * res.h);
 
 		const Vector3f white(100.0f, 0.005f, -0.01f);
 
@@ -203,18 +152,18 @@ int main()
 				const Matrix4f camera(LookAt(animation.Eye(frame, frameCount), at, up));
 
 				// render
-				ProjectMesh(camera, projection, w, h, buffer.data(), mesh);
-				RenderMesh(camera, rayCast, w, h, buffer.data(), mesh, volume, spline, profiler);
+				ProjectMesh(camera, projection, res.w, res.h, buffer.data(), mesh);
+				RenderMesh(camera, rayCast, res.w, res.h, buffer.data(), mesh, volume, spline, profiler);
 
 				// save
-				SaveBuffer(MakeAnimationFilename(projectRoot, frame).c_str(), w, h, buffer.data(), white);
+				SaveBuffer(MakeAnimationFilename(projectRoot, frame).c_str(), res.w, res.h, buffer.data(), white);
 			}
 
 			PrintFrameInfo(frame, frameCount, profiler);
 		}
 	};
 
-	vector<thread> threads(4);
+	array<thread, 4> threads;
 	for (auto & t : threads)
 		t = thread(ProcessFrame);
 	for (auto & t : threads)
