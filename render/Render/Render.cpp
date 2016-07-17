@@ -1,7 +1,9 @@
 #include "Animation.h"
+#include "FgtVolume.h"
 #include "Profiler.h"
 #include "Projection.h"
 #include "ProjectMesh.h"
+#include "RateIndicator.h"
 #include "RenderMesh.h"
 #include "Volume.h"
 
@@ -12,6 +14,7 @@
 #include <fstream>
 #include <iomanip>
 #include <iostream>
+#include <locale>
 #include <mutex>
 #include <numeric>
 #include <sstream>
@@ -77,32 +80,25 @@ string MakeAnimationFilename(const string & root, size_t i)
 	return s.str();
 }
 
-struct Resolution
-{
-	size_t w, h;
-	Resolution(size_t width, size_t height) : w(width), h(height) {}
-};
-const Resolution res1080p (1920, 1080);
-const Resolution res720p  (1280, 720);
-
 int main()
 {
 	Eigen::initParallel();
 
+	cout.imbue(locale(""));
+
 	const string projectRoot("C:\\Users\\Alexey\\Projects\\Colours visualization\\");
 
-	const Volume volume(Volume::Load((projectRoot + "voxelize\\volume.dat").c_str(), Volume::PostprocessNone));
-	//const Volume volume(Volume::MakeTest());
+	const FgtVolume volume = FgtVolume((projectRoot + "fgt\\coef.dat").c_str(), 4);
+
+	//const Volume volume = Volume::Load((projectRoot + "voxelize\\volume.dat").c_str(), Volume::PostprocessNone);
 
 	const Mesh mesh(LoadPly((projectRoot + "shell\\hull.ply").c_str()));
 
-	const float focalDistance(1.0f);
-
-	const Resolution res(res720p);
-
-	const Matrix3f rayCast(RayCast(static_cast<float>(res.w), static_cast<float>(res.h), focalDistance));
-
-	const Matrix4f projection(Perspective(focalDistance));
+	// set up the camera
+	const float      focalDistance (1.0f);
+	const Resolution res           (res720p);
+	const Matrix3f   rayCast       (RayCast(res, focalDistance));
+	const Matrix4f   projection    (Perspective(focalDistance));
 
 	// set up the camera animation
 	const Vector3f eye (500.0f, 0.0f, 0.0f);
@@ -118,9 +114,9 @@ int main()
 	//frames.push_back(337);
 	//frames.push_back(172);
 
-	cout << volume.Nx << "x" << volume.Ny << "x" << volume.Nz << " volume" << endl;
-
 	mutex frameMutex;
+
+	RateIndicator rateIndicator(300);
 
 	auto ProcessFrame = [&]()
 	{
@@ -141,7 +137,7 @@ int main()
 
 			Profiler profiler;
 
-			BezierLookup spline({0.1f, 0.0f}, {0.0f, 1.0f}, 1 << 20);
+			BezierLookup spline({0.1f, 0.0f}, {0.0f, 1.0f}, 1 << 20, 0.0f, 60000.0f);
 
 			{
 				Profiler::Timer timer(profiler, "Total");
@@ -152,13 +148,14 @@ int main()
 				const Matrix4f camera(LookAt(animation.Eye(frame, frameCount), at, up));
 
 				// render
-				ProjectMesh(camera, projection, res.w, res.h, buffer.data(), mesh);
-				RenderMesh(camera, rayCast, res.w, res.h, buffer.data(), mesh, volume, spline, profiler);
+				ProjectMesh(camera, projection, res, buffer.data(), mesh);
+				RenderMesh(camera, rayCast, res, buffer.data(), mesh, volume, spline, profiler, rateIndicator);
 
 				// save
 				SaveBuffer(MakeAnimationFilename(projectRoot, frame).c_str(), res.w, res.h, buffer.data(), white);
 			}
 
+			rateIndicator.Reset();
 			PrintFrameInfo(frame, frameCount, profiler);
 		}
 	};

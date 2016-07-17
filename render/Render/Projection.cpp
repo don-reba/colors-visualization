@@ -39,17 +39,17 @@ Matrix4f Perspective(float focalDistance)
 	return m;
 }
 
-Matrix3f RayCast(float width, float height, float focalDistance)
+Matrix3f RayCast(Resolution res, float focalDistance)
 {
 	// sx 0  -dx
 	// 0  xy -dy
 	// 0  0   f
 
 	const float w(1.0f);
-	const float h(height / width);
+	const float h((float)res.h / res.w);
 	const float f(focalDistance);
 
-	const float sx(1.0f / width);
+	const float sx(1.0f / res.w);
 
 	Matrix3f m(Matrix3f::Zero());
 

@@ -52,19 +52,22 @@ def Save(path, a)
 
 	using (w = BinaryWriter(File.Create(path)))
 	{
-		w.Write(a.σ    : double);
+		w.Write(a.σ    :> float);
 		w.Write(a.α    : int);
 		w.Write(a.pd   : int);
-		w.Write(a.side : double);
-		w.Write(a.domain.x[0] : double);
-		w.Write(a.domain.x[1] : double);
-		w.Write(a.domain.y[0] : double);
-		w.Write(a.domain.y[1] : double);
-		w.Write(a.domain.z[0] : double);
-		w.Write(a.domain.z[1] : double);
+		w.Write(a.side :> float);
+		w.Write(a.domain.x[0] :> float);
+		w.Write(a.domain.y[0] :> float);
+		w.Write(a.domain.z[0] :> float);
+		w.Write(a.domain.x[1] :> float);
+		w.Write(a.domain.y[1] :> float);
+		w.Write(a.domain.z[1] :> float);
+		w.Write(a.coef.Length : int);
 		for (mutable i; i != a.coef.Length; ++i)
-			w.Write(a.coef[i] : double);
+			w.Write(a.coef[i] :> float);
 	}
+
+	WriteLine("'{0}'", path);
 }
 
 def domain = Domain3D

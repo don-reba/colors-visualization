@@ -1,10 +1,12 @@
 #pragma once
 
+#include "IModel.h"
+
 #include <vector>
 
 #include <Eigen/Dense>
 
-class Volume
+class Volume : public IModel
 {
 public:
 

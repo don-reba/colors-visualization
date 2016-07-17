@@ -103,10 +103,12 @@
     <ClCompile Include="Bezier.cpp" />
     <ClCompile Include="BezierLookup.cpp" />
     <ClCompile Include="Color.cpp" />
+    <ClCompile Include="FgtVolume.cpp" />
     <ClCompile Include="Image.cpp" />
     <ClCompile Include="Mesh.cpp" />
     <ClCompile Include="Projection.cpp" />
     <ClCompile Include="ProjectMesh.cpp" />
+    <ClCompile Include="RateIndicator.cpp" />
     <ClCompile Include="Render.cpp" />
     <ClCompile Include="RenderMesh.cpp" />
     <ClCompile Include="Profiler.cpp" />
@@ -121,12 +123,15 @@
     <ClInclude Include="FreeImage.h" />
     <ClInclude Include="FreeImagePlus.h" />
     <ClInclude Include="Image.h" />
+    <ClInclude Include="IModel.h" />
     <ClInclude Include="Mesh.h" />
     <ClInclude Include="Pow.h" />
     <ClInclude Include="Projection.h" />
     <ClInclude Include="ProjectMesh.h" />
+    <ClInclude Include="RateIndicator.h" />
     <ClInclude Include="RenderMesh.h" />
     <ClInclude Include="Profiler.h" />
+    <ClInclude Include="Resolution.h" />
     <ClInclude Include="Volume.h" />
   </ItemGroup>
   <ItemGroup>

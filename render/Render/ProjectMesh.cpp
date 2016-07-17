@@ -45,7 +45,7 @@ bool IsTopLeft(const Vector2i & a, const Vector2i & b)
 	return false;
 }
 
-void Rasterize(const Triangle2i & tri, float id, size_t w, size_t h, Vector4f * buffer)
+void Rasterize(const Triangle2i & tri, float id, Resolution res, Vector4f * buffer)
 {
 	// the triangle bounding box
 	int minX(min3(tri.v0.x(), tri.v1.x(), tri.v2.x()));
@@ -55,9 +55,9 @@ void Rasterize(const Triangle2i & tri, float id, size_t w, size_t h, Vector4f * 
 
 	// intersect with the screen
 	minX = max(minX, 0);
-	maxX = min(maxX, static_cast<int>(w - 1));
+	maxX = min(maxX, static_cast<int>(res.w - 1));
 	minY = max(minY, 0);
-	maxY = min(maxY, static_cast<int>(h - 1));
+	maxY = min(maxY, static_cast<int>(res.h - 1));
 
 	// rasterize
 	Vector2i p;
@@ -75,7 +75,7 @@ void Rasterize(const Triangle2i & tri, float id, size_t w, size_t h, Vector4f * 
 
 		if ((w0 | w1 | w2) >= 0)
 		{
-			Vector4f & pxl(buffer[p.y() * w + p.x()]);
+			Vector4f & pxl(buffer[p.y() * res.w + p.x()]);
 			// we store pixel id in A and B components of the pixel
 			// this assumed the volume is convex
 			(pxl.x() == 0.0f ? pxl.x() : pxl.y()) = id;
@@ -83,10 +83,8 @@ void Rasterize(const Triangle2i & tri, float id, size_t w, size_t h, Vector4f * 
 	}
 }
 
-Vector2i CameraToScreen(Vector2f v, size_t width, size_t height)
+Vector2i CameraToScreen(Vector2f v, float w, float h)
 {
-	const float w(static_cast<float>(width));
-	const float h(static_cast<float>(height));
 	return Vector2i
 		( static_cast<int>(v.x() * w + 0.5f * w)
 		, static_cast<int>(v.y() * w + 0.5f * h)
@@ -105,15 +103,17 @@ Vector2f Transform(const Matrix4f & m, const Vector3f & v)
 }
 
 void ProjectMesh
-	( const Matrix4f & world
-	, const Matrix4f & projection
-	,       size_t     w
-	,       size_t     h
-	,       Vector4f * buffer
-	, const Mesh     & mesh
+	( const Matrix4f   & world
+	, const Matrix4f   & projection
+	,       Resolution   res
+	,       Vector4f   * buffer
+	, const Mesh       & mesh
 	)
 {
 	const Matrix4f m(projection * world);
+
+	const float w(static_cast<float>(res.w));
+	const float h(static_cast<float>(res.h));
 
 	for (size_t i(0), size(mesh.faces.size()); i != size; ++i)
 	{
@@ -125,6 +125,6 @@ void ProjectMesh
 		MakeCounterclockwise(face);
 
 		const float id(static_cast<float>(i + 1));
-		Rasterize(face, id, w, h, buffer);
+		Rasterize(face, id, res, buffer);
 	}
 }

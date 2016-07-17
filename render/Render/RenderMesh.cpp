@@ -62,7 +62,7 @@ namespace
 	}
 
 	void Integrate
-		( const Volume       & volume
+		( const IModel       & model
 		, const Vector3f     & offset
 		, const Vector3f     & ray
 		, float                step
@@ -87,7 +87,7 @@ namespace
 		// it could go up to 3 steps past max — usually an imperceptible error
 		while (t <= max && amount >= minAmount)
 		{
-			Vector3f values[4];
+			__declspec(align(16)) Vector3f values[4];
 			for (size_t i(0); i != 4; ++i)
 			{
 				values[i] = ray;
@@ -96,11 +96,14 @@ namespace
 				t += step;
 			}
 
-			float samples[4];
+			__declspec(align(16)) float samples[4];
 			for (size_t i(0); i != 4; ++i)
-				samples[i] = 1.0f - spline[volume[values[i]]];
+				samples[i] = 1.0f - spline[model[values[i]]];
 
-			float transparencies[4];
+			static size_t count = 0;
+			++count;
+
+			__declspec(align(16)) float transparencies[4];
 			_mm_store_ps(transparencies, powf4(_mm_load_ps(samples), _mm_set1_ps(step / unitWidth)));
 
 			for (size_t i(0); i != 4; ++i)
@@ -126,20 +129,20 @@ namespace
 }
 
 void RenderMesh
-	( const Matrix4f     & camera
-	, const Matrix3f     & rayCast
-	,       size_t         w
-	,       size_t         h
-	,       Vector4f     * buffer
-	, const Mesh         & mesh
-	, const Volume       & volume
-	, const BezierLookup & spline
-	,       Profiler     & profiler
+	( const Matrix4f      & camera
+	, const Matrix3f      & rayCast
+	,       Resolution      res
+	,       Vector4f      * buffer
+	, const Mesh          & mesh
+	, const IModel        & model
+	, const BezierLookup  & spline
+	,       Profiler      & profiler
+	,       RateIndicator & rateIndicator
 	)
 {
 	Profiler::Timer timer(profiler, "RenderMesh");
 
-	if (w == 0 && h == 0)
+	if (res.w == 0 && res.h == 0)
 		return;
 
 	const Matrix4f world(camera.inverse());
@@ -154,10 +157,10 @@ void RenderMesh
 	}
 
 	// integrate inside the mesh
-	for (size_t y(0); y != h; ++y)
-	for (size_t x(0); x != w; ++x)
+	for (size_t y(0); y != res.h; ++y)
+	for (size_t x(0); x != res.w; ++x)
 	{
-		Vector4f & pxl(buffer[y * w + x]);
+		Vector4f & pxl(buffer[y * res.w + x]);
 
 		if (pxl.x() == 0.0f || pxl.y() == 0.0f)
 			continue;
@@ -179,7 +182,10 @@ void RenderMesh
 
 		RefineRange(offset, ray, stepLength, min, max);
 
-		if (min < max)
-			Integrate(volume, offset, ray, stepLength, min, max, spline, pxl);
+		if (min >= max)
+			continue;
+
+		Integrate(model, offset, ray, stepLength, min, max, spline, pxl);
+		rateIndicator.Increment();
 	}
 }

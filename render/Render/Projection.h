@@ -1,5 +1,7 @@
 #pragma once
 
+#include "Resolution.h"
+
 #include <Eigen/Dense>
 
 Eigen::Matrix4f LookAt
@@ -10,4 +12,4 @@ Eigen::Matrix4f LookAt
 
 Eigen::Matrix4f Perspective(float focalDistance);
 
-Eigen::Matrix3f RayCast(float width, float height, float focalDistance);
+Eigen::Matrix3f RayCast(Resolution res, float focalDistance);
