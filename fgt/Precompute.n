@@ -12,6 +12,71 @@ using System.IO;
 using System.Math;
 using System;
 
+def PadToMultiple(coef1, (nx1, ny1, nz1), pd, k)
+{
+	def RoundUp(n, k)
+	{
+		if (n % k == 0)
+			n
+		else
+			n / k * k + k
+	}
+
+	WriteLine("Padding...");
+
+	def nx2 = RoundUp(nx1, k);
+	def ny2 = RoundUp(ny1, k);
+	def nz2 = RoundUp(nz1, k);
+
+	if (nx1 == nx2 && ny1 == ny2 && nz1 == nz2)
+		(coef1, (nx1, ny1, nz1))
+	else
+	{
+		def coef2 : array[double] = array(nx2 * ny2 * nz2 * pd);
+		for (mutable z; z != nz1; ++z)
+		for (mutable y; y != ny1; ++y)
+			Array.Copy
+				( sourceArray      = coef1
+				, sourceIndex      = nx1 * pd * (z * ny1 + y)
+				, destinationArray = coef2
+				, destinationIndex = nx2 * pd * (z * ny2 + y)
+				, length           = nx1 * pd
+				);
+		(coef2, (nx2, ny2, nz2))
+	}
+}
+
+def Collate(coef1, (nx, ny, nz), pd, k)
+{
+	WriteLine("Collating...");
+
+	unless (nx % k == 0 && ny % k == 0 && nz % k == 0)
+		throw Exception("Size not a multiple of k.");
+
+	def coef2 : array[double] = array(coef1.Length);
+	mutable i2;
+
+	for (mutable z; z != nz; z += k)
+	for (mutable y; y != ny; y += k)
+	for (mutable x; x != nx; x += k)
+	{
+		for (mutable c; c != pd; ++c)
+		{
+			for (mutable kz; kz != k; ++kz)
+			for (mutable ky; ky != k; ++ky)
+			for (mutable kx; kx != k; ++kx)
+			{
+				def (xkx, yky, zkz) = (x + kx, y + ky, z + kz);
+				coef2[i2] = coef1[((zkz * ny + yky) * nx + xkx) * pd + c];
+				++i2;
+			}
+		}
+	}
+	unless (i2 == coef2.Length)
+		throw Exception("Collation error.");
+	(coef2, (nx / k, ny / k, nz / k))
+}
+
 def Load(path, domain, maxEntries)
 {
 	using (txt = File.OpenText(path))
@@ -50,36 +115,46 @@ def Save(path, a)
 	def mem = sizeof(double) * a.n[0] * a.n[1] * a.n[2] * a.pd;
 	WriteLine("Saving {0}x{1}x{2}x{3} ({4:N0} bytes)...", a.n[0], a.n[1], a.n[2], a.pd, mem);
 
+	def (coef, n) = PadToMultiple(a.coef, a.n, a.pd, 2);
+	def (coef, n) = Collate(coef, n, a.pd, 2);
+
 	using (w = BinaryWriter(File.Create(path)))
 	{
-		w.Write(a.σ    :> float);
-		w.Write(a.α    : int);
-		w.Write(a.pd   : int);
-		w.Write(a.side :> float);
+		w.Write(a.σ           :> float);
+		w.Write(a.α           : int);
+		w.Write(a.pd          : int);
+		w.Write(a.side        :> float);
+		w.Write(n[0]          : int);
+		w.Write(n[1]          : int);
+		w.Write(n[2]          : int);
 		w.Write(a.domain.x[0] :> float);
 		w.Write(a.domain.y[0] :> float);
 		w.Write(a.domain.z[0] :> float);
-		w.Write(a.domain.x[1] :> float);
-		w.Write(a.domain.y[1] :> float);
-		w.Write(a.domain.z[1] :> float);
-		w.Write(a.coef.Length : int);
-		for (mutable i; i != a.coef.Length; ++i)
-			w.Write(a.coef[i] :> float);
+		w.Write(coef.Length : int);
+		for (mutable i; i != coef.Length; ++i)
+			w.Write(coef[i] :> float);
 	}
 
 	WriteLine("'{0}'", path);
 }
 
-def domain = Domain3D
-	( (   0.0, 100.0)
-	, ( -87.0,  99.0)
-	, (-108.0,  96.0)
-	);
+def Pad(min, max, σ, r, n)
+{
+	def offset = n * σ / r;
+	(min - offset, max + offset);
+}
 
 def iPath = @"..\get colors\data.txt";
 def oPath = "coef.dat";
 def count = 10_000_000;
 def σ     = 5.0;
 def α     = 5;
+def r     = Sqrt(2.0);
 
-Save(oPath, Preprocess(Load(iPath, domain, count), σ, α, domain));
+def domain = Domain3D
+	( Pad(   0.0, 100.0, σ, r, 8)
+	, Pad( -87.0,  99.0, σ, r, 8)
+	, Pad(-108.0,  96.0, σ, r, 8)
+	);
+
+Save(oPath, Preprocess(Load(iPath, domain, count), σ, α, r, domain));

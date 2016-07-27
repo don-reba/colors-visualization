@@ -88,9 +88,9 @@ int main()
 
 	const string projectRoot("C:\\Users\\Alexey\\Projects\\Colours visualization\\");
 
-	const FgtVolume volume = FgtVolume((projectRoot + "fgt\\coef.dat").c_str(), 4);
+	const FgtVolume volume = FgtVolume((projectRoot + "fgt\\coef.dat").c_str());
 
-	//const Volume volume = Volume::Load((projectRoot + "voxelize\\volume.dat").c_str(), Volume::PostprocessNone);
+	// const Volume volume = Volume::Load((projectRoot + "voxelize\\volume.dat").c_str(), Volume::PostprocessNone);
 
 	const Mesh mesh(LoadPly((projectRoot + "shell\\hull.ply").c_str()));
 
@@ -116,7 +116,7 @@ int main()
 
 	mutex frameMutex;
 
-	RateIndicator rateIndicator(300);
+	RateIndicator rateIndicator(60);
 
 	auto ProcessFrame = [&]()
 	{

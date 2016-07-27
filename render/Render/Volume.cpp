@@ -129,11 +129,5 @@ Volume Volume::Load(const char * path, Volume::Postprocess method)
 
 	//PrintStats(v, "D:\\Programming\\Colours visualization\\analysis\\volume values.txt");
 
-	const float min    (*min_element(v.Values.begin(), v.Values.end()));
-	const float max    (*max_element(v.Values.begin(), v.Values.end()));
-	const float factor (min == max ? 0.0f : 1.0f / (max - min));
-	for (float & x : v.Values)
-		x = factor * (x - min);
-
 	return v;
 }

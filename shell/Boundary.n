@@ -1,0 +1,52 @@
+using Nemerle.Collections;
+using System.Console;
+using System.IO;
+using System;
+
+def path = "hull.ply";
+
+def lines = File.ReadAllLines(path);
+
+when (lines[0] != "ply")
+	throw Exception("Invalid header.");
+
+mutable i = 1;
+
+// parse header
+
+mutable vertexCount;
+
+while (lines[i] != "end_header")
+{
+	def parts = lines[i].Split(array[' ']);
+	when (parts[0] == "element" && parts[1] == "vertex")
+		vertexCount = int.Parse(parts[2]);
+	++i;
+}
+++i;
+
+Console.WriteLine("vertex count: {0}", vertexCount);
+
+// parse vertices
+
+mutable minX = double.MaxValue; mutable maxX = double.MinValue;
+mutable minY = double.MaxValue; mutable maxY = double.MinValue;
+mutable minZ = double.MaxValue; mutable maxZ = double.MinValue;
+
+repeat (vertexCount)
+{
+	def v = lines[i].Split(array[' ']).Map(double.Parse);
+
+	when (v.Length != 3)
+		throw Exception("Invalid vertex.");
+
+	when (v[0] < minX) minX = v[0]; when (v[0] > maxX) maxX = v[0];
+	when (v[1] < minY) minY = v[1]; when (v[1] > maxY) maxY = v[1];
+	when (v[2] < minZ) minZ = v[2]; when (v[2] > maxZ) maxZ = v[2];
+
+	++i;
+}
+
+Console.WriteLine("{0:F1} - {1:F1}", minX, maxX);
+Console.WriteLine("{0:F1} - {1:F1}", minY, maxY);
+Console.WriteLine("{0:F1} - {1:F1}", minZ, maxZ);
