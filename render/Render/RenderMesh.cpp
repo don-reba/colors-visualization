@@ -84,7 +84,6 @@ namespace
 		float t(min);
 
 		// t is incremented 4 steps at a time for SIMD to be effective
-		// it could go up to 3 steps past max — usually an imperceptible error
 		while (t + 4.0f * step <= max && amount >= minAmount)
 		{
 			__declspec(align(16)) Vector3f values[4];
@@ -113,28 +112,23 @@ namespace
 		}
 		while (t <= max && amount >= minAmount)
 		{
-			Vector3f value = ray * t + offset;
-			t += step;
+			const Vector3f value = ray * t + offset;
 
 			const float sample = 1.0f - spline[model[value]];
 
 			const float transparency = std::min(pow(sample, step / unitWidth), 1.0f);
 
-			value  *= amount * (1.0f - transparency);
-			color  += value;
+			color  += value * amount * (1.0f - transparency);
 			amount *= transparency;
+
+			t += step;
 		}
 
-		// rescale colour
-		if (amount != 1.0f)
-			color /= 1.0f - amount;
-
 		// set pixel value
-
-		pxl.x() = color.x();
-		pxl.y() = color.y();
-		pxl.z() = color.z();
-		pxl.w() = 1.0f - amount;
+		pxl.x() += color.x();
+		pxl.y() += color.y();
+		pxl.z() += color.z();
+		pxl.w() += 1.0f - amount;
 	}
 }
 
@@ -146,6 +140,7 @@ void RenderMesh
 	, const Mesh          & mesh
 	, const IModel        & model
 	, const IBezier       & spline
+	, const AAMask        & aamask
 	,       Profiler      & profiler
 	,       RateIndicator & rateIndicator
 	)
@@ -170,32 +165,59 @@ void RenderMesh
 	for (size_t y(0); y != res.h; ++y)
 	for (size_t x(0); x != res.w; ++x)
 	{
+		// get bounding triangle coordinates from the pixel, then reset it
 		Vector4f & pxl(buffer[y * res.w + x]);
 
 		if (pxl.x() == 0.0f || pxl.y() == 0.0f)
+		{
+			pxl = Vector4f::Zero();
 			continue;
+		}
 
 		const size_t triIndex0(static_cast<size_t>(pxl.x()) - 1);
 		const size_t triIndex1(static_cast<size_t>(pxl.y()) - 1);
 
-		Vector3f cameraRay(rayCast * Vector3f(static_cast<float>(x), static_cast<float>(y), 1.0f));
-		cameraRay.normalize();
+		pxl = Vector4f::Zero();
 
-		float min(DistanceToTri(faces[triIndex0], cameraRay)); if (min < 0.0f) continue;
-		float max(DistanceToTri(faces[triIndex1], cameraRay)); if (max < 0.0f) continue;
-		if (min > max)
-			swap(min, max);
+		// send a ray for every subsample, average the results
+		float subsampleCount = 0.0f;
 
-		const float stepLength (0.2f);
-		const Vector3f offset (::TransformTo3D(world, Vector3f::Zero()));
-		const Vector3f ray    (::TransformTo3D(world, cameraRay) - offset);
+		for (auto & subsample : aamask)
+		{
+			Vector3f subpixel  = Vector3f(x + subsample.dx, y + subsample.dy, 1.0f);
+			Vector3f cameraRay = (rayCast * subpixel).normalized();
 
-		RefineRange(offset, ray, stepLength, min, max);
+			float min(DistanceToTri(faces[triIndex0], cameraRay)); if (min < 0.0f) continue;
+			float max(DistanceToTri(faces[triIndex1], cameraRay)); if (max < 0.0f) continue;
+			if (min > max)
+				swap(min, max);
 
-		if (min >= max)
-			continue;
+			const float stepLength (0.2f);
+			const Vector3f offset (::TransformTo3D(world, Vector3f::Zero()));
+			const Vector3f ray    (::TransformTo3D(world, cameraRay) - offset);
 
-		Integrate(model, offset, ray, stepLength, min, max, spline, pxl);
-		rateIndicator.Increment();
+			RefineRange(offset, ray, stepLength, min, max);
+
+			if (min >= max)
+				continue;
+
+			subsampleCount += 1.0f;
+
+			Integrate(model, offset, ray, stepLength, min, max, spline, pxl);
+			rateIndicator.Increment();
+		}
+
+		// rescale the colour
+		if (pxl.w() > 0.0f)
+		{
+			pxl /= subsampleCount;
+			pxl.x() /= pxl.w();
+			pxl.y() /= pxl.w();
+			pxl.z() /= pxl.w();
+		}
+		else
+		{
+			pxl = Vector4f::Zero();
+		}
 	}
 }

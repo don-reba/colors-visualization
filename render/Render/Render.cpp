@@ -88,6 +88,7 @@ namespace
 		( const string  & projectRoot
 		, const IModel  & volume
 		, const IBezier & spline
+		, const AAMask  & aamask
 		)
 	{
 
@@ -148,7 +149,10 @@ namespace
 
 					// render
 					ProjectMesh(camera, projection, res, buffer.data(), mesh);
-					RenderMesh(camera, rayCast, res, buffer.data(), mesh, volume, spline, profiler, rateIndicator);
+					RenderMesh
+						(camera, rayCast, res, buffer.data(), mesh
+						, volume, spline, aamask, profiler, rateIndicator
+						);
 
 					// save
 					SaveBuffer(MakeAnimationFilename(projectRoot, frame).c_str(), res.w, res.h, buffer.data(), white);
@@ -169,25 +173,27 @@ namespace
 
 int main()
 {
-	Eigen::initParallel();
-
 	cout.imbue(locale(""));
+
+	Eigen::initParallel();
 
 	const string projectRoot("C:\\Users\\Alexey\\Projects\\Colours visualization\\");
 
-	bool hifi = true;
+	const bool hifi = true;
 
 	if (hifi)
 		Run
 			( projectRoot
 			, FgtVolume((projectRoot + "fgt\\coef.dat").c_str())
-			, BezierDirect({ 0.0f, 0.5f }, { 1.0f, 1.0f }, 3000.0f, 3000.0f, 0.0001f)
+			, BezierDirect({ 1.0f, 0.0f }, { 1.0f, 1.0f }, 500.0f, 4000.0f, 0.0001f)
+			, aa1x
 			);
 	else
 		Run
 			( projectRoot
 			, Volume((projectRoot + "voxelize\\volume.dat").c_str(), Volume::PostprocessNone)
 			, BezierLookup({ 0.1f, 0.0f }, { 0.0f, 1.0f }, 1 << 20, 0.0f, 2050.0f)
+			, aa1x
 			);
 
 	return 0;

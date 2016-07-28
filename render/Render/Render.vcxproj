@@ -222,6 +222,7 @@
     <ClInclude Include="RenderMesh.h" />
     <ClInclude Include="Profiler.h" />
     <ClInclude Include="Resolution.h" />
+    <ClInclude Include="Antialias.h" />
     <ClInclude Include="Volume.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

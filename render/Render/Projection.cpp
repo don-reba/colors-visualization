@@ -55,8 +55,8 @@ Matrix3f RayCast(Resolution res, float focalDistance)
 
 	m(0, 0) =  sx;
 	m(1, 1) =  sx;
-	m(0, 2) = -0.5f * (w - sx);
-	m(1, 2) = -0.5f * (h - sx);
+	m(0, 2) = -0.5f *w;
+	m(1, 2) = -0.5f *h;
 	m(2, 2) =  f;
 
 	return m;
