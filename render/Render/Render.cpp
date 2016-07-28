@@ -1,4 +1,5 @@
 #include "Animation.h"
+#include "BezierLookup.h"
 #include "FgtVolume.h"
 #include "Profiler.h"
 #include "Projection.h"
@@ -80,17 +81,12 @@ string MakeAnimationFilename(const string & root, size_t i)
 	return s.str();
 }
 
-int main()
+void Run
+	( const string  & projectRoot
+	, const IModel  & volume
+	, const IBezier & spline
+	)
 {
-	Eigen::initParallel();
-
-	cout.imbue(locale(""));
-
-	const string projectRoot("C:\\Users\\Alexey\\Projects\\Colours visualization\\");
-
-	const FgtVolume volume = FgtVolume((projectRoot + "fgt\\coef.dat").c_str());
-
-	// const Volume volume = Volume::Load((projectRoot + "voxelize\\volume.dat").c_str(), Volume::PostprocessNone);
 
 	const Mesh mesh(LoadPly((projectRoot + "shell\\hull.ply").c_str()));
 
@@ -113,6 +109,8 @@ int main()
 	//vector<size_t> frames;
 	//frames.push_back(337);
 	//frames.push_back(172);
+	//frames.push_back(45);
+	//frames.push_back(0);
 
 	mutex frameMutex;
 
@@ -136,8 +134,6 @@ int main()
 			}
 
 			Profiler profiler;
-
-			BezierLookup spline({0.1f, 0.0f}, {0.0f, 1.0f}, 1 << 20, 0.0f, 60000.0f);
 
 			{
 				Profiler::Timer timer(profiler, "Total");
@@ -165,6 +161,30 @@ int main()
 		t = thread(ProcessFrame);
 	for (auto & t : threads)
 		t.join();
+}
+
+int main()
+{
+	Eigen::initParallel();
+
+	cout.imbue(locale(""));
+
+	const string projectRoot("C:\\Users\\Alexey\\Projects\\Colours visualization\\");
+
+	bool hifi = true;
+
+	if (hifi)
+		Run
+			( projectRoot
+			, FgtVolume((projectRoot + "fgt\\coef.dat").c_str())
+			, BezierLookup({ 0.1f, 0.0f }, { 0.0f, 1.0f }, 1 << 20, 0.0f, 60000.0f)
+			);
+	else
+		Run
+			( projectRoot
+			, Volume((projectRoot + "voxelize\\volume.dat").c_str(), Volume::PostprocessNone)
+			, BezierLookup({ 0.1f, 0.0f }, { 0.0f, 1.0f }, 1 << 20, 0.0f, 2050.0f)
+			);
 
 	return 0;
 }

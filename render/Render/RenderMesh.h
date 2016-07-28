@@ -1,6 +1,6 @@
 #pragma once
 
-#include "BezierLookup.h"
+#include "IBezier.h"
 #include "IModel.h"
 #include "Image.h"
 #include "Mesh.h"
@@ -17,7 +17,7 @@ void RenderMesh
 	,       Eigen::Vector4f * buffer
 	, const Mesh            & mesh
 	, const IModel          & model
-	, const BezierLookup    & spline
+	, const IBezier         & spline
 	,       Profiler        & profiler
 	,       RateIndicator   & rateIndicator
 	);

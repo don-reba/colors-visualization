@@ -32,11 +32,7 @@ private:
 
 public:
 
-	Volume(size_t nx, size_t ny, size_t nz);
-	Volume(Volume && other);
+	Volume(const char * path, Postprocess method);
 
 	float operator [] (const Eigen::Vector3f & lab) const;
-
-	static Volume MakeTest();
-	static Volume Load(const char * path, Postprocess method);
 };

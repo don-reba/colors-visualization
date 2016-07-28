@@ -209,6 +209,7 @@
     <ClInclude Include="FgtVolume.h" />
     <ClInclude Include="FreeImage.h" />
     <ClInclude Include="FreeImagePlus.h" />
+    <ClInclude Include="IBezier.h" />
     <ClInclude Include="Image.h" />
     <ClInclude Include="IModel.h" />
     <ClInclude Include="Mesh.h" />

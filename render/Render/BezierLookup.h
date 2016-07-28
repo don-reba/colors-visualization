@@ -1,10 +1,12 @@
 #pragma once
 
+#include "IBezier.h"
+
 #include <vector>
 
 #include <Eigen/Dense>
 
-class BezierLookup
+class BezierLookup : public IBezier
 {
 public:
 

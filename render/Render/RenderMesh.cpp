@@ -68,7 +68,7 @@ namespace
 		, float                step
 		, float                min
 		, float                max
-		, const BezierLookup & spline
+		, const IBezier      & spline
 		, Vector4f           & pxl
 		)
 	{
@@ -135,7 +135,7 @@ void RenderMesh
 	,       Vector4f      * buffer
 	, const Mesh          & mesh
 	, const IModel        & model
-	, const BezierLookup  & spline
+	, const IBezier       & spline
 	,       Profiler      & profiler
 	,       RateIndicator & rateIndicator
 	)
