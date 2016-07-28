@@ -18,15 +18,15 @@ public:
 
 	Bezier(Eigen::Vector2f p1, Eigen::Vector2f p2);
 
-	float SampleCurveX(float t);
+	float SampleCurveX(float t) const;
 
-	float SampleCurveY(float t);
+	float SampleCurveY(float t) const;
 
-	float SampleCurveDerivativeX(float t);
+	float SampleCurveDerivativeX(float t) const;
 
 	// Given an x value, find a parametric value it came from.
-	float SolveCurveX(float x, float epsilon);
+	float SolveCurveX(float x, float epsilon) const;
 
 	// Solve for x ± epsilon.
-	float Solve(float x, float epsilon);
+	float Solve(float x, float epsilon) const;
 };

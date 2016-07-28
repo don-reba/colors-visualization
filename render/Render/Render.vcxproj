@@ -188,6 +188,7 @@
   <ItemGroup>
     <ClCompile Include="Animation.cpp" />
     <ClCompile Include="Bezier.cpp" />
+    <ClCompile Include="BezierDirect.cpp" />
     <ClCompile Include="BezierLookup.cpp" />
     <ClCompile Include="Color.cpp" />
     <ClCompile Include="FgtVolume.cpp" />
@@ -204,6 +205,7 @@
   <ItemGroup>
     <ClInclude Include="Animation.h" />
     <ClInclude Include="Bezier.h" />
+    <ClInclude Include="BezierDirect.h" />
     <ClInclude Include="BezierLookup.h" />
     <ClInclude Include="Color.h" />
     <ClInclude Include="FgtVolume.h" />

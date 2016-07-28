@@ -26,8 +26,8 @@ BezierLookup::BezierLookup
 
 float BezierLookup::operator[] (float x) const
 {
-	if (x < min) x = min;
-	if (x > max) x = max;
+	if (x < min) return 0.0f;
+	if (x > max) return 1.0f;
 	x = (x - min) / (max - min);
 	return t[static_cast<size_t>(x * (t.size() - 1))];
 }

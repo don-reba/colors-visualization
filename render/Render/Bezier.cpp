@@ -17,24 +17,24 @@ Bezier::Bezier(Vector2f p1, Vector2f p2)
 	ay = 1.0f - cy - by;
 }
 
-float Bezier::SampleCurveX(float t)
+float Bezier::SampleCurveX(float t) const
 {
 	// `ax t^3 + bx t^2 + cx t' expanded using Horner's rule.
 	return ((ax * t + bx) * t + cx) * t;
 }
 
-float Bezier::SampleCurveY(float t)
+float Bezier::SampleCurveY(float t) const
 {
 	return ((ay * t + by) * t + cy) * t;
 }
 
-float Bezier::SampleCurveDerivativeX(float t)
+float Bezier::SampleCurveDerivativeX(float t) const
 {
 	return (3.0f * ax * t + 2.0f * bx) * t + cx;
 }
 
 // Given an x value, find a parametric value it came from.
-float Bezier::SolveCurveX(float x, float epsilon)
+float Bezier::SolveCurveX(float x, float epsilon) const
 {
 	float t0;
 	float t1;
@@ -79,7 +79,7 @@ float Bezier::SolveCurveX(float x, float epsilon)
 	return t2;
 }
 
-float Bezier::Solve(float x, float epsilon)
+float Bezier::Solve(float x, float epsilon) const
 {
 	return SampleCurveY(SolveCurveX(x, epsilon));
 }

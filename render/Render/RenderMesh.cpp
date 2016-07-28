@@ -85,10 +85,10 @@ namespace
 
 		// t is incremented 4 steps at a time for SIMD to be effective
 		// it could go up to 3 steps past max — usually an imperceptible error
-		while (t <= max && amount >= minAmount)
+		while (t + 4.0f * step <= max && amount >= minAmount)
 		{
 			__declspec(align(16)) Vector3f values[4];
-			for (size_t i(0); i != 4; ++i)
+			for (size_t i = 0; i != 4; ++i)
 			{
 				values[i] = ray;
 				values[i] *= t;
@@ -100,19 +100,29 @@ namespace
 			for (size_t i(0); i != 4; ++i)
 				samples[i] = 1.0f - spline[model[values[i]]];
 
-			static size_t count = 0;
-			++count;
-
 			__declspec(align(16)) float transparencies[4];
 			_mm_store_ps(transparencies, powf4(_mm_load_ps(samples), _mm_set1_ps(step / unitWidth)));
 
-			for (size_t i(0); i != 4; ++i)
+			for (size_t i = 0; i != 4; ++i)
 			{
 				transparencies[i] = std::min(transparencies[i], 1.0f);
 				values[i] *= amount * (1.0f - transparencies[i]);
 				color += values[i];
 				amount *= transparencies[i];
 			}
+		}
+		while (t <= max && amount >= minAmount)
+		{
+			Vector3f value = ray * t + offset;
+			t += step;
+
+			const float sample = 1.0f - spline[model[value]];
+
+			const float transparency = std::min(pow(sample, step / unitWidth), 1.0f);
+
+			value  *= amount * (1.0f - transparency);
+			color  += value;
+			amount *= transparency;
 		}
 
 		// rescale colour

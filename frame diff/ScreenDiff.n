@@ -1,0 +1,108 @@
+// REFERENCE: System.Drawing.dll
+
+using Nemerle.Collections;
+using System.Console;
+using System.Drawing;
+using System.IO;
+using System.Math;
+using System;
+
+[ Record ]
+class Stat
+{
+	private n  : double;
+	private m1 : double;
+	private m2 : double;
+
+	public this() {}
+
+	public Add(x : double) : Stat
+	{
+		def δ = x - m1;
+
+		def n  = this.n + 1.0;
+		def m1 = this.m1 + δ / n;
+		def m2 = this.m2 + δ * (x - m1);
+
+		Stat(n, m1, m2);
+	}
+
+	public Count  : int    { get { n :> int } }
+	public Mean   : double { get { m1 } }
+	public StdDev : double { get { Sqrt(m2 / (n - 1.0)) } }
+}
+
+def Diff(dir1, dir2)
+{
+	mutable overall = Stat();
+
+	def files1 = Directory.GetFiles(dir1).Map(Path.GetFileName);
+	def files2 = Directory.GetFiles(dir2).Map(Path.GetFileName);
+	foreach (file in Set(files1).Intersect(Set(files2)))
+	{
+		def Delta(c1, c2)
+		{
+			def dr = (c1.R : int) - (c2.R : int);
+			def dg = (c1.G : int) - (c2.G : int);
+			def db = (c1.B : int) - (c2.B : int);
+			Sqrt(dr * dr + dg * dg + db * db);
+		}
+
+		using (bmp1 = Bitmap(Path.Combine(dir1, file)))
+		using (bmp2 = Bitmap(Path.Combine(dir2, file)))
+		{
+			if (bmp1.Width != bmp2.Width || bmp1.Height != bmp2.Height)
+			{
+				WriteLine
+					( "{0}: {1}x{2} vs {3}x{4}"
+					, file
+					, bmp1.Width, bmp1.Height
+					, bmp2.Width, bmp2.Height
+					);
+			}
+			else
+			{
+				mutable max  = 0.0;
+				mutable stat = Stat();
+
+				foreach (y in [0 .. bmp1.Height - 1])
+				foreach (x in [0 .. bmp1.Width  - 1])
+				{
+					def c1 = bmp1.GetPixel(x, y);
+					def c2 = bmp2.GetPixel(x, y);
+					def δ  = Delta(c1, c2);
+
+					when (δ > 0.0)
+					{
+						max     = Max(max, δ);
+						stat    = stat.Add(δ);
+						overall = overall.Add(δ);
+					}
+				}
+
+				when (stat.Mean > 0.0)
+				{
+					WriteLine
+						( "{0}: n {1:N0} max {2:F2}; mean {3:F2}({4:F2})"
+						, file
+						, stat.Count, max, stat.Mean, stat.StdDev
+						);
+				}
+			}
+		}
+	}
+
+	when (overall.Mean > 0.0)
+	{
+		WriteLine();
+		WriteLine
+			( "overall: mean {0:F2}({1:F2})"
+			, overall.Mean, overall.StdDev
+			);
+	}
+}
+
+Diff
+	( "..\\render\\animation"
+	, "..\\render\\animation - Copy"
+	);
