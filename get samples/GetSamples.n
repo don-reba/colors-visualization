@@ -21,7 +21,7 @@ def Load(path)
 
 		// skip header
 		def header = txt.ReadLine();
-		Trace.Assert(header == "index\trank\thex\tvotes\tcomments\thearts", "header");
+		Trace.Assert(header == "index\trank\thex\tvotes\tcomments\thearts\tdate\tname", "header");
 
 		mutable n = 0;
 
@@ -96,4 +96,4 @@ def Save(path, samples)
 	WriteLine("'{0}'", path);
 }
 
-Save("samples.dat", Jitter(Load(@"..\get colors\data backup.txt")));
+Save("samples.dat", Jitter(Load(@"..\get colors\data.txt")));
