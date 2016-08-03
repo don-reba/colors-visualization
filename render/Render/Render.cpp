@@ -85,20 +85,20 @@ namespace
 	}
 
 	void Run
-		( const string  & projectRoot
-		, const IModel  & volume
-		, const IBezier & spline
-		, const AAMask  & aamask
+		( const string     & projectRoot
+		, const IModel     & volume
+		, const IBezier    & spline
+		, const Resolution & res
+		, const AAMask     & aamask
 		)
 	{
 
 		const Mesh mesh(LoadPly((projectRoot + "shell\\hull.ply").c_str()));
 
 		// set up the camera
-		const float      focalDistance = 1.0f;
-		const Resolution res           = res360p;
-		const Matrix3f   rayCast       = RayCast(res, focalDistance);
-		const Matrix4f   projection    = Perspective(focalDistance);
+		const float    focalDistance = 1.0f;
+		const Matrix3f rayCast       = RayCast(res, focalDistance);
+		const Matrix4f projection    = Perspective(focalDistance);
 
 		// set up the camera animation
 		const Vector3f eye (400.0f, 0.0f, 0.0f);
@@ -186,6 +186,7 @@ int main()
 			( projectRoot
 			, FgtVolume((projectRoot + "fgt\\coef.dat").c_str())
 			, BezierDirect({ 1.0f, 0.0f }, { 1.0f, 1.0f }, 500.0f, 4000.0f, 0.0001f)
+			, res720p
 			, aa1x
 			);
 	else
@@ -193,6 +194,7 @@ int main()
 			( projectRoot
 			, Volume((projectRoot + "voxelize\\volume.dat").c_str(), Volume::PostprocessNone)
 			, BezierLookup({ 0.1f, 0.0f }, { 0.0f, 1.0f }, 1 << 20, 0.0f, 2050.0f)
+			, res360p
 			, aa1x
 			);
 

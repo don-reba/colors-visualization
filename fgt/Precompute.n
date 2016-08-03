@@ -77,35 +77,31 @@ def Collate(coef1, (nx, ny, nz), pd, k)
 	(coef2, (nx / k, ny / k, nz / k))
 }
 
-def Load(path, domain, maxEntries)
+def Load(path, domain)
 {
-	using (txt = File.OpenText(path))
+	using (reader = BinaryReader(File.OpenRead(path)))
 	{
 		WriteLine("Reading data...");
 		def watch = Stopwatch.StartNew();
 
-		// skip header
-		def header = txt.ReadLine();
-		Trace.Assert(header == "index\trank\thex\tvotes\tcomments\thearts", "header");
-
-		mutable (min, max) = (int.MaxValue, int.MinValue);
+		def count = reader.ReadInt32();
 
 		def entries = List();
-		for (mutable line = txt.ReadLine(); line != null && entries.Count < maxEntries; line = txt.ReadLine())
+		entries.Capacity = count;
+		repeat (count)
 		{
-			def parts = line.Split(array['\t']);
-			def color = Drawing.Color.FromArgb(int.Parse(parts[2], Globalization.NumberStyles.HexNumber));
-			def votes = int.Parse(parts[3]);
+			def r = reader.ReadDouble() / 255.0;
+			def g = reader.ReadDouble() / 255.0;
+			def b = reader.ReadDouble() / 255.0;
 
-			def p = color |> ColorToRgb |> RgbToXyz |> XyzToLab;
+			def p = (r, g, b) |> RgbToXyz |> XyzToLab;
 			Trace.Assert(p[0] >= domain.x[0] && p[0] <= domain.x[1]);
 			Trace.Assert(p[1] >= domain.y[0] && p[1] <= domain.y[1]);
 			Trace.Assert(p[2] >= domain.z[0] && p[2] <= domain.z[1]);
-			when (votes < min) min = votes;
-			when (votes > max) max = votes;
-			entries.Add(Value3D(p, votes :> double));
+
+			entries.Add(Value3D(p, 1.0));
 		}
-		WriteLine("Loaded {0:N0} entries {1:N0}-{2:N0} in {3} seconds", entries.Count, min, max, watch.Elapsed.TotalSeconds);
+		WriteLine("Loaded {0:N0} entries {1:N0} seconds", entries.Count, watch.Elapsed.TotalSeconds);
 		entries.ToArray();
 	}
 }
@@ -144,9 +140,8 @@ def Pad(min, max, σ, r, n)
 	(min - offset, max + offset);
 }
 
-def iPath = @"..\get colors\data.txt";
+def iPath = @"..\get samples\samples.dat";
 def oPath = "coef.dat";
-def count = 10_000_000;
 def σ     = 5.0;
 def α     = 5;
 def r     = Sqrt(2.0);
@@ -157,4 +152,4 @@ def domain = Domain3D
 	, Pad(-108.0,  96.0, σ, r, 8)
 	);
 
-Save(oPath, Preprocess(Load(iPath, domain, count), σ, α, r, domain));
+Save(oPath, Preprocess(Load(iPath, domain), σ, α, r, domain));

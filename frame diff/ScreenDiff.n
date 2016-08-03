@@ -104,5 +104,5 @@ def Diff(dir1, dir2)
 
 Diff
 	( "..\\render\\animation"
-	, "..\\render\\animation - Copy"
+	, "..\\render\\animation reference"
 	);

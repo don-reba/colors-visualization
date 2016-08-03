@@ -1,21 +1,38 @@
-require 'HTTParty'
+require 'open-uri'
+require 'nokogiri'
 
-def GetColors(s, n)
-  HTTParty.get("http://www.colourlovers.com/api/colors?resultOffset=#{s}&numResults=#{n}").first[1]['color']
+def GetTotalResults
+  data = Nokogiri::XML open 'http://www.colourlovers.com/api/colors'
+  data.at_xpath('//colors/@totalResults').value.to_i
 end
 
-File.open('data.txt', 'a') do |file|
-  (0...6911482).step(100).each do |i|
-    begin
-      colors = GetColors(i, 100)
-      colors.each_index do |j|
-        c = colors[j]
-        file.puts "#{i+j}\t#{c['rank']}\t#{c['hex']}\t#{c['numVotes']}\t#{c['numComments']}\t#{c['numHearts']}"
+def GetColors(s, n)
+  begin
+    data = Nokogiri::XML open "http://www.colourlovers.com/api/colors?resultOffset=#{s}&numResults=#{n}"
+    data.xpath('//colors/color').map do |node|
+      ['rank', 'hex', 'numVotes', 'numComments', 'numHearts', 'dateCreated', 'title'].map do |member|
+        node.at_xpath(member).text.gsub(/\s+/, ' ')
       end
-      puts i
-    rescue Errno::ETIMEDOUT, Timeout::Error, EOFError
-      puts 'retry'
-      retry
     end
+  rescue Errno::ETIMEDOUT, Timeout::Error, EOFError
+    puts 'retry'
+    sleep 10
+    retry
   end
+end
+
+def DownloadColors(file, i, n)
+  puts i
+  colors = GetColors(i, n)
+  colors.each_index do |j|
+    file.puts ([ i+j ] + colors[j]).join "\t"
+  end
+end
+
+totalResults = GetTotalResults()
+raise "Too few results" unless totalResults > 0
+puts "downloading #{totalResults} results..."
+
+File.open('data.txt', 'w') do |file|
+  (0...totalResults).step(100).each { |i| DownloadColors(file, i, 100) }
 end
