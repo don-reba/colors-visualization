@@ -5,6 +5,7 @@
 #include <stdexcept>
 
 using namespace Eigen;
+using namespace std;
 
 BezierLookup::BezierLookup
 	( Vector2f p1
@@ -17,6 +18,9 @@ BezierLookup::BezierLookup
 	, min(min)
 	, max(max)
 {
+	if (min >= max)
+	throw runtime_error("BezierDirect: min >= max");
+
 	float epsilon(0.5f / size);
 	Bezier b(p1, p2);
 	for (size_t i(0); i != size; ++i)

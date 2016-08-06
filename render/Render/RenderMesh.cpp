@@ -83,11 +83,13 @@ namespace
 
 		float t(min);
 
-		// t is incremented 4 steps at a time for SIMD to be effective
-		while (t + 4.0f * step <= max && amount >= minAmount)
+		__m256 power = _mm256_set1_ps(step / unitWidth);
+
+		// t is incremented 8 steps at a time for SIMD to be effective
+		while (t + 8.0f * step <= max && amount >= minAmount)
 		{
-			__declspec(align(16)) Vector3f values[4];
-			for (size_t i = 0; i != 4; ++i)
+			__declspec(align(32)) Vector3f values[8];
+			for (size_t i = 0; i != 8; ++i)
 			{
 				values[i] = ray;
 				values[i] *= t;
@@ -95,14 +97,14 @@ namespace
 				t += step;
 			}
 
-			__declspec(align(16)) float samples[4];
-			for (size_t i(0); i != 4; ++i)
+			__declspec(align(32)) float samples[8];
+			for (size_t i(0); i != 8; ++i)
 				samples[i] = 1.0f - spline[model[values[i]]];
 
-			__declspec(align(16)) float transparencies[4];
-			_mm_store_ps(transparencies, powf4(_mm_load_ps(samples), _mm_set1_ps(step / unitWidth)));
+			__declspec(align(32)) float transparencies[8];
+			_mm256_store_ps(transparencies, powf8(_mm256_load_ps(samples), power));
 
-			for (size_t i = 0; i != 4; ++i)
+			for (size_t i = 0; i != 8; ++i)
 			{
 				transparencies[i] = std::min(transparencies[i], 1.0f);
 				values[i] *= amount * (1.0f - transparencies[i]);

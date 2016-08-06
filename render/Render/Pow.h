@@ -8,6 +8,7 @@
 #define EXP4_POLY_DEGREE 5
 #define EXP8_POLY_DEGREE 5
 #define LOG4_POLY_DEGREE 5
+#define LOG8_POLY_DEGREE 5
 
 // exp2
 
@@ -127,11 +128,50 @@ static inline __m128 log2f4(__m128 x)
 	return _mm_add_ps(p, e);
 }
 
+static inline __m256 log2f8(__m256 x)
+{
+	__m256i exp  = _mm256_set1_epi32(0x7F800000);
+	__m256i mant = _mm256_set1_epi32(0x007FFFFF);
+
+	__m256 one = _mm256_set1_ps(1.0f);
+
+	__m256i i = _mm256_castps_si256(x);
+
+	__m256 e = _mm256_cvtepi32_ps(_mm256_sub_epi32(_mm256_srli_epi32(_mm256_and_si256(i, exp), 23), _mm256_set1_epi32(127)));
+
+	__m256 m = _mm256_or_ps(_mm256_castsi256_ps(_mm256_and_si256(i, mant)), one);
+
+	__m256 p;
+
+	/* Minimax polynomial fit of log2(x)/(x - 1), for x in range [1, 2[ */
+#if   LOG8_POLY_DEGREE == 6
+	p = M256_POLY5( m, 3.1157899f, -3.3241990f, 2.5988452f, -1.2315303f,  3.1821337e-1f, -3.4436006e-2f);
+#elif LOG8_POLY_DEGREE == 5
+	p = M256_POLY4(m, 2.8882704548164776201f, -2.52074962577807006663f, 1.48116647521213171641f, -0.465725644288844778798f, 0.0596515482674574969533f);
+#elif LOG8_POLY_DEGREE == 4
+	p = M256_POLY3(m, 2.61761038894603480148f, -1.75647175389045657003f, 0.688243882994381274313f, -0.107254423828329604454f);
+#elif LOG8_POLY_DEGREE == 3
+	p = M256_POLY2(m, 2.28330284476918490682f, -1.04913055217340124191f, 0.204446009836232697516f);
+#else
+#error
+#endif
+
+	/* This effectively increases the polynomial degree by one, but ensures that log2(1) == 0*/
+	p = _mm256_mul_ps(p, _mm256_sub_ps(m, one));
+
+	return _mm256_add_ps(p, e);
+}
+
 // pow
 
 static inline __m128 powf4(__m128 x, __m128 y)
 {
 	return exp2f4(_mm_mul_ps(log2f4(x), y));
+}
+
+static inline __m256 powf8(__m256 x, __m256 y)
+{
+	return exp2f8(_mm256_mul_ps(log2f8(x), y));
 }
 
 // exp

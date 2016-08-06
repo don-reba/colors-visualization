@@ -1,11 +1,12 @@
 // REFERENCE: System.Drawing.dll
 // REFERENCE: ConvertColor.dll
-// PLATFORM: x86
+// PLATFORM: x64
 
 #define TRACE
 
 using ConvertColor;
 
+using Nemerle.Collections;
 using System.Collections.Generic;
 using System.Console;
 using System.Drawing;
@@ -16,54 +17,46 @@ using System.IO;
 using System.Threading;
 
 def lRange     = (   0.0, 100.0);
-def aRange     = ( -86.0,  99.0);
+def aRange     = ( -87.0,  99.0);
 def bRange     = (-108.0,  96.0);
 def cellSize   = 1.0f;
-def σ          = 1.0f;
-def maxEntries = 10_000_000;
+def σ          = 5.0f;
+
+def nx = (Floor((lRange[1] - lRange[0]) / cellSize) :> int) + 1;
+def ny = (Floor((aRange[1] - aRange[0]) / cellSize) :> int) + 1;
+def nz = (Floor((bRange[1] - bRange[0]) / cellSize) :> int) + 1;
 
 def Load(path)
 {
-	using (txt = File.OpenText(path))
+	using (reader = BinaryReader(File.OpenRead(path)))
 	{
 		WriteLine("Reading data...");
+		def watch = Stopwatch.StartNew();
 
-		// skip header
-		def header = txt.ReadLine();
-		Trace.Assert(header == "index\trank\thex\tvotes\tcomments\thearts", "header");
+		def count = reader.ReadInt32();
 
 		def entries = List();
-		for (mutable line = txt.ReadLine(); line != null && entries.Count < maxEntries; line = txt.ReadLine())
+		entries.Capacity = count;
+		repeat (count)
 		{
-			def parts = line.Split(array['\t']);
-			def color = Color.FromArgb(int.Parse(parts[2], NumberStyles.HexNumber));
-			def votes = int.Parse(parts[3]);
+			def r = reader.ReadDouble() / 255.0;
+			def g = reader.ReadDouble() / 255.0;
+			def b = reader.ReadDouble() / 255.0;
 
-			def (l, a, b) = color |> ColorToRgb |> RgbToXyz |> XyzToLab;
+			def (l, a, b) = (r, g, b) |> RgbToXyz |> XyzToLab;
 			def tx = (l - lRange[0]) / cellSize;
 			def ty = (a - aRange[0]) / cellSize;
 			def tz = (b - bRange[0]) / cellSize;
-			entries.Add(tx, ty, tz, votes);
-		}
-		WriteLine("Loaded {0} entries", entries.Count);
-		entries;
-	}
-}
+			Trace.Assert(tx >= 0 && tx < nx);
+			Trace.Assert(ty >= 0 && ty < ny);
+			Trace.Assert(tz >= 0 && tz < nz);
 
-/*
-def GenerateData()
-{
-	def MakeData(color)
-	{
-		def (l, a, b) = Color.FromArgb(color) |> ColorToRgb |> RgbToXyz |> XyzToLab;
-		def tx = (l - lRange[0]) / cellSize;
-		def ty = (a - aRange[0]) / cellSize;
-		def tz = (b - bRange[0]) / cellSize;
-		(tx, ty, tz, 1);
+			entries.Add(tx, ty, tz);
+		}
+		WriteLine("Loaded {0:N0} entries {1:N0} seconds", entries.Count, watch.Elapsed.TotalSeconds);
+		entries.ToArray();
 	}
-	[ 0xFDD75A, 0xFBA84C, 0xEA736B, 0xAB6B5B, 0xA1A362 ].Map(MakeData)
 }
-*/
 
 def CreateThreads(dataCount, threadCount, f)
 {
@@ -82,17 +75,15 @@ def CreateThreads(dataCount, threadCount, f)
 
 def Voxelize(data)
 {
-	def nx = (Floor((lRange[1] - lRange[0]) / cellSize) :> int) + 1;
-	def ny = (Floor((aRange[1] - aRange[0]) / cellSize) :> int) + 1;
-	def nz = (Floor((bRange[1] - bRange[0]) / cellSize) :> int) + 1;
-
 	WriteLine("Voxelizing {0}x{1}x{2} grid", nx, ny, nz);
 
 	def volume : array[double] = array(nx * ny * nz);
 
 	def VoxelizeRange(threadID, start, finish)
 	{
-		def scale = -0.5 / σ / σ;
+		def scale = -0.5 * cellSize * cellSize / σ / σ;
+
+		def n = Ceiling(3.0 * σ / cellSize) :> int;
 
 		def vol : array[double] = array(volume.Length);
 
@@ -104,42 +95,55 @@ def Voxelize(data)
 			{
 				def done    = i - start;
 				def outOf   = finish - start;
-				def percent = done * 100 / outOf;
-				WriteLine("thread {0} at {1} / {2} ({3}%)", threadID, done, outOf, percent);
+				def percent = done * 100.0 / outOf;
+				WriteLine("thread {0} at {1} / {2} ({3:F1}%)", threadID, done, outOf, percent);
 				watch.Restart();
 			}
 
-			def (tx, ty, tz, n) : double * double * double * int = data[i];
-			def n = n :> double;
-			for (mutable z = 0; z != nz; ++z)
+			def (tx, ty, tz) = data[i];
+
+			def cx = (tx : double) :> int;
+			def cy = (ty : double) :> int;
+			def cz = (tz : double) :> int;
+
+			def (minX, maxX) = (Max(0, cx - n), Min(cx + n, nx - 1));
+			def (minY, maxY) = (Max(0, cy - n), Min(cy + n, ny - 1));
+			def (minZ, maxZ) = (Max(0, cz - n), Min(cz + n, nz - 1));
+
+			for (mutable z = minZ; z <= maxZ; ++z)
+			for (mutable y = minY; y <= maxY; ++y)
+			for (mutable x = minX; x <= maxX; ++x)
 			{
-				def δzSq = tz - z;
-				def δzSq = δzSq * δzSq;
-				for (mutable y = 0; y != ny; ++y)
-				{
-					def δySq = ty - y;
-					def δySq = δySq * δySq;
-					for (mutable x = 0; x != nx; ++x)
-					{
-						def δxSq = tx - x;
-						def δxSq = δxSq * δxSq;
-						vol[x + nx * y  + nx * ny * z] += n * Exp(scale * (δxSq + δySq + δzSq));
-					}
-				}
+				def δx = tx - x - 0.5f;
+				def δy = ty - y - 0.5f;
+				def δz = tz - z - 0.5f;
+
+				vol[(z * ny + y) * nx + x] += Exp(scale * (δx * δx + δy * δy + δz * δz));
 			}
 		}
 		lock (volume)
 		{
-			for (mutable i = 0; i != volume.Length; ++i)
+			for (mutable i; i != volume.Length; ++i)
 				volume[i] += vol[i];
 		}
 	}
 
-	def threads = CreateThreads(data.Count, 3, VoxelizeRange);
+	def threads = CreateThreads(data.Length, 3, VoxelizeRange);
 	foreach (t in threads)
 		t.Start();
 	foreach (t in threads)
 		t.Join();
+
+	for (mutable i; i != volume.Length; ++i)
+		volume[i] *= Pow(σ * Sqrt(2.0 * PI), -3.0);
+
+	WriteLine
+		( "mean: {0:F2}; max: {1:F2}; sum: {2:N0}"
+		, volume.Fold(0.0, _ + _) / volume.Length
+		, volume.Fold(0.0, Max)
+		, volume.Fold(0.0, _ + _) * Pow(cellSize, 3.0)
+		);
+
 	(nx, ny, nz, volume);
 }
 
@@ -157,6 +161,5 @@ def Save((nx, ny, nz, volume), path)
 }
 
 def watch = Stopwatch.StartNew();
-Save(Voxelize(Load(@"..\get colors\data.txt")), "volume.dat");
-//Save(Voxelize(GenerateData()), "volume.dat");
+Save(Voxelize(Load(@"..\get samples\samples.dat")), "volume.dat");
 WriteLine("{0} seconds", watch.Elapsed.TotalSeconds);

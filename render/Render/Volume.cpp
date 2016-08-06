@@ -25,7 +25,7 @@ namespace
 	// lab ranges
 	//--------------------------------------
 	const float minX( 0.0f  ), maxX(100.0f);
-	const float minY(-86.0f ), maxY(99.0f );
+	const float minY(-87.0f ), maxY(99.0f );
 	const float minZ(-108.0f), maxZ(95.0f );
 	//--------------------------------------
 }
@@ -41,6 +41,10 @@ Volume::Volume(const char * path, Postprocess method)
 	Read(f, &Ny);
 	Read(f, &Nz);
 
+	xFactor = static_cast<float>(Nx) / (maxX - minX);
+	yFactor = static_cast<float>(Ny) / (maxY - minY);
+	zFactor = static_cast<float>(Nz) / (maxZ - minZ);
+
 	const size_t n(Nx * Ny * Nz);
 	vector<double> values(n);
 	f.read(reinterpret_cast<char*>(values.data()), n * sizeof(double));
@@ -52,12 +56,12 @@ Volume::Volume(const char * path, Postprocess method)
 	switch (method)
 	{
 	case PostprocessNone:
-		for (size_t i(0); i != n; ++i)
-			Values.push_back(static_cast<float>(values[i]));
+		for (double x : values)
+			Values.push_back(static_cast<float>(x));
 		break;
 	case PostprocessLog:
-		for (size_t i(0); i != n; ++i)
-			Values.push_back(log(static_cast<float>(values[i]) + 1.0f));
+		for (double x : values)
+			Values.push_back(log(static_cast<float>(x) + 1.0f));
 		break;
 	}
 }
@@ -77,5 +81,5 @@ float Volume::operator [] (const Vector3f & p) const
 	if (y < 0 || y >= Ny) return 0.0f;
 	if (z < 0 || z >= Nz) return 0.0f;
 
-	return Values[x + Nx * y + Nx * Ny * z];
+	return Values[(z * Ny + y) * Nx + x];
 }

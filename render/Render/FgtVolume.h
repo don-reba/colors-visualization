@@ -39,6 +39,8 @@ private:
 
 	Neighbors neighbors;
 
+	float normalizationFactor;
+
 public:
 
 	FgtVolume(const char * path);

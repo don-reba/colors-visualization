@@ -49,6 +49,8 @@ FgtVolume::FgtVolume(const char * path)
 		throw runtime_error("Inconsistent value count.");
 
 	neighbors = PrecomputeNeighbors(4);
+
+	normalizationFactor = pow(Sigma * sqrt(2.0f * (float)M_PI), -3.0f);
 }
 
 float FgtVolume::operator [] (const Vector3f & p) const
@@ -121,7 +123,7 @@ float FgtVolume::operator [] (const Vector3f & p) const
 	// add up the 8 partial sums
 	for (size_t i = 1; i != 7; ++i)
 		sumValues[0] += sumValues[i];
-	return sumValues[0];
+	return normalizationFactor * sumValues[0];
 }
 
 FgtVolume::Neighbors FgtVolume::PrecomputeNeighbors(int r) const

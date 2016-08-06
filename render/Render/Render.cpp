@@ -124,7 +124,7 @@ namespace
 		{
 			vector<Vector4f> buffer(res.w * res.h);
 
-			const Vector3f white(100.0f, 0.005f, -0.01f);
+			const Vector3f bgColor(90.0f, 0.005f, -0.01f);
 
 			for (;;)
 			{
@@ -155,7 +155,7 @@ namespace
 						);
 
 					// save
-					SaveBuffer(MakeAnimationFilename(projectRoot, frame).c_str(), res.w, res.h, buffer.data(), white);
+					SaveBuffer(MakeAnimationFilename(projectRoot, frame).c_str(), res.w, res.h, buffer.data(), bgColor);
 				}
 
 				rateIndicator.Reset();
@@ -179,23 +179,23 @@ int main()
 
 	const string projectRoot("C:\\Users\\Alexey\\Projects\\Colours visualization\\");
 
-	const bool hifi = true;
+	const bool hifi = false;
 
 	if (hifi)
 		Run
 			( projectRoot
 			, FgtVolume((projectRoot + "fgt\\coef.dat").c_str())
-			, BezierDirect({ 1.0f, 0.0f }, { 1.0f, 1.0f }, 500.0f, 4000.0f, 0.0001f)
-			, res720p
+			, BezierDirect({ 1.0f, 0.0f }, { 1.0f, 1.0f }, 1.0f, 10.0f, 0.0001f)
+			, res360p
 			, aa1x
 			);
 	else
 		Run
 			( projectRoot
 			, Volume((projectRoot + "voxelize\\volume.dat").c_str(), Volume::PostprocessNone)
-			, BezierLookup({ 0.1f, 0.0f }, { 0.0f, 1.0f }, 1 << 20, 0.0f, 2050.0f)
-			, res360p
-			, aa1x
+			, BezierLookup({ 1.0f, 0.0f }, { 1.0f, 1.0f }, 1 << 20, 1.0f, 10.0f)
+			, res720p
+			, aa4x
 			);
 
 	return 0;
