@@ -1,4 +1,4 @@
-#include "Animation.h"
+﻿#include "Animation.h"
 #include "BezierDirect.h"
 #include "BezierLookup.h"
 #include "FgtVolume.h"
@@ -110,11 +110,6 @@ namespace
 
 		vector<size_t> frames(frameCount);
 		iota(frames.rbegin(), frames.rend(), 0);
-		//vector<size_t> frames;
-		//frames.push_back(337);
-		//frames.push_back(172);
-		//frames.push_back(45);
-		//frames.push_back(0);
 
 		mutex frameMutex;
 
@@ -179,12 +174,12 @@ int main()
 
 	const string projectRoot("C:\\Users\\Alexey\\Projects\\Colours visualization\\");
 
-	const bool hifi = false;
+	const bool hifi = true;
 
 	if (hifi)
 		Run
 			( projectRoot
-			, FgtVolume((projectRoot + "fgt\\coef.dat").c_str())
+			, FgtVolume((projectRoot + "fgt\\coef s3.dat").c_str())
 			, BezierDirect({ 1.0f, 0.0f }, { 1.0f, 1.0f }, 1.0f, 10.0f, 0.0001f)
 			, res360p
 			, aa1x
@@ -192,7 +187,7 @@ int main()
 	else
 		Run
 			( projectRoot
-			, Volume((projectRoot + "voxelize\\volume.dat").c_str(), Volume::PostprocessNone)
+			, Volume((projectRoot + "voxelize\\volume s3.dat").c_str(), Volume::PostprocessNone)
 			, BezierLookup({ 1.0f, 0.0f }, { 1.0f, 1.0f }, 1 << 20, 1.0f, 10.0f)
 			, res720p
 			, aa4x

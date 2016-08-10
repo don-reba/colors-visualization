@@ -5,7 +5,6 @@
 #include <algorithm>
 #include <cassert>
 #include <fstream>
-#include <iostream>
 #include <stdexcept>
 
 using namespace Eigen;
@@ -48,15 +47,15 @@ FgtVolume::FgtVolume(const char * path)
 	if (valueCount != Count.x() * Count.y() * Count.z() * PD * 8)
 		throw runtime_error("Inconsistent value count.");
 
-	neighbors = PrecomputeNeighbors(4);
+	neighbors = PrecomputeNeighbors(5);
 
-	normalizationFactor = pow(Sigma * sqrt(2.0f * (float)M_PI), -3.0f);
+	normalizationFactor = pow(Sigma * sqrt((float)M_PI), -3.0f);
 }
 
 float FgtVolume::operator [] (const Vector3f & p) const
 {
 	Vector3f dpVector = (p - ClusterOrigin(p)) / Sigma;
-	int      ci       = CellIndex(p);
+	int      ci       = ClusterIndex(p);
 
 	__m256 dp[3] =
 		{ _mm256_set1_ps(dpVector.x())
@@ -74,15 +73,15 @@ float FgtVolume::operator [] (const Vector3f & p) const
 	for (int iOffset : neighbors.iOffsets)
 	{
 		// compute delta as dp - vOffset (prescaled by sigma)
-		__m256 deltas[3];
-		deltas[0] = _mm256_sub_ps(dp[0], _mm256_load_ps(pv)); pv += 8;
-		deltas[1] = _mm256_sub_ps(dp[1], _mm256_load_ps(pv)); pv += 8;
-		deltas[2] = _mm256_sub_ps(dp[2], _mm256_load_ps(pv)); pv += 8;
+		__m256 delta[3];
+		delta[0] = _mm256_sub_ps(dp[0], _mm256_load_ps(pv)); pv += 8; // x
+		delta[1] = _mm256_sub_ps(dp[1], _mm256_load_ps(pv)); pv += 8; // y
+		delta[2] = _mm256_sub_ps(dp[2], _mm256_load_ps(pv)); pv += 8; // z
 
 		// initialize the polynomial to exp(-delta^2)
-		__m256 dxx = _mm256_mul_ps(deltas[0], deltas[0]);
-		__m256 dyy = _mm256_mul_ps(deltas[1], deltas[1]);
-		__m256 dzz = _mm256_mul_ps(deltas[2], deltas[2]);
+		__m256 dxx = _mm256_mul_ps(delta[0], delta[0]);
+		__m256 dyy = _mm256_mul_ps(delta[1], delta[1]);
+		__m256 dzz = _mm256_mul_ps(delta[2], delta[2]);
 
 		__m256 norm = _mm256_xor_ps
 			( _mm256_add_ps(_mm256_add_ps(dxx, dyy), dzz)
@@ -102,7 +101,7 @@ float FgtVolume::operator [] (const Vector3f & p) const
 				int head = heads[i];
 				heads[i] = t;
 				for (int j = head; j != tail; ++j, ++t)
-					polynomial[t] = _mm256_mul_ps(deltas[i], polynomial[j]);
+					polynomial[t] = _mm256_mul_ps(delta[i], polynomial[j]);
 			}
 		}
 
@@ -112,6 +111,7 @@ float FgtVolume::operator [] (const Vector3f & p) const
 		{
 			__m256 coef = _mm256_load_ps(pCoef);
 			sum = _mm256_fmadd_ps(coef, term, sum);
+
 			pCoef += 8;
 		}
 	}
@@ -121,8 +121,10 @@ float FgtVolume::operator [] (const Vector3f & p) const
 	_mm256_store_ps(sumValues, sum);
 
 	// add up the 8 partial sums
-	for (size_t i = 1; i != 7; ++i)
+	for (size_t i = 1; i != 8; ++i)
 		sumValues[0] += sumValues[i];
+
+	// normalize kernel to unit integral
 	return normalizationFactor * sumValues[0];
 }
 
@@ -172,7 +174,7 @@ Vector3f FgtVolume::ClusterOrigin(const Eigen::Vector3f & p) const
 		) * clusterSide + DomainMin;
 }
 
-int FgtVolume::CellIndex(const Eigen::Vector3f & p) const
+int FgtVolume::ClusterIndex(const Eigen::Vector3f & p) const
 {
 	const float clusterSide = 2.0f * Side;
 	Vector3i k = ((p - DomainMin) / clusterSide).cast<int>();

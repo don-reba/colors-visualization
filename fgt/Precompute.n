@@ -141,8 +141,8 @@ def Pad(min, max, σ, r, n)
 }
 
 def iPath = @"..\get samples\samples.dat";
-def oPath = "coef.dat";
-def σ     = 5.0;
+def oPath = "coef s3.dat";
+def σ     = 3.0 * Sqrt(2.0); // Sqrt(2) to make a proper Gaussian kernel
 def α     = 5;
 def r     = Sqrt(2.0);
 

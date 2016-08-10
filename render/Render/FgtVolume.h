@@ -55,5 +55,5 @@ public:
 
 	Eigen::Vector3f ClusterOrigin(const Eigen::Vector3f & p) const;
 
-	int CellIndex(const Eigen::Vector3f & p) const;
+	int ClusterIndex(const Eigen::Vector3f & p) const;
 };

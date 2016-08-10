@@ -20,7 +20,7 @@ def lRange     = (   0.0, 100.0);
 def aRange     = ( -87.0,  99.0);
 def bRange     = (-108.0,  96.0);
 def cellSize   = 1.0f;
-def σ          = 5.0f;
+def σ          = 3.0f;
 
 def nx = (Floor((lRange[1] - lRange[0]) / cellSize) :> int) + 1;
 def ny = (Floor((aRange[1] - aRange[0]) / cellSize) :> int) + 1;
@@ -83,7 +83,7 @@ def Voxelize(data)
 	{
 		def scale = -0.5 * cellSize * cellSize / σ / σ;
 
-		def n = Ceiling(3.0 * σ / cellSize) :> int;
+		def n = Ceiling(4.0 * σ / cellSize) :> int;
 
 		def vol : array[double] = array(volume.Length);
 
@@ -100,11 +100,11 @@ def Voxelize(data)
 				watch.Restart();
 			}
 
-			def (tx, ty, tz) = data[i];
+			def (xs, ys, zs) = data[i];
 
-			def cx = (tx : double) :> int;
-			def cy = (ty : double) :> int;
-			def cz = (tz : double) :> int;
+			def cx = (xs : double) :> int;
+			def cy = (ys : double) :> int;
+			def cz = (zs : double) :> int;
 
 			def (minX, maxX) = (Max(0, cx - n), Min(cx + n, nx - 1));
 			def (minY, maxY) = (Max(0, cy - n), Min(cy + n, ny - 1));
@@ -114,9 +114,9 @@ def Voxelize(data)
 			for (mutable y = minY; y <= maxY; ++y)
 			for (mutable x = minX; x <= maxX; ++x)
 			{
-				def δx = tx - x - 0.5f;
-				def δy = ty - y - 0.5f;
-				def δz = tz - z - 0.5f;
+				def δx = xs - x - 0.5f;
+				def δy = ys - y - 0.5f;
+				def δz = zs - z - 0.5f;
 
 				vol[(z * ny + y) * nx + x] += Exp(scale * (δx * δx + δy * δy + δz * δz));
 			}
@@ -161,5 +161,5 @@ def Save((nx, ny, nz, volume), path)
 }
 
 def watch = Stopwatch.StartNew();
-Save(Voxelize(Load(@"..\get samples\samples.dat")), "volume.dat");
+Save(Voxelize(Load(@"..\get samples\samples.dat")), "volume s3.dat");
 WriteLine("{0} seconds", watch.Elapsed.TotalSeconds);
