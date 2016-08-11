@@ -17,6 +17,7 @@ BezierLookup::BezierLookup
 	: t(size + 1)
 	, min(min)
 	, max(max)
+	, factor((float)size / (max - min))
 {
 	if (min >= max)
 	throw runtime_error("BezierDirect: min >= max");
@@ -32,11 +33,6 @@ float BezierLookup::operator[] (float x) const
 {
 	if (x < min) return 0.0f;
 	if (x > max) return 1.0f;
-	x = (x - min) / (max - min);
-	return t[static_cast<size_t>(x * (t.size() - 1))];
-}
-
-size_t BezierLookup::size() const
-{
-	return t.size() - 1;
+	x = factor * (x - min);
+	return t[static_cast<size_t>(x)];
 }

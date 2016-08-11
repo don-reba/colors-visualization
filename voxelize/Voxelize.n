@@ -16,76 +16,82 @@ using System.Math;
 using System.IO;
 using System.Threading;
 
-def lRange     = (   0.0, 100.0);
-def aRange     = ( -87.0,  99.0);
-def bRange     = (-108.0,  96.0);
-def cellSize   = 1.0f;
-def σ          = 3.0f;
+[ Record ]
+class Domain
+{
+	public X : double * double;
+	public Y : double * double;
+	public Z : double * double;
+}
 
-def nx = (Floor((lRange[1] - lRange[0]) / cellSize) :> int) + 1;
-def ny = (Floor((aRange[1] - aRange[0]) / cellSize) :> int) + 1;
-def nz = (Floor((bRange[1] - bRange[0]) / cellSize) :> int) + 1;
-
-def Load(path)
+def LoadPoints(path)
 {
 	using (reader = BinaryReader(File.OpenRead(path)))
 	{
-		WriteLine("Reading data...");
-		def watch = Stopwatch.StartNew();
-
-		def count = reader.ReadInt32();
-
-		def entries = List();
-		entries.Capacity = count;
-		repeat (count)
+		WriteLine("reading data...");
+		def points = array(reader.ReadInt32());
+		for (mutable i; i != points.Length; ++i)
 		{
-			def r = reader.ReadDouble() / 255.0;
-			def g = reader.ReadDouble() / 255.0;
-			def b = reader.ReadDouble() / 255.0;
-
-			def (l, a, b) = (r, g, b) |> RgbToXyz |> XyzToLab;
-			def tx = (l - lRange[0]) / cellSize;
-			def ty = (a - aRange[0]) / cellSize;
-			def tz = (b - bRange[0]) / cellSize;
-			Trace.Assert(tx >= 0 && tx < nx);
-			Trace.Assert(ty >= 0 && ty < ny);
-			Trace.Assert(tz >= 0 && tz < nz);
-
-			entries.Add(tx, ty, tz);
+			points[i] =
+				( reader.ReadDouble()
+				, reader.ReadDouble()
+				, reader.ReadDouble()
+				);
 		}
-		WriteLine("Loaded {0:N0} entries {1:N0} seconds", entries.Count, watch.Elapsed.TotalSeconds);
-		entries.ToArray();
+		WriteLine("{0:N0} points", points.Length);
+		points;
 	}
 }
 
-def CreateThreads(dataCount, threadCount, f)
+def RgbToLab(points, domain)
 {
-	def threads = array(threadCount);
-	mutable prev = 0;
-	for (mutable i = 0; i != threadCount; ++i)
+	def CheckRange(x, (min, max))
 	{
-		def fi    = i;
-		def begin = prev;
-		def end   = dataCount * (i + 1) / threadCount;
-		threads[i] = Thread(() => f(fi, begin, end));
-		prev = end;
+		when (x < min || x > max)
+			throw System.ArgumentOutOfRangeException("Point not in voxel volume.");
 	}
-	threads;
+	def MapPoint(r, g, b)
+	{
+		def (x, y, z) = (r / 255.0, g / 255.0, b / 255.0) |> RgbToXyz |> XyzToLab;
+		CheckRange(x, domain.X);
+		CheckRange(y, domain.Y);
+		CheckRange(z, domain.Z);
+		(x, y, z);
+	}
+	points.Map(MapPoint);
 }
 
-def Voxelize(data)
+def Voxelize(points, domain, σ, cellSize, n)
 {
-	WriteLine("Voxelizing {0}x{1}x{2} grid", nx, ny, nz);
+	def CreateThreads(dataCount, threadCount, f)
+	{
+		def threads = array(threadCount);
+		mutable prev = 0;
+		for (mutable i = 0; i != threadCount; ++i)
+		{
+			def fi    = i;
+			def begin = prev;
+			def end   = dataCount * (i + 1) / threadCount;
+			threads[i] = Thread(() => f(fi, begin, end));
+			prev = end;
+		}
+		threads;
+	}
+	def N(min, max)
+	{
+		Ceiling((max - min) / cellSize) :> int;
+	}
 
-	def volume : array[double] = array(nx * ny * nz);
+	def (nx, ny, nz) = (N(domain.X), N(domain.Y), N(domain.Z));
+	def grid : array[double] = array(nx * ny * nz);
+
+	def scale = -0.5 / σ / σ;
+	def n = Ceiling(n * σ) :> int;
 
 	def VoxelizeRange(threadID, start, finish)
 	{
-		def scale = -0.5 * cellSize * cellSize / σ / σ;
 
-		def n = Ceiling(4.0 * σ / cellSize) :> int;
-
-		def vol : array[double] = array(volume.Length);
+		def subrid : array[double] = array(grid.Length);
 
 		def watch = Stopwatch.StartNew();
 
@@ -100,11 +106,14 @@ def Voxelize(data)
 				watch.Restart();
 			}
 
-			def (xs, ys, zs) = data[i];
+			def (xs, ys, zs) = points[i];
+			def xs = xs - domain.X[0];
+			def ys = ys - domain.Y[0];
+			def zs = zs - domain.Z[0];
 
-			def cx = (xs : double) :> int;
-			def cy = (ys : double) :> int;
-			def cz = (zs : double) :> int;
+			def cx = (xs / cellSize + 0.5) :> int;
+			def cy = (ys / cellSize + 0.5) :> int;
+			def cz = (zs / cellSize + 0.5) :> int;
 
 			def (minX, maxX) = (Max(0, cx - n), Min(cx + n, nx - 1));
 			def (minY, maxY) = (Max(0, cy - n), Min(cy + n, ny - 1));
@@ -114,52 +123,78 @@ def Voxelize(data)
 			for (mutable y = minY; y <= maxY; ++y)
 			for (mutable x = minX; x <= maxX; ++x)
 			{
-				def δx = xs - x - 0.5f;
-				def δy = ys - y - 0.5f;
-				def δz = zs - z - 0.5f;
+				def δx = xs - cellSize * (x + 0.5);
+				def δy = ys - cellSize * (y + 0.5);
+				def δz = zs - cellSize * (z + 0.5);
 
-				vol[(z * ny + y) * nx + x] += Exp(scale * (δx * δx + δy * δy + δz * δz));
+				subrid[(z * ny + y) * nx + x] += Exp(scale * (δx * δx + δy * δy + δz * δz));
 			}
 		}
-		lock (volume)
+		lock (grid)
 		{
-			for (mutable i; i != volume.Length; ++i)
-				volume[i] += vol[i];
+			for (mutable i; i != grid.Length; ++i)
+				grid[i] += subrid[i];
 		}
 	}
 
-	def threads = CreateThreads(data.Length, 3, VoxelizeRange);
+	WriteLine("voxelizing over a {0}x{1}x{2} grid...", nx, ny, nz);
+
+	def threads = CreateThreads(points.Length, 3, VoxelizeRange);
 	foreach (t in threads)
 		t.Start();
 	foreach (t in threads)
 		t.Join();
 
-	for (mutable i; i != volume.Length; ++i)
-		volume[i] *= Pow(σ * Sqrt(2.0 * PI), -3.0);
+	for (mutable i; i != grid.Length; ++i)
+		grid[i] *= Pow(σ * Sqrt(2.0 * PI), -3.0);
 
-	WriteLine
-		( "mean: {0:F2}; max: {1:F2}; sum: {2:N0}"
-		, volume.Fold(0.0, _ + _) / volume.Length
-		, volume.Fold(0.0, Max)
-		, volume.Fold(0.0, _ + _) * Pow(cellSize, 3.0)
-		);
-
-	(nx, ny, nz, volume);
+	(grid, (nx, ny, nz))
 }
 
-def Save((nx, ny, nz, volume), path)
+def AnalyzeVolume((grid : array[double], _), cellSize)
+{
+	WriteLine
+		( "mean: {0:F2}; max: {1:F2}; sum: {2:N0}"
+		, grid.Fold(0.0, _ + _) / grid.Length
+		, grid.Fold(0.0, Max)
+		, grid.Fold(0.0, _ + _) * Pow(cellSize, 3.0)
+		);
+}
+
+def SaveVolume(path, (grid, (nx, ny, nz)), domain, cellSize)
 {
 	WriteLine("Saving...");
 	using (w = BinaryWriter(File.Create(path)))
 	{
-		w.Write(nx);
-		w.Write(ny);
-		w.Write(nz);
-		for (mutable i = 0; i != volume.Length; ++i)
-			w.Write(volume[i]);
+		w.Write(cellSize    :> float);
+		w.Write(nx          :  int);
+		w.Write(ny          :  int);
+		w.Write(nz          :  int);
+		w.Write(domain.X[0] :> float);
+		w.Write(domain.Y[0] :> float);
+		w.Write(domain.Z[0] :> float);
+		for (mutable i = 0; i != grid.Length; ++i)
+			w.Write(grid[i] :> float);
 	}
 }
 
+def iPath    = @"..\get samples\samples.dat";
+def oPath    = "volume s3.dat";
+def cellSize = 1.0;
+def σ        = 3.0;
+def n        = 4.0;
+
+def domain = Domain
+	( (   0.0, 100.0)
+	, ( -87.0,  99.0)
+	, (-108.0,  95.0)
+	);
+
 def watch = Stopwatch.StartNew();
-Save(Voxelize(Load(@"..\get samples\samples.dat")), "volume s3.dat");
+
+def points = RgbToLab(LoadPoints(iPath), domain);
+def volume = Voxelize(points, domain, σ, cellSize, n);
+AnalyzeVolume(volume, cellSize);
+SaveVolume(oPath, volume, domain, cellSize);
+
 WriteLine("{0} seconds", watch.Elapsed.TotalSeconds);

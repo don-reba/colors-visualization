@@ -3,36 +3,26 @@
 #include "IModel.h"
 
 #include <vector>
+#include <cstdint>
 
 #include <Eigen/Dense>
 
 class Volume : public IModel
 {
-public:
-
-	enum Postprocess
-	{
-		PostprocessLog,
-		PostprocessNone
-	};
-
-public:
-
-	int Nx;
-	int Ny;
-	int Nz;
-
-	std::vector<float> Values;
-
 private:
 
-	float xFactor;
-	float yFactor;
-	float zFactor;
+	int32_t nx;
+	int32_t ny;
+	int32_t nz;
+
+	Eigen::Vector3f offset;
+	float           factor;
+
+	std::vector<float> values;
 
 public:
 
-	Volume(const char * path, Postprocess method);
+	Volume(const char * path);
 
 	float operator [] (const Eigen::Vector3f & lab) const;
 };

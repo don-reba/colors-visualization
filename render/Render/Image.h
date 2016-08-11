@@ -4,8 +4,8 @@
 
 void SaveBuffer
 	( const char            * path
-	, size_t                  width
-	, size_t                  height
+	, unsigned int            width
+	, unsigned int            height
 	, const Eigen::Vector4f * buffer
 	, Eigen::Vector3f         bgColor
 	);

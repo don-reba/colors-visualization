@@ -20,12 +20,11 @@ public:
 
 	float operator[] (float x) const;
 
-	size_t size() const;
-
 private:
 
 	float min;
 	float max;
+	float factor;
 
 	std::vector<float> t;
 };

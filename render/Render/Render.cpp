@@ -150,7 +150,13 @@ namespace
 						);
 
 					// save
-					SaveBuffer(MakeAnimationFilename(projectRoot, frame).c_str(), res.w, res.h, buffer.data(), bgColor);
+					SaveBuffer
+						( MakeAnimationFilename(projectRoot, frame).c_str()
+						, static_cast<unsigned int>(res.w)
+						, static_cast<unsigned int>(res.h)
+						, buffer.data()
+						, bgColor
+						);
 				}
 
 				rateIndicator.Reset();
@@ -174,23 +180,23 @@ int main()
 
 	const string projectRoot("C:\\Users\\Alexey\\Projects\\Colours visualization\\");
 
-	const bool hifi = true;
+	const bool hifi = false;
 
 	if (hifi)
 		Run
 			( projectRoot
 			, FgtVolume((projectRoot + "fgt\\coef s3.dat").c_str())
-			, BezierDirect({ 1.0f, 0.0f }, { 1.0f, 1.0f }, 1.0f, 10.0f, 0.0001f)
-			, res360p
+			, BezierDirect({ 0.8f, 0.0f }, { 1.0f, 1.0f }, 0.2f, 8.0f, 0.0001f)
+			, res1080p
 			, aa1x
 			);
 	else
 		Run
 			( projectRoot
-			, Volume((projectRoot + "voxelize\\volume s3.dat").c_str(), Volume::PostprocessNone)
-			, BezierLookup({ 1.0f, 0.0f }, { 1.0f, 1.0f }, 1 << 20, 1.0f, 10.0f)
-			, res720p
-			, aa4x
+			, Volume((projectRoot + "voxelize\\volume s3.dat").c_str())
+			, BezierLookup({ 0.8f, 0.0f }, { 1.0f, 1.0f }, 1 << 10, 0.2f, 8.0f)
+			, res1080p
+			, aa1x
 			);
 
 	return 0;

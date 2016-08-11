@@ -1,7 +1,6 @@
 #pragma once
 
-#include <emmintrin.h>
-#include <immintrin.h>
+#include <immintrin.h> // AVX
 
 // adapted from http://jrfonseca.blogspot.com.es/2008/09/fast-sse2-pow-tables-or-polynomials.html
 

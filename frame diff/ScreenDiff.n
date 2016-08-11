@@ -82,10 +82,11 @@ def Diff(dir1, dir2)
 
 				when (stat.Mean > 0.0)
 				{
+					def pct = stat.Count * 100 / (bmp1.Width * bmp1.Height);
 					WriteLine
-						( "{0}: n {1:N0} max {2:F2}; mean {3:F2}({4:F2})"
+						( "{0}: n {1:N0}({2}%) max {3:F2}; mean {4:F2}({5:F2})"
 						, file
-						, stat.Count, max, stat.Mean, stat.StdDev
+						, stat.Count, pct, max, stat.Mean, stat.StdDev
 						);
 				}
 			}

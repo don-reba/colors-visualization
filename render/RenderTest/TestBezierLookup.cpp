@@ -20,8 +20,6 @@ BOOST_AUTO_TEST_CASE(BezierLookup_Range)
 	{
 		BezierLookup spline({0.93f, 0.55f}, {0.25f, 0.79f}, size, 0.0f, 1.0f);
 
-		BOOST_CHECK_EQUAL(spline.size(), size);
-
 		BOOST_CHECK_EQUAL(spline[0.0f], 0.0f);
 		BOOST_CHECK_EQUAL(spline[1.0f], 1.0f);
 
