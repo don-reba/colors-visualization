@@ -70,7 +70,7 @@ namespace
 		ostringstream msg;
 		msg.setf(ios::fixed, ios::floatfield);
 
-		msg << "frame " << frameIndex << " out of " << frameCount << '\n';
+		msg << "frame " << (frameIndex + 1) << " out of " << frameCount << '\n';
 
 		PrintProfilerNode(msg, 0, profiler.current);
 
@@ -82,6 +82,13 @@ namespace
 		ostringstream s;
 		s << root << "render\\animation\\" << i << ".png";
 		return s.str();
+	}
+
+	vector<size_t> GetFrames(size_t frameCount)
+	{
+		vector<size_t> frames(frameCount);
+		iota(frames.rbegin(), frames.rend(), 0);
+		return frames;
 	}
 
 	void Run
@@ -106,10 +113,7 @@ namespace
 		const Vector3f up  (  0.0f, 0.0f, 1.0f);
 		const RotationAnimation animation(eye, at);
 
-		const size_t frameCount(360);
-
-		vector<size_t> frames(frameCount);
-		iota(frames.rbegin(), frames.rend(), 0);
+		vector<size_t> frames = GetFrames(360);
 
 		mutex frameMutex;
 
@@ -140,7 +144,7 @@ namespace
 					fill(buffer.begin(), buffer.end(), Vector4f::Zero());
 
 					// set up the camera
-					const Matrix4f camera(LookAt(animation.Eye(frame, frameCount), at, up));
+					const Matrix4f camera(LookAt(animation.Eye(frame, frames.size()), at, up));
 
 					// render
 					ProjectMesh(camera, projection, res, buffer.data(), mesh);
@@ -160,11 +164,11 @@ namespace
 				}
 
 				rateIndicator.Reset();
-				PrintFrameInfo(frame, frameCount, profiler);
+				PrintFrameInfo(frame, frames.size(), profiler);
 			}
 		};
 
-		array<thread, 4> threads;
+		array<thread, 3> threads;
 		for (auto & t : threads)
 			t = thread(ProcessFrame);
 		for (auto & t : threads)
@@ -180,14 +184,14 @@ int main()
 
 	const string projectRoot("C:\\Users\\Alexey\\Projects\\Colours visualization\\");
 
-	const bool hifi = false;
+	const bool hifi = true;
 
 	if (hifi)
 		Run
 			( projectRoot
 			, FgtVolume((projectRoot + "fgt\\coef s3.dat").c_str())
 			, BezierDirect({ 0.8f, 0.0f }, { 1.0f, 1.0f }, 0.2f, 8.0f, 0.0001f)
-			, res1080p
+			, res720p
 			, aa1x
 			);
 	else

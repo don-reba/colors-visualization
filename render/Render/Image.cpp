@@ -15,7 +15,8 @@ namespace
 	{
 		if (x <= 0.0f) return 0x00;
 		if (x >= 1.0f) return 0xFF;
-		return static_cast<BYTE>(x * 255.0f);
+		// round to nearest
+		return static_cast<BYTE>(x * 255.0f + 0.5f);
 	}
 }
 
@@ -32,15 +33,18 @@ void SaveBuffer
 	for (unsigned int y = 0; y != height; ++y)
 	{
 		BYTE * scanline(img.getScanLine(y));
-		for (size_t x = 0; x !=  width; ++x)
+		for (size_t x = 0; x != width; ++x)
 		{
 			const Vector4f & pxl = *buffer++;
-			Vector3f fgColor(pxl.x(), pxl.y(), pxl.z());
-			Vector3f rgb(LabToRgb(pxl.w() * fgColor + (1.0f - pxl.w()) * bgColor));
+
+			const Vector3f fgColor(pxl.x(), pxl.y(), pxl.z());
+			const Vector3f lab(bgColor + pxl.w() * (fgColor - bgColor));
+			const Vector3f rgb(LabToRgb(lab));
+
 			*scanline++ = FloatToByteChannel(rgb(2));
 			*scanline++ = FloatToByteChannel(rgb(1));
 			*scanline++ = FloatToByteChannel(rgb(0));
-			*scanline++ = FloatToByteChannel(1.0f);
+			*scanline++ = 0xFF;
 		}
 	}
 	img.save(path);
