@@ -144,7 +144,7 @@ namespace
 					fill(buffer.begin(), buffer.end(), Vector4f::Zero());
 
 					// set up the camera
-					const Matrix4f camera(LookAt(animation.Eye(frame, frames.size()), at, up));
+					const Matrix4f camera(LookAt(animation.Eye(frame, frameCount), at, up));
 
 					// render
 					ProjectMesh(camera, projection, res, buffer.data(), mesh);

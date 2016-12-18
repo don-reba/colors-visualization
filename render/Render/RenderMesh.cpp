@@ -57,6 +57,8 @@ namespace
 	{
 		while (min < max && !::IsValidLab(offset + min * ray))
 			min += step;
+		if (min < max)
+			max = min + step * ::floorf((max - min) / step);
 		while (min < max && !::IsValidLab(offset + max * ray))
 			max -= step;
 	}
@@ -182,8 +184,6 @@ void RenderMesh
 		pxl = Vector4f::Zero();
 
 		// send a ray for every subsample, average the results
-		float subsampleCount = 0.0f;
-
 		for (auto & subsample : aamask)
 		{
 			Vector3f subpixel  = Vector3f(x + subsample.dx, y + subsample.dy, 1.0f);
@@ -203,8 +203,6 @@ void RenderMesh
 			if (min >= max)
 				continue;
 
-			subsampleCount += 1.0f;
-
 			Integrate(model, offset, ray, stepLength, min, max, spline, pxl);
 			rateIndicator.Increment();
 		}
@@ -212,10 +210,10 @@ void RenderMesh
 		// rescale the colour
 		if (pxl.w() > 0.0f)
 		{
-			pxl /= subsampleCount;
 			pxl.x() /= pxl.w();
 			pxl.y() /= pxl.w();
 			pxl.z() /= pxl.w();
+			pxl.w() /= aamask.size();
 		}
 		else
 		{
