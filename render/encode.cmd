@@ -18,12 +18,12 @@ if exist "%file%" (
 	rem  youtube 60fps: 7.5  12    24    53-68
 	rem  vimeo:         5-10 10-20 20-30 30-60
 
-	if !height!==2160 set bitrate=60
-	if !height!==1440 set bitrate=30
-	if !height!==1080 set bitrate=20
-	if !height!==720  set bitrate=10
-	if !height!==480  set bitrate=5
-	if !height!==360  set bitrate=5
+	if !height!==2160 set bitrate=60m
+	if !height!==1440 set bitrate=30m
+	if !height!==1080 set bitrate=20m
+	if !height!==720  set bitrate=10m
+	if !height!==480  set bitrate=5m
+	if !height!==360  set bitrate=5m
 
 	ffmpeg                       ^
 		-r 60                ^

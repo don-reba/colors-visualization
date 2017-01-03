@@ -90,7 +90,6 @@ def Voxelize(points, domain, σ, cellSize, n)
 
 	def VoxelizeRange(threadID, start, finish)
 	{
-
 		def subrid : array[double] = array(grid.Length);
 
 		def watch = Stopwatch.StartNew();

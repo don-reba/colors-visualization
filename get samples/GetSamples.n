@@ -78,10 +78,8 @@ def Jitter(entries)
 	samples.ToArray();
 }
 
-def Save(path, samples)
+def SaveBin(path, samples)
 {
-	WriteLine("Saving {0:N0} samples...", samples.Length);
-
 	using (w = BinaryWriter(File.Create(path)))
 	{
 		w.Write(samples.Length : int);
@@ -92,8 +90,22 @@ def Save(path, samples)
 			w.Write(b : double);
 		}
 	}
-
 	WriteLine("'{0}'", path);
 }
 
-Save("samples.dat", Jitter(Load(@"..\get colors\data.txt")));
+def SaveTxt(path, samples)
+{
+	using (w = File.CreateText(path))
+	{
+		foreach ((r, g, b) in samples)
+			w.WriteLine("{0}\t{1}\t{2}", r, g, b);
+	}
+	WriteLine("'{0}'", path);
+}
+
+def samples = Jitter(Load(@"..\get colors\data.txt"));
+
+WriteLine("Saving {0:N0} samples...", samples.Length);
+
+SaveBin("samples.dat", samples);
+SaveTxt("samples.txt", samples);

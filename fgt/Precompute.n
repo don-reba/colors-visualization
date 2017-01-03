@@ -46,37 +46,6 @@ def PadToMultiple(coef1, (nx1, ny1, nz1), pd, k)
 	}
 }
 
-def Collate(coef1, (nx, ny, nz), pd, k)
-{
-	WriteLine("Collating...");
-
-	unless (nx % k == 0 && ny % k == 0 && nz % k == 0)
-		throw Exception("Size not a multiple of k.");
-
-	def coef2 : array[double] = array(coef1.Length);
-	mutable i2;
-
-	for (mutable z; z != nz; z += k)
-	for (mutable y; y != ny; y += k)
-	for (mutable x; x != nx; x += k)
-	{
-		for (mutable c; c != pd; ++c)
-		{
-			for (mutable kz; kz != k; ++kz)
-			for (mutable ky; ky != k; ++ky)
-			for (mutable kx; kx != k; ++kx)
-			{
-				def (xkx, yky, zkz) = (x + kx, y + ky, z + kz);
-				coef2[i2] = coef1[((zkz * ny + yky) * nx + xkx) * pd + c];
-				++i2;
-			}
-		}
-	}
-	unless (i2 == coef2.Length)
-		throw Exception("Collation error.");
-	(coef2, (nx / k, ny / k, nz / k))
-}
-
 def Load(path, domain)
 {
 	using (reader = BinaryReader(File.OpenRead(path)))
@@ -112,7 +81,6 @@ def Save(path, a)
 	WriteLine("Saving {0}x{1}x{2}x{3} ({4:N0} bytes)...", a.n[0], a.n[1], a.n[2], a.pd, mem);
 
 	def (coef, n) = PadToMultiple(a.coef, a.n, a.pd, 2);
-	def (coef, n) = Collate(coef, n, a.pd, 2);
 
 	using (w = BinaryWriter(File.Create(path)))
 	{
@@ -141,10 +109,10 @@ def Pad(min, max, σ, r, n)
 }
 
 def iPath = @"..\get samples\samples.dat";
-def oPath = "coef s3.dat";
+def oPath = "coef s3 a6 2.0.dat";
 def σ     = 3.0 * Sqrt(2.0); // Sqrt(2) to make a proper Gaussian kernel
-def α     = 5;
-def r     = Sqrt(2.0);
+def α     = 6;
+def r     = 2.0;
 
 def domain = Domain3D
 	( Pad(   0.0, 100.0, σ, r, 8)

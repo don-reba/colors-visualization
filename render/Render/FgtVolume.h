@@ -17,14 +17,6 @@ private:
 
 public:
 
-	struct Neighbors
-	{
-		aligned_vector_f32 vOffsets;
-		std::vector<int>   iOffsets;
-	};
-
-public:
-
 	float Sigma;
 	int   Alpha;
 	int   PD;
@@ -37,8 +29,6 @@ public:
 
 private:
 
-	Neighbors neighbors;
-
 	float normalizationFactor;
 
 public:
@@ -46,14 +36,4 @@ public:
 	FgtVolume(const char * path);
 
 	float operator [] (const Eigen::Vector3f & lab) const;
-
-private:
-
-	Neighbors PrecomputeNeighbors(int r) const;
-
-public:
-
-	Eigen::Vector3f ClusterOrigin(const Eigen::Vector3f & p) const;
-
-	int ClusterIndex(const Eigen::Vector3f & p) const;
 };
