@@ -36,3 +36,15 @@ float BezierLookup::operator[] (float x) const
 	x = factor * (x - min);
 	return t[static_cast<size_t>(x)];
 }
+
+__m256 BezierLookup::operator[] (__m256 x) const
+{
+	__declspec(align(32)) float values[8];
+	_mm256_store_ps(values, x);
+
+	__declspec(align(32)) float result[8];
+	for (size_t i = 0; i != 8; ++i)
+		result[i] = (*this)[values[i]];
+
+	return _mm256_load_ps(result);
+}

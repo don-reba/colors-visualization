@@ -6,7 +6,7 @@
 
 #include <boost/align/aligned_allocator.hpp>
 
-#include <Eigen\Dense>
+#include <Eigen/Dense>
 
 class FgtVolume : public IModel
 {
@@ -36,4 +36,6 @@ public:
 	FgtVolume(const char * path);
 
 	float operator [] (const Eigen::Vector3f & lab) const;
+
+	__m256 operator [] (const Vector3f256 & lab) const;
 };

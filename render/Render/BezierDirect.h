@@ -18,6 +18,8 @@ public:
 
 	float operator[] (float x) const;
 
+	__m256 operator[] (__m256 x) const;
+
 private:
 
 	Bezier b;

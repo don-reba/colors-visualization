@@ -90,27 +90,37 @@ namespace
 		// t is incremented 8 steps at a time for SIMD to be effective
 		while (t + 8.0f * step <= max && amount >= minAmount)
 		{
-			__declspec(align(32)) Vector3f values[8];
+			// get the current coordinate
+			__declspec(align(32)) float x[8];
+			__declspec(align(32)) float y[8];
+			__declspec(align(32)) float z[8];
 			for (size_t i = 0; i != 8; ++i)
 			{
-				values[i] = ray;
-				values[i] *= t;
-				values[i] += offset;
+				x[i] = ray.x() * t + offset.x();
+				y[i] = ray.y() * t + offset.y();
+				z[i] = ray.z() * t + offset.z();
 				t += step;
 			}
 
-			__declspec(align(32)) float samples[8];
-			for (size_t i(0); i != 8; ++i)
-				samples[i] = 1.0f - spline[model[values[i]]];
+			Vector3f256 p = {_mm256_load_ps(x), _mm256_load_ps(y), _mm256_load_ps(z)};
 
+			// sample the model
+			__m256 samples = _mm256_sub_ps(_mm256_set1_ps(1.0f), spline[model[p]]);
+
+			// add the new value
 			__declspec(align(32)) float transparencies[8];
-			_mm256_store_ps(transparencies, powf8(_mm256_load_ps(samples), power));
+			_mm256_store_ps(transparencies, powf8(samples, power));
 
 			for (size_t i = 0; i != 8; ++i)
 			{
 				transparencies[i] = std::min(transparencies[i], 1.0f);
-				values[i] *= amount * (1.0f - transparencies[i]);
-				color += values[i];
+				float factor = amount * (1.0f - transparencies[i]);
+				x[i] *= factor;
+				y[i] *= factor;
+				z[i] *= factor;
+				color.x() += x[i];
+				color.y() += y[i];
+				color.z() += z[i];
 				amount *= transparencies[i];
 			}
 		}

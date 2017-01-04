@@ -67,3 +67,19 @@ float Volume::operator [] (const Vector3f & p) const
 
 	return values[(z * ny + y) * nx + x];
 }
+
+__m256 Volume::operator [] (const Vector3f256 &lab) const
+{
+	__declspec(align(32)) float x[8];
+	__declspec(align(32)) float y[8];
+	__declspec(align(32)) float z[8];
+	_mm256_store_ps(x, lab.x);
+	_mm256_store_ps(y, lab.y);
+	_mm256_store_ps(z, lab.z);
+
+	__declspec(align(32)) float result[8];
+	for (size_t i = 0; i != 8; ++i)
+		result[i] = (*this)[Vector3f(x[i], y[i], z[i])];
+
+	return _mm256_load_ps(result);
+}

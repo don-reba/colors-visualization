@@ -116,6 +116,7 @@
       <PreprocessorDefinitions>WIN32;EIGEN_DONT_PARALLELIZE;_DEBUG;_CONSOLE;cimg_use_png;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <DisableLanguageExtensions>false</DisableLanguageExtensions>
       <FloatingPointModel>Strict</FloatingPointModel>
+      <EnableEnhancedInstructionSet>AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
