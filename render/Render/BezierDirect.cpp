@@ -6,7 +6,8 @@ using namespace Eigen;
 using namespace std;
 
 BezierDirect::BezierDirect(Vector2f p1, Vector2f p2, float min, float max, float epsilon)
-	: b(p1, p2), min(min), max(max), epsilon(epsilon)
+	: b(p1, p2), bf8(p1, p2), min(min), max(max), epsilon(epsilon)
+	, factor(1.0f / (max - min)), offset(min / (min - max))
 {
 	if (min >= max)
 		throw runtime_error("BezierDirect: min >= max");
@@ -24,19 +25,15 @@ float BezierDirect::operator[] (float x) const
 
 __m256 BezierDirect::operator[] (__m256 x) const
 {
-	__m256 min = _mm256_set1_ps(this->min);
-	__m256 max = _mm256_set1_ps(this->max);
+	__m256 minf8 = _mm256_set1_ps(min);
+	__m256 maxf8 = _mm256_set1_ps(max);
 
-	x = _mm256_max_ps(x, min);
-	x = _mm256_min_ps(x, max);
-	x = _mm256_div_ps(_mm256_sub_ps(x, min), _mm256_sub_ps(max, min));
+	__m256 offsetf8 = _mm256_set1_ps(offset);
+	__m256 factorf8 = _mm256_set1_ps(factor);
 
-	__declspec(align(32)) float values[8];
-	_mm256_store_ps(values, x);
+	x = _mm256_max_ps(x, minf8);
+	x = _mm256_min_ps(x, maxf8);
+	x = _mm256_fmadd_ps(x, factorf8, offsetf8);
 
-	__declspec(align(32)) float result[8];
-	for (size_t i = 0; i != 8; ++i)
-		result[i] = b.Solve(values[i], epsilon);
-
-	return _mm256_load_ps(result);
+	return bf8.Solve(x, _mm256_set1_ps(epsilon));
 }

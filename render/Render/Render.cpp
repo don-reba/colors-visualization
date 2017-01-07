@@ -171,7 +171,7 @@ namespace
 			}
 		};
 
-		array<thread, 1> threads;
+		array<thread, 3> threads;
 		for (auto & t : threads)
 			t = thread(ProcessFrame);
 		for (auto & t : threads)
@@ -194,8 +194,8 @@ int main()
 			( projectRoot
 			, FgtVolume((projectRoot + "fgt\\coef s3 a6 2.0.dat").c_str())
 			, BezierDirect({ 0.8f, 0.0f }, { 1.0f, 1.0f }, 0.2f, 8.0f, 0.0001f)
-			, res720p
-			, aa1x
+			, res4k
+			, aa4x
 			);
 	else
 		Run

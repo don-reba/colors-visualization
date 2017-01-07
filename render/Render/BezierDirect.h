@@ -2,6 +2,7 @@
 
 #include "IBezier.h"
 #include "Bezier.h"
+#include "Bezierf8.h"
 #include <Eigen/Dense>
 
 class BezierDirect : public IBezier
@@ -22,8 +23,11 @@ public:
 
 private:
 
-	Bezier b;
-	float  min;
-	float  max;
-	float  epsilon;
+	Bezier   b;
+	Bezierf8 bf8;
+	float    min;
+	float    max;
+	float    epsilon;
+	float    factor;
+	float    offset;
 };

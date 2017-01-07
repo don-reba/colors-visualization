@@ -155,8 +155,6 @@ __m256 FgtVolume::operator [] (const Vector3f256 & p) const
 	for (size_t i = 1; i != 8; ++i)
 		allEqual = allEqual && (indicesi32[0] == indicesi32[i]);
 
-	//bool allEqual = _mm256_testz_si256(_mm256_cmpeq_epi32(indices, _mm256_shuffle_epi32(indices, 
-
 	// normalizationFactor * coefficients · polynomial
 	__m256 sum = _mm256_setzero_ps();
 	if (allEqual)

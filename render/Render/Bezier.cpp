@@ -36,47 +36,19 @@ float Bezier::SampleCurveDerivativeX(float t) const
 // Given an x value, find a parametric value it came from.
 float Bezier::SolveCurveX(float x, float epsilon) const
 {
-	float t0;
-	float t1;
-	float t2;
-	float x2;
-	float d2;
-	int i;
-
-	// First try a few iterations of Newton's method -- normally very fast.
-	for (t2 = x, i = 0; i < 8; i++) {
-		x2 = SampleCurveX(t2) - x;
+	// try a few Newton's method iterations
+	float t = x;
+	for (size_t i = 0; i < 8; i++) {
+		float x2 = SampleCurveX(t) - x;
 		if (fabs(x2) < epsilon)
-			return t2;
-		d2 = SampleCurveDerivativeX(t2);
+			return t;
+		float d2 = SampleCurveDerivativeX(t);
 		if (fabs(d2) < 1e-6)
 			break;
-		t2 = t2 - x2 / d2;
+		t = t - x2 / d2;
 	}
 
-	// Fall back to the bisection method for reliability.
-	t0 = 0.0f;
-	t1 = 1.0f;
-	t2 = x;
-
-	if (t2 < t0)
-		return t0;
-	if (t2 > t1)
-		return t1;
-
-	while (t0 < t1) {
-		x2 = SampleCurveX(t2);
-		if (fabs(x2 - x) < epsilon)
-			return t2;
-		if (x > x2)
-			t0 = t2;
-		else
-			t1 = t2;
-		t2 = (t1 - t0) * 0.5f + t0;
-	}
-
-	// Failure.
-	return t2;
+	return t;
 }
 
 float Bezier::Solve(float x, float epsilon) const
