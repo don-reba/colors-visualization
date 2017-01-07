@@ -24,12 +24,19 @@ float BezierDirect::operator[] (float x) const
 
 __m256 BezierDirect::operator[] (__m256 x) const
 {
+	__m256 min = _mm256_set1_ps(this->min);
+	__m256 max = _mm256_set1_ps(this->max);
+
+	x = _mm256_max_ps(x, min);
+	x = _mm256_min_ps(x, max);
+	x = _mm256_div_ps(_mm256_sub_ps(x, min), _mm256_sub_ps(max, min));
+
 	__declspec(align(32)) float values[8];
 	_mm256_store_ps(values, x);
 
 	__declspec(align(32)) float result[8];
 	for (size_t i = 0; i != 8; ++i)
-		result[i] = (*this)[values[i]];
+		result[i] = b.Solve(values[i], epsilon);
 
 	return _mm256_load_ps(result);
 }

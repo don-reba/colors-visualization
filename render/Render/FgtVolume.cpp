@@ -86,30 +86,42 @@ float FgtVolume::operator [] (const Vector3f & p) const
 	return normalizationFactor * sum;
 }
 
-__m256 FgtVolume::operator [] (const Vector3f256 & lab) const
+__m256 FgtVolume::operator [] (const Vector3f256 & p) const
 {
 	__m256 side = _mm256_set1_ps(Side);
 
-	// get domain-relative coordinates
-	__m256 px = _mm256_add_ps(lab.x, _mm256_set1_ps(-DomainMin.x()));
-	__m256 py = _mm256_add_ps(lab.y, _mm256_set1_ps(-DomainMin.y()));
-	__m256 pz = _mm256_add_ps(lab.z, _mm256_set1_ps(-DomainMin.z()));
+	// get domain origin
+	__m256 minX = _mm256_set1_ps(DomainMin.x());
+	__m256 minY = _mm256_set1_ps(DomainMin.y());
+	__m256 minZ = _mm256_set1_ps(DomainMin.z());
 
 	// get cell coordinates
-	__m256 kx = _mm256_floor_ps(_mm256_div_ps(px, side));
-	__m256 ky = _mm256_floor_ps(_mm256_div_ps(py, side));
-	__m256 kz = _mm256_floor_ps(_mm256_div_ps(pz, side));
+	__m256 kx = _mm256_floor_ps(_mm256_div_ps(_mm256_sub_ps(p.x, minX), side));
+	__m256 ky = _mm256_floor_ps(_mm256_div_ps(_mm256_sub_ps(p.y, minY), side));
+	__m256 kz = _mm256_floor_ps(_mm256_div_ps(_mm256_sub_ps(p.z, minZ), side));
+
+	// get coefficient addresses
+	__m256i indices = _mm256_cvtps_epi32
+		( _mm256_mul_ps
+			( _mm256_fmadd_ps
+					( _mm256_fmadd_ps(kz, _mm256_set1_ps((float)Count.y()), ky)
+					, _mm256_set1_ps((float)Count.x())
+					, kx
+					)
+			, _mm256_set1_ps((float)PD)
+			)
+		);
 
 	// get cell center's position
-	__m256 cx = _mm256_mul_ps(side, _mm256_add_ps(kx, _mm256_set1_ps(0.5f)));
-	__m256 cy = _mm256_mul_ps(side, _mm256_add_ps(ky, _mm256_set1_ps(0.5f)));
-	__m256 cz = _mm256_mul_ps(side, _mm256_add_ps(kz, _mm256_set1_ps(0.5f)));
+	__m256 cx = _mm256_fmadd_ps(side, _mm256_add_ps(kx, _mm256_set1_ps(0.5f)), minX);
+	__m256 cy = _mm256_fmadd_ps(side, _mm256_add_ps(ky, _mm256_set1_ps(0.5f)), minY);
+	__m256 cz = _mm256_fmadd_ps(side, _mm256_add_ps(kz, _mm256_set1_ps(0.5f)), minZ);
 
 	// compute distance from cell center in sigmas
 	__m256 delta[3] =
-		{ _mm256_mul_ps(_mm256_sub_ps(px, cx), _mm256_set1_ps(1.0f / Sigma))
-		, _mm256_mul_ps(_mm256_sub_ps(py, cy), _mm256_set1_ps(1.0f / Sigma))
-		, _mm256_mul_ps(_mm256_sub_ps(pz, cz), _mm256_set1_ps(1.0f / Sigma))
+		{ _mm256_mul_ps(_mm256_sub_ps(p.x, cx), _mm256_set1_ps(1.0f / Sigma))
+		, _mm256_mul_ps(_mm256_sub_ps(p.y, cy), _mm256_set1_ps(1.0f / Sigma))
+		, _mm256_mul_ps(_mm256_sub_ps(p.z, cz), _mm256_set1_ps(1.0f / Sigma))
 		};
 
 	__m256 dxx = _mm256_mul_ps(delta[0], delta[0]);
@@ -121,7 +133,7 @@ __m256 FgtVolume::operator [] (const Vector3f256 & lab) const
 	// gather the polynomial
 	assert(PD == 56);
 	__m256 polynomial[56];
-	polynomial[0] = exp2f8(_mm256_sub_ps(_mm256_setzero_ps(), dnorm));
+	polynomial[0] = expf8(_mm256_sub_ps(_mm256_setzero_ps(), dnorm));
 
 	Vector3i heads(0, 0, 0);
 	int t = 1;
@@ -137,29 +149,34 @@ __m256 FgtVolume::operator [] (const Vector3f256 & lab) const
 		}
 	}
 
-	// get coefficient addresses
-	__m256i indices = _mm256_cvtps_epi32
-		( _mm256_mul_ps
-			( _mm256_fmadd_ps
-					( _mm256_fmadd_ps(kz, _mm256_set1_ps((float)Count.y()), ky)
-					, _mm256_set1_ps((float)Count.x())
-					, kx
-					)
-			, _mm256_set1_ps((float)PD)
-			)
-		);
-	__declspec(align(32)) int indexValues[8];
-	_mm256_store_si256((__m256i*)indexValues, indices);
+	__declspec(align(32)) int indicesi32[8];
+	_mm256_store_si256((__m256i*)indicesi32, indices);
+	bool allEqual = true;
+	for (size_t i = 1; i != 8; ++i)
+		allEqual = allEqual && (indicesi32[0] == indicesi32[i]);
 
-	// load the coefficients
-	__declspec(align(32)) float coefficients[56 * 8];
-	for (size_t i = 0; i != 56; ++i)
-		for (size_t j = 0; j != 8; ++j)
-			coefficients[i * 8 + j] = Coefficients[indexValues[j] + i];
+	//bool allEqual = _mm256_testz_si256(_mm256_cmpeq_epi32(indices, _mm256_shuffle_epi32(indices, 
 
 	// normalizationFactor * coefficients · polynomial
 	__m256 sum = _mm256_setzero_ps();
-	for (size_t i = 0; i != 56; ++i)
-		sum = _mm256_fmadd_ps(polynomial[i], _mm256_load_ps(coefficients + i * 8), sum);
+	if (allEqual)
+	{
+		// fast path (all indices are the same)
+		const float * cp = &Coefficients[indicesi32[0]];
+		for (size_t i = 0; i != 56; ++i)
+		{
+			__m256 coefficients = _mm256_set1_ps(cp[i]);
+			sum = _mm256_fmadd_ps(polynomial[i], coefficients, sum);
+		}
+	}
+	else
+	{
+		// slow path
+		for (size_t i = 0; i != 56; ++i)
+		{
+			__m256 coefficients = _mm256_i32gather_ps(&Coefficients[i], indices, sizeof(float));
+			sum = _mm256_fmadd_ps(polynomial[i], coefficients, sum);
+		}
+	}
 	return _mm256_mul_ps(sum, _mm256_set1_ps(normalizationFactor));
 }

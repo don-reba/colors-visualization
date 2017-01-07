@@ -4,6 +4,7 @@
 
 #include <boost/test/unit_test.hpp>
 
+using namespace boost;
 using namespace std;
 
 namespace
