@@ -195,6 +195,7 @@
     <ClCompile Include="Color.cpp" />
     <ClCompile Include="FgtVolume.cpp" />
     <ClCompile Include="Image.cpp" />
+    <ClCompile Include="MappedModel.cpp" />
     <ClCompile Include="Mesh.cpp" />
     <ClCompile Include="Projection.cpp" />
     <ClCompile Include="ProjectMesh.cpp" />
@@ -214,9 +215,10 @@
     <ClInclude Include="FgtVolume.h" />
     <ClInclude Include="FreeImage.h" />
     <ClInclude Include="FreeImagePlus.h" />
-    <ClInclude Include="IBezier.h" />
+    <ClInclude Include="IValueMap.h" />
     <ClInclude Include="Image.h" />
     <ClInclude Include="IModel.h" />
+    <ClInclude Include="MappedModel.h" />
     <ClInclude Include="Mesh.h" />
     <ClInclude Include="Pow.h" />
     <ClInclude Include="Projection.h" />

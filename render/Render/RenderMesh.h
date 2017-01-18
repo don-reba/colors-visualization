@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Antialias.h"
-#include "IBezier.h"
+#include "IValueMap.h"
 #include "IModel.h"
 #include "Image.h"
 #include "Mesh.h"
@@ -18,7 +18,6 @@ void RenderMesh
 	,       Eigen::Vector4f * buffer
 	, const Mesh            & mesh
 	, const IModel          & model
-	, const IBezier         & spline
 	, const AAMask          & aamask
 	,       Profiler        & profiler
 	,       RateIndicator   & rateIndicator

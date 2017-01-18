@@ -1,11 +1,11 @@
 #pragma once
 
-#include "IBezier.h"
+#include "IValueMap.h"
 #include "Bezier.h"
 #include "Bezierf8.h"
 #include <Eigen/Dense>
 
-class BezierDirect : public IBezier
+class BezierDirect : public IValueMap
 {
 public:
 

@@ -70,7 +70,6 @@ namespace
 		, float                step
 		, float                min
 		, float                max
-		, const IBezier      & spline
 		, Vector4f           & pxl
 		)
 	{
@@ -105,7 +104,7 @@ namespace
 			Vector3f256 p = {_mm256_load_ps(x), _mm256_load_ps(y), _mm256_load_ps(z)};
 
 			// sample the model
-			__m256 samples = _mm256_sub_ps(_mm256_set1_ps(1.0f), spline[model[p]]);
+			__m256 samples = _mm256_sub_ps(_mm256_set1_ps(1.0f), model[p]);
 
 			// add the new value
 			__declspec(align(32)) float transparencies[8];
@@ -128,7 +127,7 @@ namespace
 		{
 			const Vector3f value = ray * t + offset;
 
-			const float sample = 1.0f - spline[model[value]];
+			const float sample = 1.0f - model[value];
 
 			const float transparency = std::min(pow(sample, step / unitWidth), 1.0f);
 
@@ -153,7 +152,6 @@ void RenderMesh
 	,       Vector4f      * buffer
 	, const Mesh          & mesh
 	, const IModel        & model
-	, const IBezier       & spline
 	, const AAMask        & aamask
 	,       Profiler      & profiler
 	,       RateIndicator & rateIndicator
@@ -204,7 +202,7 @@ void RenderMesh
 			if (min > max)
 				swap(min, max);
 
-			const float stepLength (0.2f);
+			const float stepLength (0.2);
 			const Vector3f offset (::TransformTo3D(world, Vector3f::Zero()));
 			const Vector3f ray    (::TransformTo3D(world, cameraRay) - offset);
 
@@ -213,7 +211,7 @@ void RenderMesh
 			if (min >= max)
 				continue;
 
-			Integrate(model, offset, ray, stepLength, min, max, spline, pxl);
+			Integrate(model, offset, ray, stepLength, min, max, pxl);
 			rateIndicator.Increment();
 		}
 

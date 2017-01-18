@@ -2,6 +2,7 @@
 #include "BezierDirect.h"
 #include "BezierLookup.h"
 #include "FgtVolume.h"
+#include "MappedModel.h"
 #include "Profiler.h"
 #include "Projection.h"
 #include "ProjectMesh.h"
@@ -95,7 +96,6 @@ namespace
 	void Run
 		( const string     & projectRoot
 		, const IModel     & volume
-		, const IBezier    & spline
 		, const Resolution & res
 		, const AAMask     & aamask
 		)
@@ -115,8 +115,8 @@ namespace
 		const RotationAnimation animation(eye, at);
 
 		const size_t frameCount = 360;
-		vector<size_t> frames = GetFrames(frameCount);
-		//vector<size_t> frames = { 150 };
+		//vector<size_t> frames = GetFrames(frameCount);
+		vector<size_t> frames = { 150 };
 
 		mutex frameMutex;
 
@@ -153,7 +153,7 @@ namespace
 					ProjectMesh(camera, projection, res, buffer.data(), mesh);
 					RenderMesh
 						(camera, rayCast, res, buffer.data(), mesh
-						, volume, spline, aamask, profiler, rateIndicator
+						, volume, aamask, profiler, rateIndicator
 						);
 
 					// save
@@ -192,16 +192,20 @@ int main()
 	if (hifi)
 		Run
 			( projectRoot
-			, FgtVolume((projectRoot + "fgt\\coef s3 a6 2.0.dat").c_str())
-			, BezierDirect({ 0.8f, 0.0f }, { 1.0f, 1.0f }, 0.2f, 8.0f, 0.0001f)
-			, res4k
-			, aa4x
+			, MappedModel
+				( FgtVolume((projectRoot + "fgt\\coef s3 a6 2.0.dat").c_str())
+				, BezierDirect({ 0.8f, 0.0f }, { 1.0f, 1.0f }, 0.2f, 8.0f, 0.0001f)
+				)
+			, res1080p
+			, aa1x
 			);
 	else
 		Run
 			( projectRoot
-			, Volume((projectRoot + "voxelize\\volume s3.dat").c_str())
-			, BezierLookup({ 0.8f, 0.0f }, { 1.0f, 1.0f }, 1 << 10, 0.2f, 8.0f)
+			, MappedModel
+				( Volume((projectRoot + "voxelize\\volume s3.dat").c_str())
+				, BezierLookup({ 0.8f, 0.0f }, { 1.0f, 1.0f }, 1 << 10, 0.2f, 8.0f)
+				)
 			, res4k
 			, aa4x
 			);

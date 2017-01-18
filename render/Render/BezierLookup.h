@@ -1,12 +1,12 @@
 #pragma once
 
-#include "IBezier.h"
+#include "IValueMap.h"
 
 #include <vector>
 
 #include <Eigen/Dense>
 
-class BezierLookup : public IBezier
+class BezierLookup : public IValueMap
 {
 public:
 

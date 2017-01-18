@@ -2,7 +2,7 @@
 
 #include <immintrin.h> // AVX
 
-struct IBezier
+struct IValueMap
 {
 	virtual float operator[] (float x) const = 0;
 
