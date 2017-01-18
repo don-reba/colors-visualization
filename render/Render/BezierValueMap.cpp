@@ -1,4 +1,4 @@
-#include "BezierDirect.h"
+#include "BezierValueMap.h"
 
 #include <stdexcept>
 

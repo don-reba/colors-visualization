@@ -1,6 +1,5 @@
 ﻿#include "Animation.h"
 #include "BezierDirect.h"
-#include "BezierLookup.h"
 #include "FgtVolume.h"
 #include "MappedModel.h"
 #include "Profiler.h"
@@ -9,6 +8,7 @@
 #include "RateIndicator.h"
 #include "RenderMesh.h"
 #include "Volume.h"
+#include "WallValueMap.h"
 
 #include <Eigen/Dense>
 
@@ -98,6 +98,7 @@ namespace
 		, const IModel     & volume
 		, const Resolution & res
 		, const AAMask     & aamask
+		, float              fps
 		)
 	{
 
@@ -114,13 +115,13 @@ namespace
 		const Vector3f up  (  0.0f, 0.0f, 1.0f);
 		const RotationAnimation animation(eye, at);
 
-		const size_t frameCount = 360;
+		const size_t frameCount = static_cast<size_t>(6.0f * fps + 0.5f);
 		//vector<size_t> frames = GetFrames(frameCount);
 		vector<size_t> frames = { 150 };
 
 		mutex frameMutex;
 
-		RateIndicator rateIndicator(60);
+		RateIndicator rateIndicator(fps);
 
 		auto ProcessFrame = [&]()
 		{
@@ -194,20 +195,23 @@ int main()
 			( projectRoot
 			, MappedModel
 				( FgtVolume((projectRoot + "fgt\\coef s3 a6 2.0.dat").c_str())
-				, BezierDirect({ 0.8f, 0.0f }, { 1.0f, 1.0f }, 0.2f, 8.0f, 0.0001f)
+				//, BezierDirect({ 0.8f, 0.0f }, { 1.0f, 1.0f }, 0.2f, 8.0f, 0.0001f)
+				, WallValueMap(6.0f, 7.0f)
 				)
 			, res1080p
-			, aa1x
+			, aa4x
+			, 60.0f
 			);
 	else
 		Run
 			( projectRoot
 			, MappedModel
 				( Volume((projectRoot + "voxelize\\volume s3.dat").c_str())
-				, BezierLookup({ 0.8f, 0.0f }, { 1.0f, 1.0f }, 1 << 10, 0.2f, 8.0f)
+				, BezierDirect({ 0.8f, 0.0f }, { 1.0f, 1.0f }, 0.2f, 8.0f, 0.0001f)
 				)
 			, res4k
 			, aa4x
+			, 30.0f
 			);
 
 	return 0;

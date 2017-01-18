@@ -189,9 +189,8 @@
   <ItemGroup>
     <ClCompile Include="Animation.cpp" />
     <ClCompile Include="Bezier.cpp" />
-    <ClCompile Include="BezierDirect.cpp" />
+    <ClCompile Include="BezierValueMap.cpp" />
     <ClCompile Include="Bezierf8.cpp" />
-    <ClCompile Include="BezierLookup.cpp" />
     <ClCompile Include="Color.cpp" />
     <ClCompile Include="FgtVolume.cpp" />
     <ClCompile Include="Image.cpp" />
@@ -204,13 +203,13 @@
     <ClCompile Include="RenderMesh.cpp" />
     <ClCompile Include="Profiler.cpp" />
     <ClCompile Include="Volume.cpp" />
+    <ClCompile Include="WallValueMap.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Animation.h" />
     <ClInclude Include="Bezier.h" />
-    <ClInclude Include="BezierDirect.h" />
+    <ClInclude Include="BezierValueMap.h" />
     <ClInclude Include="Bezierf8.h" />
-    <ClInclude Include="BezierLookup.h" />
     <ClInclude Include="Color.h" />
     <ClInclude Include="FgtVolume.h" />
     <ClInclude Include="FreeImage.h" />
@@ -229,6 +228,7 @@
     <ClInclude Include="Resolution.h" />
     <ClInclude Include="Antialias.h" />
     <ClInclude Include="Volume.h" />
+    <ClInclude Include="WallValueMap.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

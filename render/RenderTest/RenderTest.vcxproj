@@ -170,12 +170,10 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\Render\Bezier.cpp" />
-    <ClCompile Include="..\Render\BezierLookup.cpp" />
     <ClCompile Include="..\Render\Color.cpp" />
     <ClCompile Include="..\Render\FgtVolume.cpp" />
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="TestBezier.cpp" />
-    <ClCompile Include="TestBezierLookup.cpp" />
     <ClCompile Include="TestColor.cpp" />
     <ClCompile Include="TestExp.cpp" />
     <ClCompile Include="TestFgtVolume.cpp" />
