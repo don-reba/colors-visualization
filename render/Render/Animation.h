@@ -1,17 +1,39 @@
 #pragma once
 
+#include "IModel.h"
+#include "IValueMap.h"
+
 #include <Eigen/Dense>
 
-class RotationAnimation
+#include <memory>
+#include <string>
+
+class Animation
 {
 private:
 
-	Eigen::Vector3f eye;
-	Eigen::Vector3f at;
+	const std::string projectRoot;
+
+	const float duration;
+
+	Eigen::Matrix4f camera;
+
+	std::unique_ptr<IModel>    baseModel;
+	std::unique_ptr<IValueMap> valueMap;
+	std::unique_ptr<IModel>    model;
 
 public:
 
-	RotationAnimation(Eigen::Vector3f eye, Eigen::Vector3f at);
+	Animation(float duration, const char * projectRoot);
 
-	Eigen::Vector3f Eye(size_t step, size_t count) const;
+	const Eigen::Matrix4f & GetCamera() const;
+	const IModel          & GetModel()  const;
+
+	void SetTime(float time);
+
+private:
+
+	void SetCamera(float time);
+
+	void SetModel(float time);
 };

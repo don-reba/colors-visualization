@@ -1,5 +1,5 @@
 ﻿#include "Animation.h"
-#include "BezierDirect.h"
+#include "BezierValueMap.h"
 #include "FgtVolume.h"
 #include "MappedModel.h"
 #include "Profiler.h"
@@ -95,7 +95,6 @@ namespace
 
 	void Run
 		( const string     & projectRoot
-		, const IModel     & volume
 		, const Resolution & res
 		, const AAMask     & aamask
 		, float              fps
@@ -109,25 +108,22 @@ namespace
 		const Matrix3f rayCast       = RayCast(res, focalDistance);
 		const Matrix4f projection    = Perspective(focalDistance);
 
-		// set up the camera animation
-		const Vector3f eye (400.0f, 0.0f, 0.0f);
-		const Vector3f at  ( 50.0f, 0.0f, 0.0f);
-		const Vector3f up  (  0.0f, 0.0f, 1.0f);
-		const RotationAnimation animation(eye, at);
-
-		const size_t frameCount = static_cast<size_t>(6.0f * fps + 0.5f);
-		//vector<size_t> frames = GetFrames(frameCount);
-		vector<size_t> frames = { 150 };
+		const float  duration   = 6.0f; // seconds
+		const size_t frameCount = static_cast<size_t>(duration * fps + 0.5f);
+		vector<size_t> frames = GetFrames(frameCount);
+		//vector<size_t> frames = { 150 };
 
 		mutex frameMutex;
 
-		RateIndicator rateIndicator(fps);
+		RateIndicator rateIndicator(60.0);
 
 		auto ProcessFrame = [&]()
 		{
 			vector<Vector4f> buffer(res.w * res.h);
 
 			const Vector3f bgColor(90.0f, 0.005f, -0.01f);
+
+			Animation animation(duration, projectRoot.c_str());
 
 			for (;;)
 			{
@@ -145,16 +141,15 @@ namespace
 				{
 					Profiler::Timer timer(profiler, "Total");
 
+					animation.SetTime(duration * frame / frameCount);
+
 					fill(buffer.begin(), buffer.end(), Vector4f::Zero());
 
-					// set up the camera
-					const Matrix4f camera(LookAt(animation.Eye(frame, frameCount), at, up));
-
 					// render
-					ProjectMesh(camera, projection, res, buffer.data(), mesh);
+					ProjectMesh(animation.GetCamera(), projection, res, buffer.data(), mesh);
 					RenderMesh
-						(camera, rayCast, res, buffer.data(), mesh
-						, volume, aamask, profiler, rateIndicator
+						( animation.GetCamera(), rayCast, res, buffer.data(), mesh
+						, animation.GetModel(), aamask, profiler, rateIndicator
 						);
 
 					// save
@@ -188,31 +183,7 @@ int main()
 
 	const string projectRoot("C:\\Users\\Alexey\\Projects\\Colours visualization\\");
 
-	const bool hifi = true;
-
-	if (hifi)
-		Run
-			( projectRoot
-			, MappedModel
-				( FgtVolume((projectRoot + "fgt\\coef s3 a6 2.0.dat").c_str())
-				//, BezierDirect({ 0.8f, 0.0f }, { 1.0f, 1.0f }, 0.2f, 8.0f, 0.0001f)
-				, WallValueMap(6.0f, 7.0f)
-				)
-			, res1080p
-			, aa4x
-			, 60.0f
-			);
-	else
-		Run
-			( projectRoot
-			, MappedModel
-				( Volume((projectRoot + "voxelize\\volume s3.dat").c_str())
-				, BezierDirect({ 0.8f, 0.0f }, { 1.0f, 1.0f }, 0.2f, 8.0f, 0.0001f)
-				)
-			, res4k
-			, aa4x
-			, 30.0f
-			);
+	Run(projectRoot, res720p, aa4x, 60.0f);
 
 	return 0;
 }

@@ -202,7 +202,7 @@ void RenderMesh
 			if (min > max)
 				swap(min, max);
 
-			const float stepLength (0.01);
+			const float stepLength (0.02);
 			const Vector3f offset (::TransformTo3D(world, Vector3f::Zero()));
 			const Vector3f ray    (::TransformTo3D(world, cameraRay) - offset);
 

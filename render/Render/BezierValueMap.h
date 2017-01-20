@@ -5,11 +5,11 @@
 #include "Bezierf8.h"
 #include <Eigen/Dense>
 
-class BezierDirect : public IValueMap
+class BezierValueMap : public IValueMap
 {
 public:
 
-	BezierDirect
+	BezierValueMap
 		( Eigen::Vector2f p1
 		, Eigen::Vector2f p2
 		, float           min
