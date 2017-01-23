@@ -50,42 +50,6 @@ FgtVolume::FgtVolume(const char * path)
 	normalizationFactor = pow(Sigma * sqrt((float)M_PI), -3.0f);
 }
 
-float FgtVolume::operator [] (const Vector3f & p) const
-{
-	// get cell coordinates
-	Vector3i k = ((p - DomainMin) / Side).cast<int>();
-
-	// compute distance from cell center
-	Vector3f c     = DomainMin + Side * (k.cast<float>() + Vector3f(0.5f, 0.5f, 0.5f));
-	Vector3f delta = (p - c) / Sigma;
-
-	// gather the polynomial
-	assert(PD == 56);
-	float polynomial[56];
-	polynomial[0] = exp(-delta.squaredNorm());
-
-	Vector3i heads(0, 0, 0);
-	int t = 1;
-	for (int a = 1; a != Alpha; ++a)
-	{
-		int tail = t;
-		for (int i = 0; i != 3; ++i)
-		{
-			int head = heads[i];
-			heads[i] = t;
-			for (int j = head; j != tail; ++j, ++t)
-				polynomial[t] = delta[i] * polynomial[j];
-		}
-	}
-
-	// normalizationFactor * coefficients · polynomial
-	float sum = 0.0f;
-	const float * value = &Coefficients[PD * (k.x() + Count.x() * (k.y() + Count.y() * k.z()))];
-	for (float prod : polynomial)
-		sum += *(value++) * prod;
-	return normalizationFactor * sum;
-}
-
 __m256 FgtVolume::operator [] (const Vector3f256 & p) const
 {
 	__m256 side = _mm256_set1_ps(Side);

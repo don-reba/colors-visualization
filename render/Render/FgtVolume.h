@@ -35,7 +35,5 @@ public:
 
 	FgtVolume(const char * path);
 
-	float operator [] (const Eigen::Vector3f & p) const;
-
 	__m256 operator [] (const Vector3f256 & p) const;
 };

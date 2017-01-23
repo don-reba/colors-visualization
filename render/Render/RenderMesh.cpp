@@ -82,59 +82,45 @@ namespace
 		float    amount(1.0f);
 		Vector3f color(Vector3f::Zero());
 
-		float t(min);
+		float t = min;
 
 		__m256 power = _mm256_set1_ps(step / unitWidth);
 
 		// t is incremented 8 steps at a time for SIMD to be effective
-		while (t + 8.0f * step <= max && amount >= minAmount)
+		while (t <= max && amount >= minAmount)
 		{
 			// get the current coordinate
 			__declspec(align(32)) float x[8];
 			__declspec(align(32)) float y[8];
 			__declspec(align(32)) float z[8];
+			float t2 = t;
 			for (size_t i = 0; i != 8; ++i)
 			{
-				x[i] = ray.x() * t + offset.x();
-				y[i] = ray.y() * t + offset.y();
-				z[i] = ray.z() * t + offset.z();
-				t += step;
+				x[i] = ray.x() * t2 + offset.x();
+				y[i] = ray.y() * t2 + offset.y();
+				z[i] = ray.z() * t2 + offset.z();
+				t2 += step;
 			}
 
 			Vector3f256 p = {_mm256_load_ps(x), _mm256_load_ps(y), _mm256_load_ps(z)};
 
 			// sample the model
-			__m256 samples = _mm256_sub_ps(_mm256_set1_ps(1.0f), model[p]);
+			__m256 samples        = _mm256_sub_ps(_mm256_set1_ps(1.0f), model[p]);
+			__m256 transparencies = _mm256_min_ps(powf8(samples, power), _mm256_set1_ps(1.0f));
 
 			// add the new value
-			__declspec(align(32)) float transparencies[8];
-			_mm256_store_ps(transparencies, powf8(samples, power));
+			__declspec(align(32)) float transparencyValues[8];
+			_mm256_store_ps(transparencyValues, transparencies);
 
-			for (size_t i = 0; i != 8; ++i)
+			for (size_t i = 0; i != 8 && t <= max; ++i)
 			{
-				transparencies[i] = std::min(transparencies[i], 1.0f);
-				float factor = amount * (1.0f - transparencies[i]);
-				x[i] *= factor;
-				y[i] *= factor;
-				z[i] *= factor;
-				color.x() += x[i];
-				color.y() += y[i];
-				color.z() += z[i];
-				amount *= transparencies[i];
+				float factor = amount * (1.0f - transparencyValues[i]);
+				color.x() += x[i] * factor;
+				color.y() += y[i] * factor;
+				color.z() += z[i] * factor;
+				amount *= transparencyValues[i];
+				t += step;
 			}
-		}
-		while (t <= max && amount >= minAmount)
-		{
-			const Vector3f value = ray * t + offset;
-
-			const float sample = 1.0f - model[value];
-
-			const float transparency = std::min(pow(sample, step / unitWidth), 1.0f);
-
-			color  += value * amount * (1.0f - transparency);
-			amount *= transparency;
-
-			t += step;
 		}
 
 		// set pixel value

@@ -17,13 +17,10 @@ public:
 		, float           epsilon
 		);
 
-	float operator[] (float x) const;
-
 	__m256 operator[] (__m256 x) const;
 
 private:
 
-	Bezier   b;
 	Bezierf8 bf8;
 	float    min;
 	float    max;

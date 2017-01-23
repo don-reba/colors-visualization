@@ -3,6 +3,8 @@
 #include "IModel.h"
 #include "IValueMap.h"
 
+#include <boost/align/aligned_delete.hpp>
+
 #include <Eigen/Dense>
 
 #include <memory>
@@ -12,15 +14,18 @@ class Animation
 {
 private:
 
+	template <typename T>
+	using aligned_unique_ptr = std::unique_ptr<T, boost::alignment::aligned_delete>;
+
 	const std::string projectRoot;
 
 	const float duration;
 
 	Eigen::Matrix4f camera;
 
-	std::unique_ptr<IModel>    baseModel;
-	std::unique_ptr<IValueMap> valueMap;
-	std::unique_ptr<IModel>    model;
+	aligned_unique_ptr<IModel>    baseModel;
+	aligned_unique_ptr<IValueMap> valueMap;
+	aligned_unique_ptr<IModel>    model;
 
 public:
 

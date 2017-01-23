@@ -1,5 +1,6 @@
 #include "Animation.h"
 
+#include "BezierValueMap.h"
 #include "FgtVolume.h"
 #include "MappedModel.h"
 #include "Projection.h"
@@ -9,8 +10,11 @@
 #include <cmath>
 #include <stdexcept>
 
+#include <boost/align/aligned_alloc.hpp>
+
 using namespace Eigen;
 using namespace std;
+using namespace boost::alignment;
 
 Animation::Animation(float duration, const char * projectRoot)
 	: duration    (duration)
@@ -41,7 +45,7 @@ void Animation::SetCamera(float time)
 {
 	const float tau = 6.28318530718f;
 
-	const float rate = 0.125f;
+	const float rate = 1.0f / 6.0f;
 
 	const float a =  tau * time * rate;
 	const float d = 350.0f;
@@ -57,7 +61,8 @@ void Animation::SetModel(float time)
 {
 	if (!baseModel)
 	{
-		baseModel.reset(new FgtVolume((projectRoot + "fgt\\coef s3 a6 2.0.dat").c_str()));
+		void * modelPointer = aligned_alloc(32, sizeof(FgtVolume));
+		baseModel.reset(new(modelPointer) FgtVolume((projectRoot + "fgt\\coef s3 a6 2.0.dat").c_str()));
 		//baseModel.reset(new Volume((projectRoot + "voxelize\\volume s3.dat").c_str()));
 	}
 
@@ -70,7 +75,11 @@ void Animation::SetModel(float time)
 
 	const float x = min + (max - min) * modf(time * rate, &cycle);
 
-	valueMap.reset(new BandValueMap(x, x + thickness));
+	//void * valueMapPointer = aligned_alloc(32, sizeof(BezierValueMap));
+	//valueMap.reset(new(valueMapPointer) BezierValueMap({ 0.8f, 0.0f }, { 1.0f, 1.0f }, 0.2f, 8.0f, 0.0001f));
+	void * valueMapPointer = aligned_alloc(32, sizeof(BandValueMap));
+	valueMap.reset(new(valueMapPointer) BandValueMap(x, x + thickness));
 
-	model.reset(new MappedModel(*baseModel, *valueMap));
+	void * modelPointer = aligned_alloc(32, sizeof(MappedModel));
+	model.reset(new(modelPointer) MappedModel(*baseModel, *valueMap));
 }

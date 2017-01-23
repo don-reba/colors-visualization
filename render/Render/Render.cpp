@@ -108,7 +108,7 @@ namespace
 		const Matrix3f rayCast       = RayCast(res, focalDistance);
 		const Matrix4f projection    = Perspective(focalDistance);
 
-		const float  duration   = 8.0f; // seconds
+		const float  duration   = 6.0f; // seconds
 		const size_t frameCount = static_cast<size_t>(duration * fps + 0.5f);
 		//vector<size_t> frames = GetFrames(frameCount);
 		vector<size_t> frames = { 150 };
