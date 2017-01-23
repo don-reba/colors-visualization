@@ -1,11 +1,11 @@
 #pragma once
 #include "IValueMap.h"
 
-class WallValueMap : public IValueMap
+class BandValueMap : public IValueMap
 {
 public:
 
-	WallValueMap(float min, float max);
+	BandValueMap(float min, float max);
 
 	float operator[] (float x) const;
 

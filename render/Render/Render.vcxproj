@@ -203,7 +203,7 @@
     <ClCompile Include="RenderMesh.cpp" />
     <ClCompile Include="Profiler.cpp" />
     <ClCompile Include="Volume.cpp" />
-    <ClCompile Include="WallValueMap.cpp" />
+    <ClCompile Include="BandValueMap.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Animation.h" />
@@ -228,7 +228,7 @@
     <ClInclude Include="Resolution.h" />
     <ClInclude Include="Antialias.h" />
     <ClInclude Include="Volume.h" />
-    <ClInclude Include="WallValueMap.h" />
+    <ClInclude Include="BandValueMap.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

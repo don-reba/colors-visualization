@@ -4,7 +4,7 @@
 #include "MappedModel.h"
 #include "Projection.h"
 #include "Volume.h"
-#include "WallValueMap.h"
+#include "BandValueMap.h"
 
 #include <cmath>
 #include <stdexcept>
@@ -39,7 +39,11 @@ void Animation::SetTime(float time)
 
 void Animation::SetCamera(float time)
 {
-	const float a = 6.28318530718f * time / duration;
+	const float tau = 6.28318530718f;
+
+	const float rate = 0.125f;
+
+	const float a =  tau * time * rate;
 	const float d = 350.0f;
 
 	const Vector3f eye(d * cos(a), d * sin(a), 0.0f);
@@ -58,15 +62,15 @@ void Animation::SetModel(float time)
 	}
 
 	const float thickness = 1.0f;
-	const float min       = -thickness;
-	const float max       = 8.0f;
-	const float rate      = 1.0f;
+	const float min       = 0.4f - thickness;
+	const float max       = 9.0f;
+	const float rate      = 0.5f;
 
 	float cycle;
 
 	const float x = min + (max - min) * modf(time * rate, &cycle);
 
-	valueMap.reset(new WallValueMap(x, x + thickness));
+	valueMap.reset(new BandValueMap(x, x + thickness));
 
 	model.reset(new MappedModel(*baseModel, *valueMap));
 }

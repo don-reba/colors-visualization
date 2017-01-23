@@ -120,4 +120,5 @@ def domain = Domain3D
 	, Pad(-108.0,  96.0, σ, r, 8)
 	);
 
+// TODO: save enough information to easily restore Approximation3D
 Save(oPath, Preprocess(Load(iPath, domain), σ, α, r, domain));

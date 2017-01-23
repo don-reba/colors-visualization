@@ -1,0 +1,79 @@
+// REFERENCE: ConvertColor.dll
+// REFERENCE: SobolSequence.dll
+// REFERENCE: FGT.dll
+// PLATFORM: x86
+
+using ConvertColor;
+using System.Linq;
+using System.Math;
+using System.IO;
+
+def ToLab(point : array[double]) : (double * double * double)
+{
+	def Scale(x, min, max)
+	{
+		min + x * (max - min)
+	}
+	( Scale(point[0],    0.0, 100.0)
+		, Scale(point[1],  -87.0,  99.0)
+		, Scale(point[2], -108.0,  96.0)
+	)
+}
+
+def IsValidLab(lab) : bool
+{
+	(lab |> LabToXyz |> XyzToRgb |> RgbToColor).HasValue
+}
+
+def LoadFgt(path)
+{
+	using (r = BinaryReader(File.OpenRead(path)))
+	{
+		def σ    = r.ReadSingle() : double;
+		def α    = r.ReadInt32();
+		def pd   = r.ReadInt32();
+		def side = r.ReadSingle() : double;
+		def n0   = r.ReadInt32();
+		def n1   = r.ReadInt32();
+		def n2   = r.ReadInt32();
+		def xMin = r.ReadSingle() : double;
+		def yMin = r.ReadSingle() : double;
+		def zMin = r.ReadSingle() : double;
+		def coef = array(r.ReadInt32());
+		for (mutable i; i != coef.Length; ++i)
+			coef[i] = r.ReadSingle();
+
+		unless (coef.Length == n0 * n1 * n2 * pd)
+			throw System.Exception("Invalid file.");
+
+		def n = (n0, n1, n2);
+
+		def domain = FGT.Domain3D
+			( ( xMin, xMin)
+			, ( yMin, yMin)
+			, ( zMin, zMin)
+			);
+
+		def fgt = FGT.Approximation3D(σ, α, pd, side, n, domain);
+		for (mutable i; i != coef.Length; ++i)
+			fgt.coef[i] = coef[i];
+		fgt;
+	}
+}
+
+def fgt = LoadFgt("coef s3 a6 2.0.dat");
+def normalizationFactor = Pow(fgt.σ * Sqrt(PI), -3.0f);
+
+def GetValue(lab)
+{
+	(normalizationFactor * FGT.FastGaussianTransform(fgt, lab)).ToString()
+}
+
+File.WriteAllLines
+	( path = "fgt sample.txt"
+		, contents = SobolSequence.GetPoints(3)
+			.Select(ToLab)
+			.Where(IsValidLab)
+			.Select(GetValue)
+			.Take(1_000_000)
+	)

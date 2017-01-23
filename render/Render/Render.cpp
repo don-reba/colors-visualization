@@ -8,7 +8,7 @@
 #include "RateIndicator.h"
 #include "RenderMesh.h"
 #include "Volume.h"
-#include "WallValueMap.h"
+#include "BandValueMap.h"
 
 #include <Eigen/Dense>
 
@@ -108,10 +108,10 @@ namespace
 		const Matrix3f rayCast       = RayCast(res, focalDistance);
 		const Matrix4f projection    = Perspective(focalDistance);
 
-		const float  duration   = 6.0f; // seconds
+		const float  duration   = 8.0f; // seconds
 		const size_t frameCount = static_cast<size_t>(duration * fps + 0.5f);
-		vector<size_t> frames = GetFrames(frameCount);
-		//vector<size_t> frames = { 150 };
+		//vector<size_t> frames = GetFrames(frameCount);
+		vector<size_t> frames = { 150 };
 
 		mutex frameMutex;
 
@@ -163,7 +163,7 @@ namespace
 				}
 
 				rateIndicator.Reset();
-				PrintFrameInfo(frame, frames.size(), profiler);
+				PrintFrameInfo(frame, frameCount, profiler);
 			}
 		};
 
@@ -183,7 +183,7 @@ int main()
 
 	const string projectRoot("C:\\Users\\Alexey\\Projects\\Colours visualization\\");
 
-	Run(projectRoot, res720p, aa4x, 60.0f);
+	Run(projectRoot, res720p, aa1x, 60.0f);
 
 	return 0;
 }
