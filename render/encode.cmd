@@ -31,14 +31,14 @@ if exist "%file%" (
 		-hide_banner         ^
 		-movflags +faststart ^
 		-c:v libx264         ^
-		-profile:v high      ^
+		-profile:v high444   ^
 		-level 4.2           ^
-		-crf 18              ^
+		-crf 8               ^
 		-coder 1             ^
 		-b:v !bitrate!       ^
 		-bf 2                ^
 		-g 30                ^
-		-pix_fmt yuv420p     ^
+		-pix_fmt yuv444p     ^
 		-y "%dir%.mp4"
 ) else (
 	echo nothing to encode
