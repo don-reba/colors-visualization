@@ -45,7 +45,7 @@ void Animation::SetCamera(float time)
 {
 	const float tau = 6.28318530718f;
 
-	const float rate = 1.0f / 6.0f;
+	const float rate = 1.0f / 8.0f;
 
 	const float a =  tau * time * rate;
 	const float d = 350.0f;
@@ -69,7 +69,7 @@ void Animation::SetModel(float time)
 	const float thickness = 1.0f;
 	const float min       = 0.4f - thickness;
 	const float max       = 9.0f;
-	const float rate      = 0.5f;
+	const float rate      = 1.0f / 4.0f;
 
 	float cycle;
 

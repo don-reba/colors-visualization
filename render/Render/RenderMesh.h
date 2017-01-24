@@ -19,6 +19,7 @@ void RenderMesh
 	, const Mesh            & mesh
 	, const IModel          & model
 	, const AAMask          & aamask
+	,       float             stepLength
 	,       Profiler        & profiler
 	,       RateIndicator   & rateIndicator
 	);

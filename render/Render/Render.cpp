@@ -108,10 +108,13 @@ namespace
 		const Matrix3f rayCast       = RayCast(res, focalDistance);
 		const Matrix4f projection    = Perspective(focalDistance);
 
-		const float  duration   = 6.0f; // seconds
+		const float  duration   = 8.0f; // seconds
 		const size_t frameCount = static_cast<size_t>(duration * fps + 0.5f);
-		//vector<size_t> frames = GetFrames(frameCount);
-		vector<size_t> frames = { 150 };
+		vector<size_t> frames = GetFrames(frameCount);
+		//vector<size_t> frames = { 150 };
+
+		// about 0.02 for 1080p
+		const float stepLength = 50.0f / (float)sqrt(res.w * res.w + res.h * res.h);
 
 		mutex frameMutex;
 
@@ -149,7 +152,7 @@ namespace
 					ProjectMesh(animation.GetCamera(), projection, res, buffer.data(), mesh);
 					RenderMesh
 						( animation.GetCamera(), rayCast, res, buffer.data(), mesh
-						, animation.GetModel(), aamask, profiler, rateIndicator
+						, animation.GetModel(), aamask, stepLength, profiler, rateIndicator
 						);
 
 					// save
@@ -183,7 +186,7 @@ int main()
 
 	const string projectRoot("C:\\Users\\Alexey\\Projects\\Colours visualization\\");
 
-	Run(projectRoot, res720p, aa1x, 60.0f);
+	Run(projectRoot, res360p, aa1x, 60.0f);
 
 	return 0;
 }
