@@ -202,6 +202,7 @@
     <ClCompile Include="Render.cpp" />
     <ClCompile Include="RenderMesh.cpp" />
     <ClCompile Include="Profiler.cpp" />
+    <ClCompile Include="Script.cpp" />
     <ClCompile Include="Volume.cpp" />
     <ClCompile Include="BandValueMap.cpp" />
   </ItemGroup>
@@ -219,6 +220,7 @@
     <ClInclude Include="IModel.h" />
     <ClInclude Include="MappedModel.h" />
     <ClInclude Include="Mesh.h" />
+    <ClInclude Include="Path.h" />
     <ClInclude Include="Pow.h" />
     <ClInclude Include="Projection.h" />
     <ClInclude Include="ProjectMesh.h" />
@@ -227,6 +229,7 @@
     <ClInclude Include="Profiler.h" />
     <ClInclude Include="Resolution.h" />
     <ClInclude Include="Antialias.h" />
+    <ClInclude Include="Script.h" />
     <ClInclude Include="Volume.h" />
     <ClInclude Include="BandValueMap.h" />
   </ItemGroup>

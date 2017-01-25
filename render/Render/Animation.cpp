@@ -68,8 +68,8 @@ void Animation::SetModel(float time)
 
 	const float thickness = 1.0f;
 	const float min       = 0.4f - thickness;
-	const float max       = 9.0f;
-	const float rate      = 1.0f / 4.0f;
+	const float max       = 13.0f;
+	const float rate      = 1.0f / 16.0f;
 
 	float cycle;
 

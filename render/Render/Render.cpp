@@ -2,11 +2,13 @@
 #include "BezierValueMap.h"
 #include "FgtVolume.h"
 #include "MappedModel.h"
+#include "Path.h"
 #include "Profiler.h"
 #include "Projection.h"
 #include "ProjectMesh.h"
 #include "RateIndicator.h"
 #include "RenderMesh.h"
+#include "Script.h"
 #include "Volume.h"
 #include "BandValueMap.h"
 
@@ -71,47 +73,96 @@ namespace
 		ostringstream msg;
 		msg.setf(ios::fixed, ios::floatfield);
 
-		msg << "frame " << (frameIndex + 1) << " out of " << frameCount << '\n';
+		msg << "frame " << frameIndex << " out of " << frameCount << '\n';
 
 		PrintProfilerNode(msg, 0, profiler.current);
 
 		cout << msg.str() << flush;
 	}
 
-	string MakeAnimationFilename(const string & root, size_t i)
+	struct FrameSetPrinter : boost::static_visitor<ostream &>
+	{
+		ostream & stream;
+
+		explicit FrameSetPrinter(ostream & stream) : stream(stream) {}
+
+		ostream & operator() (FramesAll)    { return stream << "all frames"; } 
+		ostream & operator() (FrameRange r) { return stream << "frames " << get<0>(r) << " to " << get<1>(r); } 
+		ostream & operator() (FrameIndex i) { return stream << "frame " << i; }
+	};
+
+	ostream & operator << (ostream & stream, const FrameSet & frameSet)
+	{
+		FrameSetPrinter printer(stream);
+		return boost::apply_visitor(printer, frameSet);
+	}
+
+	void PrintScript(const Script & script)
+	{
+		cout
+			<< "Rendering: "
+			<< script.duration << "s at "
+			<< script.fps << " fps, "
+			<< script.res.w << " x " << script.res.h << ", "
+			<< script.aamask.size() << "x AA, "
+			<< script.frames << "\n";
+	}
+
+	string MakeAnimationFilename(size_t i)
 	{
 		ostringstream s;
-		s << root << "render\\animation\\" << i << ".png";
+		s << "render\\animation\\" << i << ".png";
 		return s.str();
 	}
 
-	vector<size_t> GetFrames(size_t frameCount)
+	struct FrameExpander : boost::static_visitor<vector<size_t>>
 	{
-		vector<size_t> frames(frameCount);
-		frames.reserve(frameCount);
-		iota(frames.rbegin(), frames.rend(), 0);
-		return frames;
-	}
+		size_t frameCount;
 
-	void Run
-		( const string     & projectRoot
-		, const Resolution & res
-		, const AAMask     & aamask
-		, float              fps
-		)
+		explicit FrameExpander(size_t frameCount) : frameCount(frameCount) {}
+
+		vector<size_t> operator() (FramesAll) const
+		{
+			return MakeRange(0, frameCount);
+		}
+
+		vector<size_t> operator() (FrameRange r) const
+		{
+			size_t min = get<0>(r);
+			size_t max = get<1>(r);
+			return (min < frameCount)
+				? MakeRange(min, std::min(max + 1, frameCount))
+				: vector<size_t>();
+		}
+
+		vector<size_t> operator() (FrameIndex i) const
+		{
+			return { i };
+		}
+
+		vector<size_t> MakeRange(size_t min, size_t max) const
+		{
+			vector<size_t> frames(max - min);
+			frames.reserve(frameCount);
+			iota(frames.rbegin(), frames.rend(), min);
+			return frames;
+		}
+	};
+
+	void Run(const Path & projectRoot, const Script & script)
 	{
+		const Resolution & res(script.res);
 
-		const Mesh mesh(LoadPly((projectRoot + "shell\\hull.ply").c_str()));
+		const Mesh mesh(LoadPly(projectRoot / script.meshPath));
 
 		// set up the camera
 		const float    focalDistance = 1.0f;
 		const Matrix3f rayCast       = RayCast(res, focalDistance);
 		const Matrix4f projection    = Perspective(focalDistance);
 
-		const float  duration   = 8.0f; // seconds
-		const size_t frameCount = static_cast<size_t>(duration * fps + 0.5f);
-		vector<size_t> frames = GetFrames(frameCount);
-		//vector<size_t> frames = { 150 };
+		// create an array of frame indices
+		const size_t   frameCount = static_cast<size_t>(script.duration * script.fps + 0.5f);
+		vector<size_t> frames     = boost::apply_visitor(FrameExpander(frameCount), script.frames);
 
 		// about 0.02 for 1080p
 		const float stepLength = 50.0f / (float)sqrt(res.w * res.w + res.h * res.h);
@@ -126,7 +177,7 @@ namespace
 
 			const Vector3f bgColor(90.0f, 0.005f, -0.01f);
 
-			Animation animation(duration, projectRoot.c_str());
+			Animation animation(script.duration, projectRoot);
 
 			for (;;)
 			{
@@ -144,7 +195,7 @@ namespace
 				{
 					Profiler::Timer timer(profiler, "Total");
 
-					animation.SetTime(duration * frame / frameCount);
+					animation.SetTime(script.duration * frame / frameCount);
 
 					fill(buffer.begin(), buffer.end(), Vector4f::Zero());
 
@@ -152,12 +203,12 @@ namespace
 					ProjectMesh(animation.GetCamera(), projection, res, buffer.data(), mesh);
 					RenderMesh
 						( animation.GetCamera(), rayCast, res, buffer.data(), mesh
-						, animation.GetModel(), aamask, stepLength, profiler, rateIndicator
+						, animation.GetModel(), script.aamask, stepLength, profiler, rateIndicator
 						);
 
 					// save
 					SaveBuffer
-						( MakeAnimationFilename(projectRoot, frame).c_str()
+						( projectRoot / MakeAnimationFilename(frame)
 						, static_cast<unsigned int>(res.w)
 						, static_cast<unsigned int>(res.h)
 						, buffer.data()
@@ -184,9 +235,18 @@ int main()
 
 	Eigen::initParallel();
 
-	const string projectRoot("C:\\Users\\Alexey\\Projects\\Colours visualization\\");
+	const Path projectRoot("C:\\Users\\Alexey\\Projects\\Colours visualization\\");
 
-	Run(projectRoot, res360p, aa1x, 60.0f);
+	try
+	{
+		Script script = LoadScript(projectRoot / "render\\script.txt");
+		PrintScript(script);
+		Run(projectRoot, script);
+	}
+	catch (const exception & e)
+	{
+		cout << "error: " << e.what() << "\n";
+	}
 
 	return 0;
 }
