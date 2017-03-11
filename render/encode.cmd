@@ -25,7 +25,7 @@ if exist "%file%" (
 	if !height!==480  set bitrate=5m
 	if !height!==360  set bitrate=5m
 
-	ffmpeg                       ^
+	ffmpeg ^
 		-r 60                ^
 		-i "%dir%\%%d.png"   ^
 		-hide_banner         ^
