@@ -20,19 +20,19 @@
 #include <fstream>
 #include <iterator>
 
-using namespace std;
+namespace qi = boost::spirit::qi;
 
-namespace qi    = boost::spirit::qi;
-namespace ascii = boost::spirit::ascii;
+using std::string;
 
 BOOST_FUSION_ADAPT_STRUCT
-	( Script,
-	(std::string, meshPath)
-	(Resolution,  res)
-	(AAMask,      aamask)
-	(float,       fps)
-	(float,       duration)
-	(FrameSet,    frames)
+	(Script,
+	(string,     meshPath)
+	(Resolution, res)
+	(AAMask,     aamask)
+	(float,      fps)
+	(float,      duration)
+	(FrameSet,   frames)
+	(bool,       printFrameInfo)
 	)
 
 namespace
@@ -42,18 +42,10 @@ namespace
 	{
 		ScriptGrammar() : ScriptGrammar::base_type(script)
 		{
-			using qi::_1;
-			using qi::_2;
-			using qi::_val;
-			using qi::char_;
-			using qi::eol;
-			using qi::float_;
-			using qi::lit;
-			using qi::space;
-			using qi::uint_;
+			using namespace qi;
 
-			resolution.add("4k",    res4k);
-			resolution.add("1080p", res4k);
+			resolution.add("4k",    res2160p);
+			resolution.add("1080p", res1080p);
 			resolution.add("720p",  res720p);
 			resolution.add("576p",  res576p);
 			resolution.add("360p",  res360p);
@@ -73,18 +65,23 @@ namespace
 			path %= '"' >> +(char_ - '"') >> '"';
 
 			script
-				%= lit("mesh-path")  >> sep >> path       >> eol
-				>> lit("resolution") >> sep >> resolution >> eol
-				>> lit("aamask")     >> sep >> aamask     >> eol
-				>> lit("fps")        >> sep >> float_     >> eol
-				>> lit("duration")   >> sep >> time       >> eol
-				>> lit("frames")     >> sep >> frameSet   >> eol;
+				%= lit("mesh-path")        >> sep >> path       >> eol
+				>> lit("resolution")       >> sep >> resolution >> eol
+				>> lit("antialiasing")     >> sep >> aamask     >> eol
+				>> lit("fps")              >> sep >> float_     >> eol
+				>> lit("duration")         >> sep >> time       >> eol
+				>> lit("frames")           >> sep >> frameSet   >> eol
+				>> lit("print-frame-info") >> sep >> bool_      >> eol;
 
 			time
-				= (float_ >> "s")   [_val = _1]
-				| (float_ >> "min") [_val = _1 * 60.0f];
+				= (float_ >> "s")                          [_val = _1]
+				| (float_ >> "min" >> sp >> float_ >> "s") [_val = _1 * 60.0f + _2]
+				| (float_ >> "min")                        [_val = _1 * 60.0f];
 
 		}
+
+		qi::symbols<char, Resolution> resolution;
+		qi::symbols<char, AAMask>     aamask;
 
 		qi::rule<Iterator> sp;
 		qi::rule<Iterator> sep;
@@ -97,28 +94,29 @@ namespace
 		qi::rule<Iterator, string()> path;
 		qi::rule<Iterator, Script()> script;
 		qi::rule<Iterator, float()>  time;
-
-		qi::symbols<char, Resolution> resolution;
-		qi::symbols<char, AAMask>     aamask;
 	};
 }
 
 Script LoadScript(const char * path)
 {
-	ifstream file(path);
+	using FileIterator   = std::istream_iterator<char>;
+	using StringIterator = string::const_iterator;
+
+	std::ifstream file(path);
 	if (!file)
-		throw invalid_argument("File not found.");
-	file.unsetf(ios::skipws);
+		throw std::invalid_argument("File not found.");
+	file.unsetf(std::ios::skipws);
 
-	string text{istream_iterator<char>(file), istream_iterator<char>()};
-	string::const_iterator i(text.begin()), end(text.end());
+	string text{FileIterator(file), FileIterator()};
+	StringIterator i   (text.begin());
+	StringIterator end (text.end());
 
-	Script                                script;
-	ScriptGrammar<string::const_iterator> grammar;
+	Script                        script;
+	ScriptGrammar<StringIterator> grammar;
 
-	bool matches = qi::parse(i, end, grammar, script);
-	if (!matches || i != end)
-		throw runtime_error("Parsing failed.");
+	bool isMatch = qi::parse(i, end, grammar, script);
+	if (!isMatch || i != end)
+		throw std::runtime_error("Parsing failed.");
 
 	return script;
 }

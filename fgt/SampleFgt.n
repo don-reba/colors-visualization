@@ -71,9 +71,9 @@ def GetValue(lab)
 
 File.WriteAllLines
 	( path = "fgt sample.txt"
-		, contents = SobolSequence.GetPoints(3)
-			.Select(ToLab)
-			.Where(IsValidLab)
-			.Select(GetValue)
-			.Take(1_000_000)
+	, contents = SobolSequence.GetPoints(3)
+		.Select(ToLab)
+		.Where(IsValidLab)
+		.Select(GetValue)
+		.Take(1_000_000)
 	)

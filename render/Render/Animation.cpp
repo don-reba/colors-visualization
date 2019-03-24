@@ -66,19 +66,21 @@ void Animation::SetModel(float time)
 		//baseModel.reset(new Volume((projectRoot + "voxelize\\volume s3.dat").c_str()));
 	}
 
-	const float thickness = 1.0f;
+	const float thickness = 0.1f;
 	const float min       = 0.4f - thickness;
 	const float max       = 13.0f;
 	const float rate      = 1.0f / 16.0f;
 
 	float cycle;
 
-	const float x = min + (max - min) * modf(time * rate, &cycle);
+	//const float x = min + (max - min) * modf(time * rate, &cycle);
+	const float x = 1.075f;
 
-	//void * valueMapPointer = aligned_alloc(32, sizeof(BezierValueMap));
+	void * valueMapPointer = aligned_alloc(32, sizeof(BezierValueMap));
+	valueMap.reset(new(valueMapPointer) BezierValueMap({ 1.0f, 0.0f }, { 1.0f, 0.0f }, 0.0, 1.075f, 0.0001f));
 	//valueMap.reset(new(valueMapPointer) BezierValueMap({ 0.8f, 0.0f }, { 1.0f, 1.0f }, 0.2f, 8.0f, 0.0001f));
-	void * valueMapPointer = aligned_alloc(32, sizeof(BandValueMap));
-	valueMap.reset(new(valueMapPointer) BandValueMap(x, x + thickness));
+	//void * valueMapPointer = aligned_alloc(32, sizeof(BandValueMap));
+	//valueMap.reset(new(valueMapPointer) BandValueMap(x, x + thickness));
 
 	void * modelPointer = aligned_alloc(32, sizeof(MappedModel));
 	model.reset(new(modelPointer) MappedModel(*baseModel, *valueMap));

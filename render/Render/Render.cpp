@@ -15,7 +15,7 @@
 #include <Eigen/Dense>
 
 #include <algorithm>
-#include <array>
+#include <chrono>
 #include <fstream>
 #include <iomanip>
 #include <iostream>
@@ -86,8 +86,8 @@ namespace
 
 		explicit FrameSetPrinter(ostream & stream) : stream(stream) {}
 
-		ostream & operator() (FramesAll)    { return stream << "all frames"; } 
-		ostream & operator() (FrameRange r) { return stream << "frames " << get<0>(r) << " to " << get<1>(r); } 
+		ostream & operator() (FramesAll)    { return stream << "all frames"; }
+		ostream & operator() (FrameRange r) { return stream << "frames " << get<0>(r) << " to " << get<1>(r); }
 		ostream & operator() (FrameIndex i) { return stream << "frame " << i; }
 	};
 
@@ -103,7 +103,7 @@ namespace
 			<< "Rendering: "
 			<< script.duration << "s at "
 			<< script.fps << " fps, "
-			<< script.res.w << " x " << script.res.h << ", "
+			<< script.res.w << "x" << script.res.h << ", "
 			<< script.aamask.size() << "x AA, "
 			<< script.frames << "\n";
 	}
@@ -149,7 +149,7 @@ namespace
 		}
 	};
 
-	void Run(const Path & projectRoot, const Script & script)
+	void Run(const Path & projectRoot, const Script & script, int thread_count)
 	{
 		const Resolution & res(script.res);
 
@@ -171,13 +171,13 @@ namespace
 
 		RateIndicator rateIndicator(60.0);
 
+		const Vector3f bgColor(90.0f, 0.005f, -0.01f);
+
+		const Animation animation(script.duration, projectRoot);
+
 		auto ProcessFrame = [&]()
 		{
 			vector<Vector4f> buffer(res.w * res.h);
-
-			const Vector3f bgColor(90.0f, 0.005f, -0.01f);
-
-			Animation animation(script.duration, projectRoot);
 
 			for (;;)
 			{
@@ -217,11 +217,12 @@ namespace
 				}
 
 				rateIndicator.Reset();
-				PrintFrameInfo(frame, frameCount, profiler);
+				if (script.printFrameInfo)
+					PrintFrameInfo(frame, frameCount, profiler);
 			}
 		};
 
-		array<thread, 3> threads;
+		vector<thread> threads(thread_count);
 		for (auto & t : threads)
 			t = thread(ProcessFrame);
 		for (auto & t : threads)
@@ -231,6 +232,8 @@ namespace
 
 int main()
 {
+	using namespace std::chrono;
+
 	cout.imbue(locale(""));
 
 	Eigen::initParallel();
@@ -241,7 +244,19 @@ int main()
 	{
 		Script script = LoadScript(projectRoot / "render\\script.txt");
 		PrintScript(script);
-		Run(projectRoot, script);
+
+		std::vector<int> thread_counts(24);
+		std::iota(thread_counts.begin(), thread_counts.end(), 1);
+		std::random_shuffle(thread_counts.begin(), thread_counts.end());
+
+		for (int thread_count : thread_counts)
+		{
+			cout << "Thread count: " << thread_count << "\n";
+			auto begin_instance = steady_clock::now();
+			Run(projectRoot, script, thread_count);
+			auto end_instance = steady_clock::now();
+			cout << "Total time: " << duration_cast<milliseconds>(end_instance - begin_instance).count() << "ms\n";
+		}
 	}
 	catch (const exception & e)
 	{

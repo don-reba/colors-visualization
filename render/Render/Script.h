@@ -21,7 +21,7 @@ struct Script
 	float       fps;
 	float       duration;
 	FrameSet    frames;
-
+	bool        printFrameInfo;
 };
 
 Script LoadScript(const char * path);
