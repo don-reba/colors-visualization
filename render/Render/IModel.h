@@ -11,7 +11,7 @@ struct Vector3f256
 
 struct IModel
 {
-	virtual ~IModel() {}
+	virtual ~IModel() = default;
 
 	virtual __m256 operator [] (const Vector3f256 & lab) const = 0;
 };

@@ -10,21 +10,20 @@ private:
 
 public:
 
-	explicit Path(const char * root) : root(root) {}
+	Path(std::string root) : root(std::move(root)) {}
 
 	operator const char * () const
 	{
 		return root.c_str();
 	}
 
+	Path operator + (const std::string & str) const
+	{
+		return root + str;
+	}
+
 	Path operator / (const std::string & relative) const
 	{
-		return Path((root + relative).c_str());
+		return root + "\\" + relative;
 	}
-
-	Path operator / (const char * relative) const
-	{
-		return Path((root + relative).c_str());
-	}
-
 };

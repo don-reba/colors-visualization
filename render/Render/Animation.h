@@ -23,13 +23,14 @@ private:
 
 	Eigen::Matrix4f camera;
 
-	aligned_unique_ptr<IModel>    baseModel;
+	const IModel & baseModel;
+
 	aligned_unique_ptr<IValueMap> valueMap;
 	aligned_unique_ptr<IModel>    model;
 
 public:
 
-	Animation(float duration, const char * projectRoot);
+	Animation(float duration, const IModel & model);
 
 	const Eigen::Matrix4f & GetCamera() const;
 	const IModel          & GetModel()  const;

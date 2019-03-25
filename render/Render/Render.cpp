@@ -1,7 +1,6 @@
-﻿#include "Animation.h"
-#include "BezierValueMap.h"
+﻿#include "AlignedPtr.h"
+#include "Animation.h"
 #include "FgtVolume.h"
-#include "MappedModel.h"
 #include "Path.h"
 #include "Profiler.h"
 #include "Projection.h"
@@ -10,7 +9,6 @@
 #include "RenderMesh.h"
 #include "Script.h"
 #include "Volume.h"
-#include "BandValueMap.h"
 
 #include <Eigen/Dense>
 
@@ -167,16 +165,20 @@ namespace
 		// about 0.02 for 1080p
 		const float stepLength = 50.0f / (float)sqrt(res.w * res.w + res.h * res.h);
 
+		// set up model
+		aligned_unique_ptr<IModel> model =
+			make_aligned_unique<FgtVolume>(projectRoot / "fgt\\coef s3 a6 2.0.dat");
+
 		mutex frameMutex;
 
 		RateIndicator rateIndicator(60.0);
 
 		const Vector3f bgColor(90.0f, 0.005f, -0.01f);
 
-		const Animation animation(script.duration, projectRoot);
-
 		auto ProcessFrame = [&]()
 		{
+			Animation animation(script.duration, *model);
+
 			vector<Vector4f> buffer(res.w * res.h);
 
 			for (;;)
@@ -238,7 +240,7 @@ int main()
 
 	Eigen::initParallel();
 
-	const Path projectRoot("C:\\Users\\Alexey\\Projects\\Colours visualization\\");
+	const Path projectRoot("C:\\Users\\Alexey\\Projects\\Colours visualization");
 
 	try
 	{
@@ -247,6 +249,8 @@ int main()
 
 		std::vector<int> thread_counts(24);
 		std::iota(thread_counts.begin(), thread_counts.end(), 1);
+		thread_counts.reserve(thread_counts.size() * 2);
+		std::copy(thread_counts.begin(), thread_counts.end(), back_inserter(thread_counts));
 		std::random_shuffle(thread_counts.begin(), thread_counts.end());
 
 		for (int thread_count : thread_counts)

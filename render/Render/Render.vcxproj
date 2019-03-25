@@ -72,6 +72,8 @@
     <LinkIncremental>true</LinkIncremental>
     <IncludePath>C:\lib\boost;C:\lib\libpng;C:\lib\Eigen;$(IncludePath)</IncludePath>
     <LibraryPath>C:\lib\boost\stage\lib;lib;$(LibraryPath)</LibraryPath>
+    <CodeAnalysisRuleSet>NativeRecommendedRules.ruleset</CodeAnalysisRuleSet>
+    <RunCodeAnalysis>true</RunCodeAnalysis>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
@@ -97,6 +99,9 @@
       <DisableLanguageExtensions>false</DisableLanguageExtensions>
       <FloatingPointModel>Fast</FloatingPointModel>
       <EnableEnhancedInstructionSet>AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
+      <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+      <EnablePREfast>true</EnablePREfast>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -217,6 +222,7 @@
     <ClInclude Include="FgtVolume.h" />
     <ClInclude Include="FreeImage.h" />
     <ClInclude Include="FreeImagePlus.h" />
+    <ClInclude Include="AlignedPtr.h" />
     <ClInclude Include="IValueMap.h" />
     <ClInclude Include="Image.h" />
     <ClInclude Include="IModel.h" />

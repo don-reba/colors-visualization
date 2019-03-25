@@ -1,5 +1,6 @@
 #include "Animation.h"
 
+#include "AlignedPtr.h"
 #include "BezierValueMap.h"
 #include "FgtVolume.h"
 #include "MappedModel.h"
@@ -14,11 +15,10 @@
 
 using namespace Eigen;
 using namespace std;
-using namespace boost::alignment;
 
-Animation::Animation(float duration, const char * projectRoot)
-	: duration    (duration)
-	, projectRoot (projectRoot)
+Animation::Animation(float duration, const IModel & model)
+	: duration  (duration)
+	, baseModel (model)
 {
 }
 
@@ -29,8 +29,6 @@ const Matrix4f & Animation::GetCamera() const
 
 const IModel & Animation::GetModel() const
 {
-	if (!model)
-		throw runtime_error("The model has not been loaded.");
 	return *model;
 }
 
@@ -57,31 +55,23 @@ void Animation::SetCamera(float time)
 	camera = LookAt(eye, at, up);
 }
 
-void Animation::SetModel(float time)
+void Animation::SetModel(float/* time*/)
 {
-	if (!baseModel)
-	{
-		void * modelPointer = aligned_alloc(32, sizeof(FgtVolume));
-		baseModel.reset(new(modelPointer) FgtVolume((projectRoot + "fgt\\coef s3 a6 2.0.dat").c_str()));
-		//baseModel.reset(new Volume((projectRoot + "voxelize\\volume s3.dat").c_str()));
-	}
-
 	const float thickness = 0.1f;
 	const float min       = 0.4f - thickness;
 	const float max       = 13.0f;
 	const float rate      = 1.0f / 16.0f;
 
-	float cycle;
+	//float cycle;
 
 	//const float x = min + (max - min) * modf(time * rate, &cycle);
 	const float x = 1.075f;
 
-	void * valueMapPointer = aligned_alloc(32, sizeof(BezierValueMap));
-	valueMap.reset(new(valueMapPointer) BezierValueMap({ 1.0f, 0.0f }, { 1.0f, 0.0f }, 0.0, 1.075f, 0.0001f));
+	using Eigen::Vector2f;
+	valueMap = make_aligned_unique<BezierValueMap>(Vector2f{ 1.0f, 0.0f }, Vector2f{ 1.0f, 0.0f }, 0.0f, 1.075f, 0.0001f);
 	//valueMap.reset(new(valueMapPointer) BezierValueMap({ 0.8f, 0.0f }, { 1.0f, 1.0f }, 0.2f, 8.0f, 0.0001f));
 	//void * valueMapPointer = aligned_alloc(32, sizeof(BandValueMap));
 	//valueMap.reset(new(valueMapPointer) BandValueMap(x, x + thickness));
 
-	void * modelPointer = aligned_alloc(32, sizeof(MappedModel));
-	model.reset(new(modelPointer) MappedModel(*baseModel, *valueMap));
+	model = make_aligned_unique<MappedModel>(baseModel, *valueMap);
 }
