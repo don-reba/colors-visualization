@@ -247,20 +247,10 @@ int main()
 		Script script = LoadScript(projectRoot / "render\\script.txt");
 		PrintScript(script);
 
-		std::vector<int> thread_counts(24);
-		std::iota(thread_counts.begin(), thread_counts.end(), 1);
-		thread_counts.reserve(thread_counts.size() * 2);
-		std::copy(thread_counts.begin(), thread_counts.end(), back_inserter(thread_counts));
-		std::random_shuffle(thread_counts.begin(), thread_counts.end());
-
-		for (int thread_count : thread_counts)
-		{
-			cout << "Thread count: " << thread_count << "\n";
-			auto begin_instance = steady_clock::now();
-			Run(projectRoot, script, thread_count);
-			auto end_instance = steady_clock::now();
-			cout << "Total time: " << duration_cast<milliseconds>(end_instance - begin_instance).count() << "ms\n";
-		}
+		auto begin_instance = steady_clock::now();
+		Run(projectRoot, script, 10);
+		auto end_instance = steady_clock::now();
+		cout << "Total time: " << duration_cast<milliseconds>(end_instance - begin_instance).count() << "ms\n";
 	}
 	catch (const exception & e)
 	{
