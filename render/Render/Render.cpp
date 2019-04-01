@@ -42,7 +42,7 @@ namespace
 
 		for (const auto & timerStat : node->children)
 		{
-			const std::string     & name = timerStat.first;
+			const string     & name = timerStat.first;
 			const Profiler::Stats & stat = timerStat.second->stats;
 
 			for (size_t i(0); i != level; ++i)
@@ -98,19 +98,12 @@ namespace
 	void PrintScript(const Script & script)
 	{
 		cout
-			<< "Rendering: "
+			<< "Rendering '" << script.meshPath << "' to '" << script.outputPath << "': "
 			<< script.duration << "s at "
 			<< script.fps << " fps, "
-			<< script.res.w << "x" << script.res.h << ", "
+			<< to_string(script.res.w) << "x" << to_string(script.res.h) << ", "
 			<< script.aamask.size() << "x AA, "
 			<< script.frames << "\n";
-	}
-
-	string MakeAnimationFilename(size_t i)
-	{
-		ostringstream s;
-		s << "render\\animation\\" << i << ".png";
-		return s.str();
 	}
 
 	struct FrameExpander : boost::static_visitor<vector<size_t>>
@@ -210,7 +203,7 @@ namespace
 
 					// save
 					SaveBuffer
-						( projectRoot / MakeAnimationFilename(frame)
+						( projectRoot / script.outputPath / to_string(frame) + ".png"
 						, static_cast<unsigned int>(res.w)
 						, static_cast<unsigned int>(res.h)
 						, buffer.data()
@@ -234,7 +227,7 @@ namespace
 
 int main()
 {
-	using namespace std::chrono;
+	using namespace chrono;
 
 	cout.imbue(locale(""));
 

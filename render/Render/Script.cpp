@@ -27,6 +27,7 @@ using std::string;
 BOOST_FUSION_ADAPT_STRUCT
 	(Script,
 	(string,     meshPath)
+	(string,     outputPath)
 	(Resolution, res)
 	(AAMask,     aamask)
 	(float,      fps)
@@ -66,6 +67,7 @@ namespace
 
 			script
 				%= lit("mesh-path")        >> sep >> path       >> eol
+				>> lit("output-path")      >> sep >> path       >> eol
 				>> lit("resolution")       >> sep >> resolution >> eol
 				>> lit("antialiasing")     >> sep >> aamask     >> eol
 				>> lit("fps")              >> sep >> float_     >> eol

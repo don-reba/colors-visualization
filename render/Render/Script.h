@@ -16,6 +16,7 @@ using  FrameSet   = boost::variant<FramesAll, FrameRange, FrameIndex>;
 struct Script
 {
 	std::string meshPath;
+	std::string outputPath;
 	Resolution  res;
 	AAMask      aamask;
 	float       fps;
