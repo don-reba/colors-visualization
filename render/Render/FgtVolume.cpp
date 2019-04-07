@@ -7,8 +7,11 @@
 #include <fstream>
 #include <stdexcept>
 
+#include <boost/math/constants/constants.hpp>
+
 using namespace Eigen;
 using namespace std;
+using namespace boost::math::constants;
 
 namespace
 {
@@ -47,7 +50,7 @@ FgtVolume::FgtVolume(const char * path)
 	if (valueCount != Count.x() * Count.y() * Count.z() * PD)
 		throw runtime_error("Inconsistent value count.");
 
-	normalizationFactor = pow(Sigma * sqrt((float)M_PI), -3.0f);
+	normalizationFactor = pow(Sigma * sqrt(pi<float>()), -3.0f);
 }
 
 __m256 FgtVolume::operator [] (const Vector3f256 & p) const
