@@ -7,7 +7,7 @@ set dir=animation
 set PATH=%PATH%;"C:\Program Files\ffmpeg\bin"
 
 rem get the first file from the target directory
-for %%f in (%dir%\*) do set file=%%f & goto found_file
+for %%f in ("%dir%\*") do set file=%%f & goto found_file
 :found_file
 
 if exist "%file%" (
@@ -25,21 +25,21 @@ if exist "%file%" (
 	if !height!==480  set bitrate=5m
 	if !height!==360  set bitrate=5m
 
-	ffmpeg ^
-		-r 60                ^
+	ffmpeg                       ^
+		-framerate 60        ^
 		-i "%dir%\%%d.png"   ^
 		-hide_banner         ^
-		-movflags +faststart ^
 		-c:v libx264         ^
 		-profile:v high444   ^
 		-level 4.2           ^
-		-crf 8               ^
+		-crf 4               ^
 		-coder 1             ^
-		-b:v !bitrate!       ^
+		-maxrate !bitrate!   ^
 		-bf 2                ^
-		-g 30                ^
+		-g 120               ^
 		-pix_fmt yuv444p     ^
-		-y "%dir%.mp4"
+		-y                   ^
+		"%dir%.mp4"
 ) else (
 	echo nothing to encode
 )
