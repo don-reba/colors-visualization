@@ -72,23 +72,27 @@
     <LinkIncremental>true</LinkIncremental>
     <IncludePath>C:\lib\boost;C:\lib\libpng;C:\lib\Eigen;$(IncludePath)</IncludePath>
     <LibraryPath>C:\lib\boost\stage\lib;lib;$(LibraryPath)</LibraryPath>
-    <CodeAnalysisRuleSet>NativeRecommendedRules.ruleset</CodeAnalysisRuleSet>
+    <CodeAnalysisRuleSet>Render.ruleset</CodeAnalysisRuleSet>
     <RunCodeAnalysis>true</RunCodeAnalysis>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
     <IncludePath>$(BOOST_BUILD);D:\Programming\libpng;D:\Programming\Eigen;$(IncludePath)</IncludePath>
     <LibraryPath>$(BOOST_BUILD)\stage\lib;lib64;$(LibraryPath)</LibraryPath>
+    <CodeAnalysisRuleSet>Render.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
     <IncludePath>C:\lib\boost;C:\lib\libpng;C:\lib\Eigen;$(IncludePath)</IncludePath>
     <LibraryPath>C:\lib\boost\stage\lib;lib;$(LibraryPath)</LibraryPath>
+    <CodeAnalysisRuleSet>Render.ruleset</CodeAnalysisRuleSet>
+    <RunCodeAnalysis>true</RunCodeAnalysis>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
     <IncludePath>$(BOOST_BUILD);D:\Programming\libpng;D:\Programming\Eigen;$(IncludePath)</IncludePath>
     <LibraryPath>$(BOOST_BUILD)\stage\lib;lib64;$(LibraryPath)</LibraryPath>
+    <CodeAnalysisRuleSet>Render.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -153,6 +157,7 @@
       <FloatingPointModel>Fast</FloatingPointModel>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <ConformanceMode>true</ConformanceMode>
+      <EnablePREfast>true</EnablePREfast>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -242,6 +247,9 @@
     <ClInclude Include="Script.h" />
     <ClInclude Include="Volume.h" />
     <ClInclude Include="BandValueMap.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Render.ruleset" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

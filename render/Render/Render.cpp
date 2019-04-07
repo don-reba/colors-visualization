@@ -30,7 +30,7 @@ using namespace Eigen;
 
 namespace
 {
-	void PrintProfilerNode(ostream & msg, size_t level, Profiler::Node * node)
+	void PrintProfilerNode(ostream & stream, size_t level, Profiler::Node * node)
 	{
 		size_t nameLength (0u);
 		double total      (0.0);
@@ -46,23 +46,23 @@ namespace
 			const Profiler::Stats & stat = timerStat.second->stats;
 
 			for (size_t i(0); i != level; ++i)
-				msg << "  ";
+				stream << "  ";
 
 			string pad(nameLength + 1 - name.size(), ' ');
-			msg << "  " << name << ':' << pad;
+			stream << name << ':' << pad;
 
-			msg << setprecision(6) << stat.Mean();
+			stream << setprecision(6) << stat.Mean();
 			if (stat.Count() > 1)
-				msg << "(" << setprecision(6) << stat.StDev() << ")";
-			msg << "s";
+				stream << "(" << setprecision(6) << stat.StDev() << ")";
+			stream << "s";
 			if (stat.Count() > 1)
-				msg << " x" << stat.Count();
+				stream << " x" << stat.Count();
 			if (node->children.size() > 1)
-				msg << " " << setprecision(2) << (100.0 * stat.Total() / total) << '%';
+				stream << " " << setprecision(2) << (100.0 * stat.Total() / total) << '%';
 
-			msg << '\n';
+			stream << '\n';
 
-			PrintProfilerNode(msg, level + 1, timerStat.second.get());
+			PrintProfilerNode(stream, level + 1, timerStat.second.get());
 		}
 	}
 
@@ -73,7 +73,7 @@ namespace
 
 		msg << "frame " << frameIndex << " out of " << frameCount << '\n';
 
-		PrintProfilerNode(msg, 0, profiler.current);
+		PrintProfilerNode(msg, 1, profiler.current);
 
 		cout << msg.str() << flush;
 	}
@@ -140,8 +140,10 @@ namespace
 		}
 	};
 
-	void Run(const Path & projectRoot, const Script & script, int thread_count)
+	void Run(const Path & projectRoot, const Script & script, int thread_count, Profiler & globalProfiler)
 	{
+		Profiler::Timer timer(globalProfiler, "total time");
+
 		const Resolution & res(script.res);
 
 		const Mesh mesh(LoadPly(projectRoot / script.meshPath));
@@ -159,8 +161,11 @@ namespace
 		const float stepLength = 50.0f / (float)sqrt(res.w * res.w + res.h * res.h);
 
 		// set up model
-		aligned_unique_ptr<IModel> model =
-			make_aligned_unique<FgtVolume>(projectRoot / "fgt\\coef s3 a6 2.0.dat");
+		aligned_unique_ptr<IModel> model;
+		{
+			Profiler::Timer modelTimer(globalProfiler, "model loading");
+			model = make_aligned_unique<FgtVolume>(projectRoot / "fgt\\coef s3 a6 2.0.dat");
+		}
 
 		mutex frameMutex;
 
@@ -188,7 +193,7 @@ namespace
 				Profiler profiler;
 
 				{
-					Profiler::Timer timer(profiler, "Total");
+					Profiler::Timer timer(profiler, "total");
 
 					animation.SetTime(script.duration * frame / frameCount);
 
@@ -227,8 +232,6 @@ namespace
 
 int main()
 {
-	using namespace chrono;
-
 	cout.imbue(locale(""));
 
 	Eigen::initParallel();
@@ -237,13 +240,16 @@ int main()
 
 	try
 	{
+		Profiler profiler;
+
 		Script script = LoadScript(projectRoot / "render\\script.txt");
 		PrintScript(script);
 
-		auto begin_instance = steady_clock::now();
-		Run(projectRoot, script, 10);
-		auto end_instance = steady_clock::now();
-		cout << "Total time: " << duration_cast<milliseconds>(end_instance - begin_instance).count() << "ms\n";
+		constexpr int thread_count = 10;
+		Run(projectRoot, script, thread_count, profiler);
+
+		std::cout << "\n";
+		PrintProfilerNode(std::cout, 0, profiler.current);
 	}
 	catch (const exception & e)
 	{
