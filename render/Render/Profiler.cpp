@@ -56,7 +56,7 @@ double Profiler::Stats::Total() const
 
 double Profiler::Stats::Var() const
 {
-	return m2 / (n - 1);
+	return m2 / (static_cast<double>(n) - 1);
 }
 
 //----------------

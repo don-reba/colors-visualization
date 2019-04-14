@@ -45,7 +45,7 @@ namespace
 		{
 			using namespace qi;
 
-			resolution.add("4k",    res2160p);
+			resolution.add("2160p", res2160p);
 			resolution.add("1080p", res1080p);
 			resolution.add("720p",  res720p);
 			resolution.add("576p",  res576p);

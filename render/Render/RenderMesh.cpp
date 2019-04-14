@@ -74,13 +74,13 @@ namespace
 		)
 	{
 		// integrate by stepping through [min, max - step]
-		// stop if the colour becomes sufficintly opaque
+		// stop if the colour becomes sufficiently opaque
 
 		const float minAmount(1.0f / 256.0f);
 		const float unitWidth(1.0f);
 
 		float    amount(1.0f);
-		Vector3f color(Vector3f::Zero());
+		Vector3f color = Vector3f::Zero();
 
 		float t = min;
 
@@ -90,36 +90,51 @@ namespace
 		while (t <= max && amount >= minAmount)
 		{
 			// get the current coordinate
-			__declspec(align(32)) float x[8];
-			__declspec(align(32)) float y[8];
-			__declspec(align(32)) float z[8];
-			float t2 = t;
-			for (size_t i = 0; i != 8; ++i)
+			__declspec(align(32)) float tSteps[8] = {};
+			for (size_t i = 0; i != 8 && t <= max; ++i)
 			{
-				x[i] = ray.x() * t2 + offset.x();
-				y[i] = ray.y() * t2 + offset.y();
-				z[i] = ray.z() * t2 + offset.z();
-				t2 += step;
+				tSteps[i] = t;
+				t += step;
 			}
 
-			Vector3f256 p = {_mm256_load_ps(x), _mm256_load_ps(y), _mm256_load_ps(z)};
+			const Vector3f256 p =
+			{ _mm256_fmadd_ps(_mm256_set1_ps(ray.x()), _mm256_load_ps(tSteps), _mm256_set1_ps(offset.x()))
+			, _mm256_fmadd_ps(_mm256_set1_ps(ray.y()), _mm256_load_ps(tSteps), _mm256_set1_ps(offset.y()))
+			, _mm256_fmadd_ps(_mm256_set1_ps(ray.z()), _mm256_load_ps(tSteps), _mm256_set1_ps(offset.z()))
+			};
+
+			// (x + 100 < 0.1 mod 10) ? 0 : x
+			const __m256 xGrid =
+				_mm256_and_ps
+					( p.x
+					, _mm256_cmp_ps
+						( _mm256_set1_ps(0.1f)
+						, _mm256_fmod_ps
+							( _mm256_add_ps(p.x, _mm256_set1_ps(100.0f))
+							, _mm256_set1_ps(10.0f)
+							)
+						, _CMP_LT_OQ
+						)
+					);
 
 			// sample the model
 			__m256 samples        = _mm256_sub_ps(_mm256_set1_ps(1.0f), model[p]);
 			__m256 transparencies = _mm256_min_ps(powf8(samples, power), _mm256_set1_ps(1.0f));
 
 			// add the new value
-			__declspec(align(32)) float transparencyValues[8];
-			_mm256_store_ps(transparencyValues, transparencies);
+			__declspec(align(32)) float a[8], x[8], y[8], z[8];
+			_mm256_store_ps(a, transparencies);
+			_mm256_store_ps(x, xGrid);
+			_mm256_store_ps(y, p.y);
+			_mm256_store_ps(z, p.z);
 
 			for (size_t i = 0; i != 8 && t <= max; ++i)
 			{
-				float factor = amount * (1.0f - transparencyValues[i]);
+				const float factor = amount * (1.0f - a[i]);
 				color.x() += x[i] * factor;
 				color.y() += y[i] * factor;
 				color.z() += z[i] * factor;
-				amount *= transparencyValues[i];
-				t += step;
+				amount *= a[i];
 			}
 		}
 
