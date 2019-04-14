@@ -10,7 +10,7 @@
 #include <memory>
 #include <string>
 
-class Animation
+class Animation final
 {
 private:
 

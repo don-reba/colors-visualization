@@ -17,13 +17,13 @@ enum class ModelType { Fgt, Voxel };
 
 std::string ToString(ModelType modelType);
 
-struct ModelSource
+struct ModelSource final
 {
 	ModelType   type = ModelType::Fgt;
 	std::string path;
 };
 
-struct Script
+struct Script final
 {
 	std::string meshPath;
 	std::string outputPath;

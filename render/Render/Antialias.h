@@ -2,7 +2,7 @@
 
 #include <vector>
 
-struct Subsample
+struct Subsample final
 {
 	float dx;
 	float dy;

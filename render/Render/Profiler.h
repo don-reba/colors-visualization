@@ -7,11 +7,11 @@
 #include <vector>
 
 // A helper class for profiling functions.
-class Profiler
+class Profiler final
 {
 public:
 
-	class Timer
+	class Timer final
 	{
 		using clock = std::chrono::steady_clock;
 
@@ -24,7 +24,7 @@ public:
 		Timer & operator = (const Timer &) = delete;
 	};
 
-	class Stats
+	class Stats final
 	{
 		int    n;
 		double mean;
@@ -42,7 +42,7 @@ public:
 		double Var()   const;
 	};
 
-	struct Node
+	struct Node final
 	{
 		Node  * parent;
 		Stats   stats;

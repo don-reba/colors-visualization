@@ -1,13 +1,13 @@
 #pragma once
 #include "IValueMap.h"
 
-class BandValueMap : public IValueMap
+class BandValueMap final : public IValueMap
 {
 public:
 
 	BandValueMap(float min, float max);
 
-	__m256 operator[] (__m256 x) const;
+	__m256 operator[] (__m256 x) const override;
 
 private:
 

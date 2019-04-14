@@ -8,7 +8,7 @@
 
 #include <Eigen/Dense>
 
-class FgtVolume : public IModel
+class FgtVolume final : public IModel
 {
 private:
 
@@ -35,5 +35,5 @@ public:
 
 	FgtVolume(const char * path);
 
-	__m256 operator [] (const Vector3f256 & p) const;
+	__m256 operator [] (const Vector3f256 & p) const override;
 };

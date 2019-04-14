@@ -7,7 +7,7 @@
 
 #include <Eigen/Dense>
 
-class Volume : public IModel
+class Volume final : public IModel
 {
 private:
 
@@ -26,5 +26,5 @@ public:
 
 	float operator [] (const Eigen::Vector3f & p) const;
 
-	__m256 operator [] (const Vector3f256 & p) const;
+	__m256 operator [] (const Vector3f256 & p) const override;
 };

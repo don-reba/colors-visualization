@@ -5,7 +5,7 @@
 #include "Bezierf8.h"
 #include <Eigen/Dense>
 
-class BezierValueMap : public IValueMap
+class BezierValueMap final : public IValueMap
 {
 public:
 
@@ -17,7 +17,7 @@ public:
 		, float           epsilon
 		);
 
-	__m256 operator[] (__m256 x) const;
+	__m256 operator[] (__m256 x) const override;
 
 private:
 

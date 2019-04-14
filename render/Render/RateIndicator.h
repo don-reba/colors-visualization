@@ -4,7 +4,7 @@
 #include <mutex>
 
 // Reports
-class RateIndicator
+class RateIndicator final
 {
 private:
 

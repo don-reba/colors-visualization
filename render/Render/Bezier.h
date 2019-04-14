@@ -2,7 +2,7 @@
 
 #include <Eigen/Dense>
 
-class Bezier
+class Bezier final
 {
 private:
 

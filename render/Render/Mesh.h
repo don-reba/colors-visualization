@@ -3,9 +3,9 @@
 #include <Eigen/Dense>
 #include <vector>
 
-struct Mesh
+struct Mesh final
 {
-	struct Triangle
+	struct Triangle final
 	{
 		int v0, v1, v2;
 		Triangle(int v0, int v1, int v2);

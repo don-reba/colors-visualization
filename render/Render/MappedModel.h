@@ -3,7 +3,7 @@
 #include "IModel.h"
 #include "IValueMap.h"
 
-class MappedModel : public IModel
+class MappedModel final : public IModel
 {
 public:
 

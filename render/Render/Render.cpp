@@ -173,7 +173,7 @@ namespace
 		// about 0.02 for 1080p
 		const float stepLength = 50.0f / (float)sqrt(res.w * res.w + res.h * res.h);
 
-		// set up model
+		// set up the model
 		aligned_unique_ptr<IModel> model = MakeModel(script.model.type, projectRoot / script.model.path, globalProfiler);
 
 		mutex frameMutex;

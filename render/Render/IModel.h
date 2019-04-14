@@ -2,7 +2,7 @@
 
 #include <immintrin.h> // AVX
 
-struct Vector3f256
+struct Vector3f256 final
 {
 	__m256 x;
 	__m256 y;
