@@ -25,15 +25,22 @@ namespace qi = boost::spirit::qi;
 using std::string;
 
 BOOST_FUSION_ADAPT_STRUCT
+	(ModelSource,
+	(ModelType, type)
+	(string,    path)
+	)
+
+BOOST_FUSION_ADAPT_STRUCT
 	(Script,
-	(string,     meshPath)
-	(string,     outputPath)
-	(Resolution, res)
-	(AAMask,     aamask)
-	(float,      fps)
-	(float,      duration)
-	(FrameSet,   frames)
-	(bool,       printFrameInfo)
+	(string,      meshPath)
+	(string,      outputPath)
+	(ModelSource, model)
+	(Resolution,  res)
+	(AAMask,      aamask)
+	(float,       fps)
+	(float,       duration)
+	(FrameSet,    frames)
+	(bool,        printFrameInfo)
 	)
 
 namespace
@@ -45,14 +52,20 @@ namespace
 		{
 			using namespace qi;
 
-			resolution.add("2160p", res2160p);
-			resolution.add("1080p", res1080p);
-			resolution.add("720p",  res720p);
-			resolution.add("576p",  res576p);
-			resolution.add("360p",  res360p);
+			resolution.add
+				("2160p", res2160p)
+				("1080p", res1080p)
+				("720p",  res720p)
+				("576p",  res576p)
+				("360p",  res360p);
 
-			aamask.add("1x", aa1x);
-			aamask.add("4x", aa4x);
+			aamask.add
+				("1x", aa1x)
+				("4x", aa4x);
+
+			modelType.add
+				("fgt",   ModelType::Fgt)
+				("voxel", ModelType::Voxel);
 
 			sp = *(char_(' ') | char_('\t'));
 
@@ -65,9 +78,12 @@ namespace
 
 			path %= '"' >> +(char_ - '"') >> '"';
 
+			model %= modelType >> sp >> path;
+
 			script
 				%= lit("mesh-path")        >> sep >> path       >> eol
 				>> lit("output-path")      >> sep >> path       >> eol
+				>> lit("model")            >> sep >> model      >> eol
 				>> lit("resolution")       >> sep >> resolution >> eol
 				>> lit("antialiasing")     >> sep >> aamask     >> eol
 				>> lit("fps")              >> sep >> float_     >> eol
@@ -84,9 +100,12 @@ namespace
 
 		qi::symbols<char, Resolution> resolution;
 		qi::symbols<char, AAMask>     aamask;
+		qi::symbols<char, ModelType>  modelType;
 
 		qi::rule<Iterator> sp;
 		qi::rule<Iterator> sep;
+
+		qi::rule<Iterator, ModelSource()> model;
 
 		qi::rule<Iterator, FramesAll()>  framesAll;
 		qi::rule<Iterator, FrameRange()> frameRange;
@@ -97,6 +116,16 @@ namespace
 		qi::rule<Iterator, Script()> script;
 		qi::rule<Iterator, float()>  time;
 	};
+}
+
+std::string ToString(ModelType modelType)
+{
+	switch (modelType)
+	{
+	case ModelType::Fgt:   return "FGT";
+	case ModelType::Voxel: return "Voxel";
+	}
+	return "";
 }
 
 Script LoadScript(const char * path)

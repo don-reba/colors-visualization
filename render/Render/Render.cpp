@@ -103,7 +103,9 @@ namespace
 			<< script.fps << " fps, "
 			<< to_string(script.res.w) << "x" << to_string(script.res.h) << ", "
 			<< script.aamask.size() << "x AA, "
-			<< script.frames << "\n";
+			<< script.frames << "\n"
+			<< ToString(script.model.type) << " model '" << script.model.path << "'\n"
+			<< '\n';
 	}
 
 	struct FrameExpander : boost::static_visitor<vector<size_t>>
@@ -140,6 +142,17 @@ namespace
 		}
 	};
 
+	aligned_unique_ptr<IModel> MakeModel(ModelType type, const char * path, Profiler & profiler)
+	{
+		Profiler::Timer modelTimer(profiler, "model loading");
+		switch (type)
+		{
+		case ModelType::Fgt: return make_aligned_unique<FgtVolume>(path);
+		case ModelType::Voxel: return make_aligned_unique<Volume>(path);
+		}
+		return {};
+	}
+
 	void Run(const Path & projectRoot, const Script & script, int thread_count, Profiler & globalProfiler)
 	{
 		Profiler::Timer timer(globalProfiler, "total time");
@@ -161,11 +174,7 @@ namespace
 		const float stepLength = 50.0f / (float)sqrt(res.w * res.w + res.h * res.h);
 
 		// set up model
-		aligned_unique_ptr<IModel> model;
-		{
-			Profiler::Timer modelTimer(globalProfiler, "model loading");
-			model = make_aligned_unique<FgtVolume>(projectRoot / "fgt\\coef s3 a6 2.0.dat");
-		}
+		aligned_unique_ptr<IModel> model = MakeModel(script.model.type, projectRoot / script.model.path, globalProfiler);
 
 		mutex frameMutex;
 
