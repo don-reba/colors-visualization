@@ -1,0 +1,151 @@
+// REFERENCE: System.Drawing.dll
+// REFERENCE: ConvertColor.dll
+// PLATFORM: x64
+
+#define TRACE
+
+using ConvertColor;
+
+using Nemerle.Collections;
+using System.Collections.Generic;
+using System.Console;
+using System.Drawing;
+using System.Diagnostics;
+using System.Globalization;
+using System.Math;
+using System.IO;
+using System.Threading;
+
+[ Record ]
+class Domain
+{
+	public X : double * double;
+	public Y : double * double;
+	public Z : double * double;
+}
+
+def LoadPoints(path)
+{
+	using (reader = BinaryReader(File.OpenRead(path)))
+	{
+		WriteLine("reading data...");
+		def points = array(reader.ReadInt32());
+		for (mutable i; i != points.Length; ++i)
+		{
+			points[i] =
+				( reader.ReadDouble()
+				, reader.ReadDouble()
+				, reader.ReadDouble()
+				);
+		}
+		WriteLine("{0:N0} points", points.Length);
+		points;
+	}
+}
+
+def RgbToLab(points, domain)
+{
+	def CheckRange(x, (min, max))
+	{
+		when (x < min || x > max)
+			throw System.ArgumentOutOfRangeException("Point not in voxel volume.");
+	}
+	def MapPoint(r, g, b)
+	{
+		def (x, y, z) = (r / 255.0, g / 255.0, b / 255.0) |> RgbToXyz |> XyzToLab;
+		CheckRange(x, domain.X);
+		CheckRange(y, domain.Y);
+		CheckRange(z, domain.Z);
+		(x, y, z);
+	}
+	points.Map(MapPoint);
+}
+
+def IsValidLab(lab)
+{
+	lab |> LabToXyz |> XyzToRgb |> IsValidRgb;
+}
+
+def Sample(points, domain, σ : double, n : int)
+{
+	def CreateThreads(threadCount, f)
+	{
+		def threads = array(threadCount);
+		mutable prev = 0;
+		for (mutable i = 0; i != threadCount; ++i)
+		{
+			def fi    = i;
+			def begin = prev;
+			def end   = n * (i + 1) / threadCount;
+			threads[i] = Thread(() => f(fi, begin, end));
+			prev = end;
+		}
+		threads;
+	}
+
+	def Interpolate(x, (min, max))
+	{
+		min + x * (max - min);
+	}
+
+	def scale = -0.5 / σ / σ;
+
+	def Evaluate(l, a, b)
+	{
+		mutable sum;
+		foreach ((lp, ap, bp) in points)
+		{
+			def δl = lp - l;
+			def δa = ap - a;
+			def δb = bp - b;
+			sum += Exp(scale * (δl * δl + δa * δa + δb * δb));
+		}
+		sum * Pow(σ * Sqrt(2.0 * PI), -3.0);
+	}
+
+	def samples = array(n);
+
+	def SampleRange(threadID, start, finish)
+	{
+		def random = System.Random(threadID);
+
+		for (mutable i = start; i != finish;)
+		{
+			def l = Interpolate(random.NextDouble(), domain.X);
+			def a = Interpolate(random.NextDouble(), domain.Y);
+			def b = Interpolate(random.NextDouble(), domain.Z);
+			when (IsValidLab(l, a, b))
+			{
+				samples[i] = Evaluate(l, a, b);
+				++i;
+			}
+		}
+	}
+
+	def threads = CreateThreads(22, SampleRange);
+	foreach (t in threads)
+		t.Start();
+	foreach (t in threads)
+		t.Join();
+
+	samples;
+}
+
+def SaveSamples(samples, path)
+{
+	using (w = File.CreateText(path))
+		foreach (sample in samples)
+			w.WriteLine(sample);
+}
+
+def iPath    = @"..\get samples\samples.dat";
+def oPath    = "volume s3 samples.txt";
+def σ        = 3.0;
+
+def domain = Domain(RangeL, RangeA, RangeB);
+
+def watch = Stopwatch.StartNew();
+
+SaveSamples(Sample(RgbToLab(LoadPoints(iPath), domain), domain, σ, 100_000), oPath);
+
+WriteLine("{0} elapsed", watch.Elapsed);

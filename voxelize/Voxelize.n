@@ -183,11 +183,7 @@ def cellSize = 1.0;
 def σ        = 3.0;
 def n        = 4.0;
 
-def domain = Domain
-	( (   0.0, 100.0)
-	, ( -87.0,  99.0)
-	, (-108.0,  95.0)
-	);
+def domain = Domain(RangeL, RangeA, RangeB);
 
 def watch = Stopwatch.StartNew();
 
