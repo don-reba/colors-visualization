@@ -210,6 +210,7 @@ namespace
 
 					// render
 					ProjectMesh(animation.GetCamera(), projection, res, buffer.data(), mesh);
+					SaveProjectionBuffer(projectRoot / "projection.png", res, buffer.data());
 					RenderMesh
 						( animation.GetCamera(), rayCast, res, buffer.data(), mesh
 						, animation.GetModel(), script.aamask, stepLength, profiler, rateIndicator
@@ -218,8 +219,7 @@ namespace
 					// save
 					SaveBuffer
 						( projectRoot / script.outputPath / to_string(frame) + ".png"
-						, static_cast<unsigned int>(res.w)
-						, static_cast<unsigned int>(res.h)
+						, res
 						, buffer.data()
 						, bgColor
 						);

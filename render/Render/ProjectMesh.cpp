@@ -28,10 +28,12 @@ int Orient2d(const Vector2i & a, const Vector2i & b, const Vector2i & c)
 	return (b.x() - a.x()) * (c.y() - a.y()) - (b.y() - a.y()) * (c.x() - a.x());
 }
 
-void MakeCounterclockwise(Triangle2i & tri)
+bool MakeCounterclockwise(Triangle2i & tri)
 {
-	if (Orient2d(tri.v0, tri.v1, tri.v2) < 0)
+	const bool cw = Orient2d(tri.v0, tri.v1, tri.v2) >= 0;
+	if (!cw)
 		swap(tri.v1, tri.v2);
+	return cw;
 }
 
 bool IsTopLeft(const Vector2i & a, const Vector2i & b)
@@ -45,7 +47,7 @@ bool IsTopLeft(const Vector2i & a, const Vector2i & b)
 	return false;
 }
 
-void Rasterize(const Triangle2i & tri, float id, Resolution res, Vector4f * buffer)
+void Rasterize(const Triangle2i & tri, float id, Resolution res, Vector4f * buffer, bool facing)
 {
 	// the triangle bounding box
 	int minX(min3(tri.v0.x(), tri.v1.x(), tri.v2.x()));
@@ -77,8 +79,8 @@ void Rasterize(const Triangle2i & tri, float id, Resolution res, Vector4f * buff
 		{
 			Vector4f & pxl(buffer[p.y() * res.w + p.x()]);
 			// we store pixel id in A and B components of the pixel
-			// this assumed the volume is convex
-			(pxl.x() == 0.0f ? pxl.x() : pxl.y()) = id;
+			// assuming the volume is convex
+			(facing ? pxl.x() : pxl.y()) = id;
 		}
 	}
 }
@@ -122,9 +124,9 @@ void ProjectMesh
 		face.v0 = CameraToScreen(::Transform(m, mesh.vertices[mesh.faces[i].v0]), w, h);
 		face.v1 = CameraToScreen(::Transform(m, mesh.vertices[mesh.faces[i].v1]), w, h);
 		face.v2 = CameraToScreen(::Transform(m, mesh.vertices[mesh.faces[i].v2]), w, h);
-		MakeCounterclockwise(face);
+		const bool facing = MakeCounterclockwise(face);
 
 		const float id(static_cast<float>(i + 1));
-		Rasterize(face, id, res, buffer);
+		Rasterize(face, id, res, buffer, facing);
 	}
 }

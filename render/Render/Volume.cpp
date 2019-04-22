@@ -47,7 +47,7 @@ Volume::Volume(const char * path)
 	factor = 1.0f / cellSize;
 
 	values.resize(nx * ny * nz);
-	f.read(reinterpret_cast<char*>(values.data()), values.size() * sizeof(float));
+	f.read(reinterpret_cast<char*>(values.data()), static_cast<std::streamsize>(values.size()) * sizeof(float));
 	if (f.fail())
 		throw runtime_error("File could not be read");
 }

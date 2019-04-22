@@ -17,25 +17,6 @@ namespace
 		Vector3f v2;
 	};
 
-	float DistanceToTri(const Triangle3f & tri, const Vector3f & ray)
-	{
-		// intersect ray with the plane
-		const Vector3f u(tri.v1 - tri.v0);
-		const Vector3f v(tri.v2 - tri.v0);
-
-		const Vector3f n(u.cross(v));
-		if (n.isZero())
-			return -1.0f;
-
-		const float r0(n.dot(ray));
-		if (r0 == 0.0f)
-			return -1.0f;
-		const float r1(n.dot(tri.v0) / r0);
-		if (r1 < 0.0f)
-			return -1.0f;
-		return r1;
-	}
-
 	Vector3f TransformTo3D(const Matrix4f & m, const Vector3f & v)
 	{
 		const float v0(v(0, 0)), v1(v(1, 0)), v2(v(2, 0));
@@ -146,6 +127,45 @@ namespace
 	}
 }
 
+	float DistanceToTri(const Triangle3f & tri, const Vector3f & ray, bool facing)
+	{
+		// intersect ray with the plane
+		const Vector3f u(tri.v1 - tri.v0);
+		const Vector3f v(tri.v2 - tri.v0);
+
+		const Vector3f n(u.cross(v));
+		if (n.isZero())
+			return -1.0f;
+
+		const float r0(n.dot(ray));
+		if (r0 == 0.0f) // parallel
+			return -1.0f;
+		const float d(n.dot(tri.v0) / r0);
+		if (d < 0.0f) // triangle behind the camera
+			return -1.0f;
+
+		// inside-outside test
+		const float dir = facing ? 1.0f : -1.0f;
+		if (dir * ray.dot(tri.v0.cross(tri.v1 - tri.v0)) < 0.0f)
+			return -1.0f;
+		if (dir * ray.dot(tri.v1.cross(tri.v2 - tri.v1)) < 0.0f)
+			return -1.0f;
+		if (dir * ray.dot(tri.v2.cross(tri.v0 - tri.v2)) < 0.0f)
+			return -1.0f;
+
+		return d;
+	}
+
+	float BoundByVertex(const Triangle3f & tri, const Vector3f & ray, float distance, float (*f)(float, float))
+	{
+		if (distance >= 0.0f)
+			return distance;
+		const float d0 = ray.dot(tri.v0);
+		const float d1 = ray.dot(tri.v1);
+		const float d2 = ray.dot(tri.v2);
+		return f(d0, f(d1, d2));
+	}
+
 void RenderMesh
 	( const Matrix4f      & camera
 	, const Matrix3f      & rayCast
@@ -196,13 +216,11 @@ void RenderMesh
 		// send a ray for every subsample, average the results
 		for (auto & subsample : aamask)
 		{
-			Vector3f subpixel  = Vector3f(x + subsample.dx, y + subsample.dy, 1.0f);
-			Vector3f cameraRay = (rayCast * subpixel).normalized();
+			const Vector3f subpixel  = Vector3f(x + subsample.dx, y + subsample.dy, 1.0f);
+			const Vector3f cameraRay = (rayCast * subpixel).normalized();
 
-			float min(DistanceToTri(faces[triIndex0], cameraRay)); if (min < 0.0f) continue;
-			float max(DistanceToTri(faces[triIndex1], cameraRay)); if (max < 0.0f) continue;
-			if (min > max)
-				swap(min, max);
+			float min = BoundByVertex(faces[triIndex0], cameraRay, DistanceToTri(faces[triIndex0], cameraRay, true),  std::fminf);
+			float max = BoundByVertex(faces[triIndex1], cameraRay, DistanceToTri(faces[triIndex1], cameraRay, false), std::fmaxf);
 
 			const Vector3f offset (::TransformTo3D(world, Vector3f::Zero()));
 			const Vector3f ray    (::TransformTo3D(world, cameraRay) - offset);

@@ -20,20 +20,43 @@ namespace
 	}
 }
 
+void SaveProjectionBuffer
+	( const char     * path
+	, Resolution       res
+	, const Vector4f * buffer
+	)
+{
+	unsigned int bpp = 32;
+	fipImage img(FIT_BITMAP, res.w, res.h, bpp);
+	for (unsigned int y = 0; y != res.h; ++y)
+	{
+		BYTE * scanline(img.getScanLine(y));
+		for (size_t x = 0; x != res.w; ++x)
+		{
+			const Vector4f & pxl = *buffer++;
+
+			*scanline++ = pxl.x() == 0.0f ? 0x00 : 0xFF; // b
+			*scanline++ = 0x00;                          // g
+			*scanline++ = pxl.y() == 0.0f ? 0x00 : 0xFF; // r
+			*scanline++ = 0xFF;
+		}
+	}
+	img.save(path);
+}
+
 void SaveBuffer
 	( const char     * path
-	, unsigned int     width
-	, unsigned int     height
+	, Resolution       res
 	, const Vector4f * buffer
 	, Vector3f         bgColor
 	)
 {
 	unsigned int bpp = 32;
-	fipImage img(FIT_BITMAP, width, height, bpp);
-	for (unsigned int y = 0; y != height; ++y)
+	fipImage img(FIT_BITMAP, res.w, res.h, bpp);
+	for (unsigned int y = 0; y != res.h; ++y)
 	{
 		BYTE * scanline(img.getScanLine(y));
-		for (size_t x = 0; x != width; ++x)
+		for (size_t x = 0; x != res.w; ++x)
 		{
 			const Vector4f & pxl = *buffer++;
 
@@ -41,9 +64,9 @@ void SaveBuffer
 			const Vector3f lab(bgColor + pxl.w() * (fgColor - bgColor));
 			const Vector3f rgb(LabToRgb(lab));
 
-			*scanline++ = FloatToByteChannel(rgb(2));
-			*scanline++ = FloatToByteChannel(rgb(1));
-			*scanline++ = FloatToByteChannel(rgb(0));
+			*scanline++ = FloatToByteChannel(rgb(2)); // b
+			*scanline++ = FloatToByteChannel(rgb(1)); // g
+			*scanline++ = FloatToByteChannel(rgb(0)); // r
 			*scanline++ = 0xFF;
 		}
 	}
