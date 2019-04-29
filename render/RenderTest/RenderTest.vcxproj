@@ -175,12 +175,14 @@
     <ClCompile Include="..\Render\Bezier.cpp" />
     <ClCompile Include="..\Render\Color.cpp" />
     <ClCompile Include="..\Render\FgtVolume.cpp" />
+    <ClCompile Include="..\Render\PiecewiseLinearValueMap.cpp" />
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="TestBezier.cpp" />
     <ClCompile Include="TestColor.cpp" />
     <ClCompile Include="TestExp.cpp" />
     <ClCompile Include="TestFgtVolume.cpp" />
     <ClCompile Include="TestLog.cpp" />
+    <ClCompile Include="TestPiecewiseLinearValueMap.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

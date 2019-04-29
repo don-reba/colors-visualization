@@ -1,7 +1,8 @@
 #pragma once
 
-#include "IModel.h"
-#include "IValueMap.h"
+#include "BandValueMap.h"
+#include "MappedModel.h"
+#include "PiecewiseLinearValueMap.h"
 
 #include <boost/align/aligned_delete.hpp>
 
@@ -25,8 +26,10 @@ private:
 
 	const IModel & baseModel;
 
-	aligned_unique_ptr<IValueMap> valueMap;
-	aligned_unique_ptr<IModel>    model;
+	PiecewiseLinearValueMap bandMap;
+
+	aligned_unique_ptr<BandValueMap> valueMap;
+	aligned_unique_ptr<MappedModel>    model;
 
 public:
 

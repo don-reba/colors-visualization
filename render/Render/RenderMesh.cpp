@@ -78,10 +78,11 @@ namespace
 				t += step;
 			}
 
+			// p = tSteps * ray + offset
 			const Vector3f256 p =
-			{ _mm256_fmadd_ps(_mm256_set1_ps(ray.x()), _mm256_load_ps(tSteps), _mm256_set1_ps(offset.x()))
-			, _mm256_fmadd_ps(_mm256_set1_ps(ray.y()), _mm256_load_ps(tSteps), _mm256_set1_ps(offset.y()))
-			, _mm256_fmadd_ps(_mm256_set1_ps(ray.z()), _mm256_load_ps(tSteps), _mm256_set1_ps(offset.z()))
+			{ _mm256_fmadd_ps(_mm256_load_ps(tSteps), _mm256_set1_ps(ray.x()), _mm256_set1_ps(offset.x()))
+			, _mm256_fmadd_ps(_mm256_load_ps(tSteps), _mm256_set1_ps(ray.y()), _mm256_set1_ps(offset.y()))
+			, _mm256_fmadd_ps(_mm256_load_ps(tSteps), _mm256_set1_ps(ray.z()), _mm256_set1_ps(offset.z()))
 			};
 
 			// (x + 100 < 0.1 mod 10) ? 0 : x

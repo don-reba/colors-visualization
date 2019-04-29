@@ -25,7 +25,7 @@ namespace
 
 BOOST_AUTO_TEST_CASE(Log2)
 {
-	const float tolerance = 0.002f;
+	constexpr float tolerance = 0.002f;
 
 	const float args[] = { 0.1f, 0.5f, 1.0f, 2.0f, 5.0f, 100.0f };
 	for (float arg : args)
@@ -37,7 +37,7 @@ BOOST_AUTO_TEST_CASE(Log2)
 
 BOOST_AUTO_TEST_CASE(Log2f4_Fullness)
 {
-	const float x = 0.1f;
+	constexpr float x = 0.1f;
 
 	__declspec(align(16)) float v[4];
 	_mm_store_ps(v, log2f4(_mm_set1_ps(x)));
@@ -48,7 +48,7 @@ BOOST_AUTO_TEST_CASE(Log2f4_Fullness)
 
 BOOST_AUTO_TEST_CASE(Log2f8_Fullness)
 {
-	const float x = 0.1f;
+	constexpr float x = 0.1f;
 
 	__declspec(align(32)) float v[8];
 	_mm256_store_ps(v, log2f8(_mm256_set1_ps(x)));
