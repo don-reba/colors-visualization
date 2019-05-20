@@ -61,7 +61,8 @@ namespace
 
 			aamask.add
 				("1x", aa1x)
-				("4x", aa4x);
+				("4x", aa4x)
+				("8x", aa8x);
 
 			modelType.add
 				("fgt",   ModelType::Fgt)
