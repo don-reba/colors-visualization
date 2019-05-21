@@ -11,6 +11,8 @@
 
 #include <Eigen/Dense>
 
+Eigen::Vector3f Transform(const Eigen::Matrix4f& m, const Eigen::Vector3f& v);
+
 void RenderMesh
 	( const Eigen::Matrix4f & camera
 	, const Eigen::Matrix3f & rayCast

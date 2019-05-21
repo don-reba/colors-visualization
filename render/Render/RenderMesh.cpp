@@ -17,17 +17,6 @@ namespace
 		Vector3f v2;
 	};
 
-	Vector3f TransformTo3D(const Matrix4f & m, const Vector3f & v)
-	{
-		const float v0(v(0, 0)), v1(v(1, 0)), v2(v(2, 0));
-		const float f(1.0f / (m(3, 0) * v0 + m(3, 1) * v1 + m(3, 2) * v2 + m(3, 3)));
-		return Vector3f
-			( f * (m(0, 0) * v0 + m(0, 1) * v1 + m(0, 2) * v2 + m(0, 3))
-			, f * (m(1, 0) * v0 + m(1, 1) * v1 + m(1, 2) * v2 + m(1, 3))
-			, f * (m(2, 0) * v0 + m(2, 1) * v1 + m(2, 2) * v2 + m(2, 3))
-			);
-	}
-
 	void RefineRange
 		( const Vector3f & offset
 		, const Vector3f & ray
@@ -126,7 +115,6 @@ namespace
 		pxl.z() += color.z();
 		pxl.w() += 1.0f - amount;
 	}
-}
 
 	float DistanceToTri(const Triangle3f & tri, const Vector3f & ray, bool facing)
 	{
@@ -166,6 +154,17 @@ namespace
 		const float d2 = ray.dot(tri.v2);
 		return f(d0, f(d1, d2));
 	}
+}
+
+Vector3f Transform(const Matrix4f & m, const Vector3f & v)
+{
+	const Vector4f y = m * Vector4f(v(0, 0), v(1, 0), v(2, 0), 1.0f);
+	return Vector3f
+		( y(0, 0) / y(3, 0)
+		, y(1, 0) / y(3, 0)
+		, y(2, 0) / y(3, 0)
+		);
+}
 
 void RenderMesh
 	( const Matrix4f      & camera
@@ -191,9 +190,9 @@ void RenderMesh
 	vector<Triangle3f> faces(mesh.faces.size());
 	for (size_t i(0), size(mesh.faces.size()); i != size; ++i)
 	{
-		faces[i].v0 = ::TransformTo3D(camera, mesh.vertices[mesh.faces[i].v0]);
-		faces[i].v1 = ::TransformTo3D(camera, mesh.vertices[mesh.faces[i].v1]);
-		faces[i].v2 = ::TransformTo3D(camera, mesh.vertices[mesh.faces[i].v2]);
+		faces[i].v0 = ::Transform(camera, mesh.vertices[mesh.faces[i].v0]);
+		faces[i].v1 = ::Transform(camera, mesh.vertices[mesh.faces[i].v1]);
+		faces[i].v2 = ::Transform(camera, mesh.vertices[mesh.faces[i].v2]);
 	}
 
 	// integrate inside the mesh
@@ -215,7 +214,8 @@ void RenderMesh
 		pxl = Vector4f::Zero();
 
 		// send a ray for every subsample, average the results
-		for (auto & subsample : aamask)
+		float subsamplesIntegrated = 0.0;
+		for (Subsample subsample : aamask)
 		{
 			const Vector3f subpixel  = Vector3f(x + subsample.dx, y + subsample.dy, 1.0f);
 			const Vector3f cameraRay = (rayCast * subpixel).normalized();
@@ -223,8 +223,8 @@ void RenderMesh
 			float min = BoundByVertex(faces[triIndex0], cameraRay, DistanceToTri(faces[triIndex0], cameraRay, true),  std::fminf);
 			float max = BoundByVertex(faces[triIndex1], cameraRay, DistanceToTri(faces[triIndex1], cameraRay, false), std::fmaxf);
 
-			const Vector3f offset (::TransformTo3D(world, Vector3f::Zero()));
-			const Vector3f ray    (::TransformTo3D(world, cameraRay) - offset);
+			const Vector3f offset (::Transform(world, Vector3f::Zero()));
+			const Vector3f ray    (::Transform(world, cameraRay) - offset);
 
 			RefineRange(offset, ray, stepLength, min, max);
 
@@ -232,6 +232,7 @@ void RenderMesh
 				continue;
 
 			Integrate(model, offset, ray, stepLength, min, max, pxl);
+			subsamplesIntegrated += 1.0;
 			rateIndicator.Increment();
 		}
 
@@ -241,7 +242,7 @@ void RenderMesh
 			pxl.x() /= pxl.w();
 			pxl.y() /= pxl.w();
 			pxl.z() /= pxl.w();
-			pxl.w() /= aamask.size();
+			pxl.w() /= subsamplesIntegrated;
 		}
 		else
 		{
