@@ -13,12 +13,12 @@ struct Triangle2i
 	Vector2i v2;
 };
 
-int min3(int v0, int v1, int v2)
+int min3(int v0, int v1, int v2) noexcept
 {
 	return min(min(v0, v1), v2);
 }
 
-int max3(int v0, int v1, int v2)
+int max3(int v0, int v1, int v2) noexcept
 {
 	return max(max(v0, v1), v2);
 }

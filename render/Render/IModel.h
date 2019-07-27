@@ -8,7 +8,7 @@ struct Vector3f256 final
 	__m256 y;
 	__m256 z;
 
-	static Vector3f256 Zero()
+	static Vector3f256 Zero() noexcept
 	{
 		Vector3f256 v;
 		v.x = _mm256_setzero_ps();

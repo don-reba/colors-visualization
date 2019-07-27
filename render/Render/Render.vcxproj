@@ -1,17 +1,17 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
       <Configuration>Debug</Configuration>
       <Platform>Win32</Platform>
     </ProjectConfiguration>
-    <ProjectConfiguration Include="Debug|x64">
-      <Configuration>Debug</Configuration>
-      <Platform>x64</Platform>
-    </ProjectConfiguration>
     <ProjectConfiguration Include="Release|Win32">
       <Configuration>Release</Configuration>
       <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
     </ProjectConfiguration>
     <ProjectConfiguration Include="Release|x64">
       <Configuration>Release</Configuration>
@@ -19,98 +19,124 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{7556B3BD-E0BC-4F54-9EFF-A2430249651E}</ProjectGuid>
+    <VCProjectVersion>16.0</VCProjectVersion>
+    <ProjectGuid>{A0F4C727-1A48-4A96-94E9-886B54AAA2E2}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
-    <RootNamespace>Render</RootNamespace>
-    <WindowsTargetPlatformVersion>10.0.17763.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <CharacterSet>Unicode</CharacterSet>
     <PlatformToolset>v142</PlatformToolset>
-    <WholeProgramOptimization>false</WholeProgramOptimization>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
-    <ConfigurationType>Application</ConfigurationType>
-    <UseDebugLibraries>true</UseDebugLibraries>
-    <CharacterSet>Unicode</CharacterSet>
-    <PlatformToolset>v141</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v142</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
-    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>v142</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <WholeProgramOptimization>true</WholeProgramOptimization>
-    <CharacterSet>Unicode</CharacterSet>
-    <PlatformToolset>v141</PlatformToolset>
+    <PlatformToolset>v142</PlatformToolset>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
   </ImportGroup>
-  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  <ImportGroup Label="Shared">
   </ImportGroup>
-  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="PropertySheets">
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
-  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="PropertySheets">
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>C:\lib\boost;C:\lib\libpng;C:\lib\Eigen;$(IncludePath)</IncludePath>
-    <LibraryPath>C:\lib\boost\stage\lib;lib;$(LibraryPath)</LibraryPath>
-    <CodeAnalysisRuleSet>Render.ruleset</CodeAnalysisRuleSet>
-    <RunCodeAnalysis>true</RunCodeAnalysis>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <LinkIncremental>true</LinkIncremental>
-    <IncludePath>$(BOOST_BUILD);D:\Programming\libpng;D:\Programming\Eigen;$(IncludePath)</IncludePath>
-    <LibraryPath>$(BOOST_BUILD)\stage\lib;lib64;$(LibraryPath)</LibraryPath>
-    <CodeAnalysisRuleSet>Render.ruleset</CodeAnalysisRuleSet>
+    <CodeAnalysisRuleSet>NativeRecommendedRules.ruleset</CodeAnalysisRuleSet>
+    <RunCodeAnalysis>false</RunCodeAnalysis>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>C:\lib\boost;C:\lib\libpng;C:\lib\Eigen;$(IncludePath)</IncludePath>
-    <LibraryPath>C:\lib\boost\stage\lib;lib;$(LibraryPath)</LibraryPath>
-    <CodeAnalysisRuleSet>Render.ruleset</CodeAnalysisRuleSet>
-    <RunCodeAnalysis>true</RunCodeAnalysis>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <LinkIncremental>false</LinkIncremental>
-    <IncludePath>$(BOOST_BUILD);D:\Programming\libpng;D:\Programming\Eigen;$(IncludePath)</IncludePath>
-    <LibraryPath>$(BOOST_BUILD)\stage\lib;lib64;$(LibraryPath)</LibraryPath>
-    <CodeAnalysisRuleSet>Render.ruleset</CodeAnalysisRuleSet>
+    <CodeAnalysisRuleSet>NativeRecommendedRules.ruleset</CodeAnalysisRuleSet>
+    <RunCodeAnalysis>false</RunCodeAnalysis>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
-      <PrecompiledHeader>NotUsing</PrecompiledHeader>
-      <WarningLevel>Level4</WarningLevel>
+      <PreprocessorDefinitions>EIGEN_DONT_PARALLELIZE;cimg_use_png;WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>WIN32;EIGEN_DONT_PARALLELIZE;_DEBUG;_CONSOLE;cimg_use_png;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <DisableLanguageExtensions>false</DisableLanguageExtensions>
-      <FloatingPointModel>Fast</FloatingPointModel>
-      <EnableEnhancedInstructionSet>AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
-      <ConformanceMode>true</ConformanceMode>
+      <AdditionalIncludeDirectories>C:\lib\boost;C:\lib\libpng;C:\lib\Eigen;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
-      <EnablePREfast>true</EnablePREfast>
+      <EnablePREfast>false</EnablePREfast>
+      <EnableEnhancedInstructionSet>AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
+      <DisableLanguageExtensions>false</DisableLanguageExtensions>
+      <ConformanceMode>true</ConformanceMode>
+      <RuntimeTypeInfo>false</RuntimeTypeInfo>
+      <FloatingPointModel>Fast</FloatingPointModel>
+      <StringPooling>true</StringPooling>
+      <FloatingPointExceptions>false</FloatingPointExceptions>
     </ClCompile>
     <Link>
-      <SubSystem>Console</SubSystem>
+      <TargetMachine>MachineX86</TargetMachine>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>FreeImage.lib;FreeImagePlus.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <SubSystem>Console</SubSystem>
+      <AdditionalDependencies>FreeImage.lib;FreeImagePlus.lib;</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(BOOST_BUILD)\stage\lib;lib</AdditionalLibraryDirectories>
+    </Link>
+    <PostBuildEvent>
+      <Command>xcopy/d/y "$(ProjectDir)lib\*.dll" "$(OutDir)"</Command>
+    </PostBuildEvent>
+    <PostBuildEvent>
+      <Message>Copy DLLs to output folder.</Message>
+    </PostBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <PreprocessorDefinitions>EIGEN_DONT_PARALLELIZE;cimg_use_png;WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <WarningLevel>Level4</WarningLevel>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <AdditionalIncludeDirectories>C:\lib\boost;C:\lib\libpng;C:\lib\Eigen;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+      <EnablePREfast>false</EnablePREfast>
+      <TreatWarningAsError>true</TreatWarningAsError>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <WholeProgramOptimization>true</WholeProgramOptimization>
+      <StringPooling>true</StringPooling>
+      <BufferSecurityCheck>false</BufferSecurityCheck>
+      <EnableEnhancedInstructionSet>AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
+      <DisableLanguageExtensions>false</DisableLanguageExtensions>
+      <ConformanceMode>true</ConformanceMode>
+      <RuntimeTypeInfo>false</RuntimeTypeInfo>
+      <FloatingPointModel>Fast</FloatingPointModel>
+      <FloatingPointExceptions>false</FloatingPointExceptions>
+      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
+    </ClCompile>
+    <Link>
+      <TargetMachine>MachineX86</TargetMachine>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <SubSystem>Console</SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <AdditionalDependencies>FreeImage.lib;FreeImagePlus.lib;</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(BOOST_BUILD)\stage\lib;lib</AdditionalLibraryDirectories>
+      <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
     </Link>
     <PostBuildEvent>
       <Command>xcopy/d/y "$(ProjectDir)lib\*.dll" "$(OutDir)"</Command>
@@ -121,142 +147,111 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
-      <PrecompiledHeader>NotUsing</PrecompiledHeader>
-      <WarningLevel>Level3</WarningLevel>
-      <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>WIN32;EIGEN_DONT_PARALLELIZE;_DEBUG;_CONSOLE;cimg_use_png;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>C:\lib\boost;C:\lib\libpng;C:\lib\Eigen</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>EIGEN_DONT_PARALLELIZE;cimg_use_png</PreprocessorDefinitions>
+      <LanguageStandard>stdcpp17</LanguageStandard>
       <DisableLanguageExtensions>false</DisableLanguageExtensions>
-      <FloatingPointModel>Strict</FloatingPointModel>
+      <ConformanceMode>true</ConformanceMode>
+      <RuntimeTypeInfo>false</RuntimeTypeInfo>
       <EnableEnhancedInstructionSet>AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
+      <FloatingPointModel>Fast</FloatingPointModel>
+      <StringPooling>true</StringPooling>
+      <FloatingPointExceptions>false</FloatingPointExceptions>
     </ClCompile>
     <Link>
-      <SubSystem>Console</SubSystem>
-      <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>FreeImage.lib;FreeImagePlus.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>C:\lib\boost\stage\lib;lib64</AdditionalLibraryDirectories>
+      <AdditionalDependencies>FreeImage.lib;FreeImagePlus.lib;</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
       <Command>xcopy/d/y "$(ProjectDir)lib64\*.dll" "$(OutDir)"</Command>
     </PostBuildEvent>
     <PostBuildEvent>
-      <Message>Copy DLLs to output folder.</Message>
-    </PostBuildEvent>
-  </ItemDefinitionGroup>
-  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <ClCompile>
-      <WarningLevel>Level4</WarningLevel>
-      <PrecompiledHeader>NotUsing</PrecompiledHeader>
-      <Optimization>Full</Optimization>
-      <FunctionLevelLinking>true</FunctionLevelLinking>
-      <IntrinsicFunctions>true</IntrinsicFunctions>
-      <PreprocessorDefinitions>WIN32;EIGEN_DONT_PARALLELIZE;NDEBUG;_CONSOLE;cimg_use_png;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <DisableLanguageExtensions>false</DisableLanguageExtensions>
-      <EnableEnhancedInstructionSet>AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
-      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
-      <StringPooling>true</StringPooling>
-      <BufferSecurityCheck>false</BufferSecurityCheck>
-      <FloatingPointModel>Fast</FloatingPointModel>
-      <LanguageStandard>stdcpp17</LanguageStandard>
-      <ConformanceMode>true</ConformanceMode>
-      <EnablePREfast>true</EnablePREfast>
-    </ClCompile>
-    <Link>
-      <SubSystem>Console</SubSystem>
-      <GenerateDebugInformation>true</GenerateDebugInformation>
-      <EnableCOMDATFolding>true</EnableCOMDATFolding>
-      <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>FreeImage.lib;FreeImagePlus.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <Profile>true</Profile>
-    </Link>
-    <PostBuildEvent>
-      <Command>xcopy/d/y "$(ProjectDir)lib\*.dll" "$(OutDir)"</Command>
       <Message>Copy DLLs to output folder.</Message>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
-      <WarningLevel>Level4</WarningLevel>
-      <PrecompiledHeader>NotUsing</PrecompiledHeader>
-      <Optimization>Full</Optimization>
-      <FunctionLevelLinking>true</FunctionLevelLinking>
-      <IntrinsicFunctions>true</IntrinsicFunctions>
-      <PreprocessorDefinitions>WIN32;EIGEN_DONT_PARALLELIZE;NDEBUG;_CONSOLE;cimg_use_png;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>C:\lib\boost;C:\lib\libpng;C:\lib\Eigen</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>EIGEN_DONT_PARALLELIZE;cimg_use_png</PreprocessorDefinitions>
+      <LanguageStandard>stdcpp17</LanguageStandard>
       <DisableLanguageExtensions>false</DisableLanguageExtensions>
+      <ConformanceMode>true</ConformanceMode>
+      <RuntimeTypeInfo>false</RuntimeTypeInfo>
       <EnableEnhancedInstructionSet>AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
-      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
-      <StringPooling>true</StringPooling>
-      <BufferSecurityCheck>false</BufferSecurityCheck>
       <FloatingPointModel>Fast</FloatingPointModel>
+      <StringPooling>true</StringPooling>
+      <FloatingPointExceptions>false</FloatingPointExceptions>
+      <WarningLevel>Level4</WarningLevel>
+      <TreatWarningAsError>true</TreatWarningAsError>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
+      <OmitFramePointers>false</OmitFramePointers>
+      <WholeProgramOptimization>true</WholeProgramOptimization>
     </ClCompile>
     <Link>
-      <SubSystem>Console</SubSystem>
-      <GenerateDebugInformation>true</GenerateDebugInformation>
-      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <AdditionalLibraryDirectories>C:\lib\boost\stage\lib;lib64</AdditionalLibraryDirectories>
+      <AdditionalDependencies>FreeImage.lib;FreeImagePlus.lib;</AdditionalDependencies>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>FreeImage.lib;FreeImagePlus.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <Profile>true</Profile>
+      <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
     </Link>
     <PostBuildEvent>
       <Command>xcopy/d/y "$(ProjectDir)lib64\*.dll" "$(OutDir)"</Command>
+    </PostBuildEvent>
+    <PostBuildEvent>
       <Message>Copy DLLs to output folder.</Message>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Animation.cpp" />
+    <ClCompile Include="BandValueMap.cpp" />
     <ClCompile Include="Bezier.cpp" />
-    <ClCompile Include="BezierValueMap.cpp" />
     <ClCompile Include="Bezierf8.cpp" />
+    <ClCompile Include="BezierValueMap.cpp" />
     <ClCompile Include="Color.cpp" />
     <ClCompile Include="FgtVolume.cpp" />
     <ClCompile Include="Image.cpp" />
     <ClCompile Include="MappedModel.cpp" />
     <ClCompile Include="Mesh.cpp" />
     <ClCompile Include="PiecewiseLinearValueMap.cpp" />
+    <ClCompile Include="Profiler.cpp" />
     <ClCompile Include="Projection.cpp" />
     <ClCompile Include="ProjectMesh.cpp" />
     <ClCompile Include="RateIndicator.cpp" />
     <ClCompile Include="Render.cpp" />
     <ClCompile Include="RenderMesh.cpp" />
-    <ClCompile Include="Profiler.cpp" />
     <ClCompile Include="Script.cpp" />
     <ClCompile Include="Volume.cpp" />
-    <ClCompile Include="BandValueMap.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="AlignedPtr.h" />
     <ClInclude Include="Animation.h" />
+    <ClInclude Include="Antialias.h" />
+    <ClInclude Include="BandValueMap.h" />
     <ClInclude Include="Bezier.h" />
-    <ClInclude Include="BezierValueMap.h" />
     <ClInclude Include="Bezierf8.h" />
+    <ClInclude Include="BezierValueMap.h" />
     <ClInclude Include="Color.h" />
     <ClInclude Include="FgtVolume.h" />
     <ClInclude Include="FreeImage.h" />
     <ClInclude Include="FreeImagePlus.h" />
-    <ClInclude Include="AlignedPtr.h" />
-    <ClInclude Include="IValueMap.h" />
     <ClInclude Include="Image.h" />
     <ClInclude Include="IModel.h" />
+    <ClInclude Include="IValueMap.h" />
     <ClInclude Include="MappedModel.h" />
     <ClInclude Include="Mesh.h" />
     <ClInclude Include="Path.h" />
     <ClInclude Include="PiecewiseLinearValueMap.h" />
     <ClInclude Include="Pow.h" />
+    <ClInclude Include="Profiler.h" />
     <ClInclude Include="Projection.h" />
     <ClInclude Include="ProjectMesh.h" />
     <ClInclude Include="RateIndicator.h" />
     <ClInclude Include="RenderMesh.h" />
-    <ClInclude Include="Profiler.h" />
     <ClInclude Include="Resolution.h" />
-    <ClInclude Include="Antialias.h" />
     <ClInclude Include="Script.h" />
     <ClInclude Include="Volume.h" />
-    <ClInclude Include="BandValueMap.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Render.ruleset" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
-  <PropertyGroup>
-    <CAExcludePath>c:\lib;$(ThirdPartyDirectory);$(CAExcludePath)</CAExcludePath>
-  </PropertyGroup>
 </Project>

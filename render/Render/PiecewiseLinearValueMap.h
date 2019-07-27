@@ -14,7 +14,7 @@ public:
 
 public:
 
-	PiecewiseLinearValueMap(Points points);
+	PiecewiseLinearValueMap(Points points) noexcept;
 
 	float operator[] (float x) const;
 

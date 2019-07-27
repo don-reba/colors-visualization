@@ -3,7 +3,7 @@
 #include <algorithm>
 #include <stdexcept>
 
-PiecewiseLinearValueMap::PiecewiseLinearValueMap(Points points)
+PiecewiseLinearValueMap::PiecewiseLinearValueMap(Points points) noexcept
 	: points(std::move(points))
 {
 }

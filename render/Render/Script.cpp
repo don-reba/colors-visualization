@@ -140,13 +140,13 @@ Script LoadScript(const char * path)
 	file.unsetf(std::ios::skipws);
 
 	string text{FileIterator(file), FileIterator()};
-	StringIterator i   (text.begin());
-	StringIterator end (text.end());
+	StringIterator       i   (text.begin());
+	const StringIterator end (text.end());
 
 	Script                        script;
 	ScriptGrammar<StringIterator> grammar;
 
-	bool isMatch = qi::parse(i, end, grammar, script);
+	const bool isMatch = qi::parse(i, end, grammar, script);
 	if (!isMatch || i != end)
 		throw std::runtime_error("Parsing failed.");
 

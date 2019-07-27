@@ -3,7 +3,6 @@
 #include "Antialias.h"
 #include "IValueMap.h"
 #include "IModel.h"
-#include "Image.h"
 #include "Mesh.h"
 #include "Profiler.h"
 #include "RateIndicator.h"

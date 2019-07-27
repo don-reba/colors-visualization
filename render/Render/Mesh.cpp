@@ -8,7 +8,7 @@
 using namespace Eigen;
 using namespace std;
 
-Mesh::Triangle::Triangle(int v0, int v1, int v2)
+Mesh::Triangle::Triangle(int v0, int v1, int v2) noexcept
 	: v0(v0), v1(v1), v2(v2)
 {
 }

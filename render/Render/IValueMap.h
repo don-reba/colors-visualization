@@ -4,7 +4,7 @@
 
 struct IValueMap
 {
-	virtual ~IValueMap() {}
+	virtual ~IValueMap() = default;
 
 	virtual __m256 operator[] (__m256 x) const = 0;
 };

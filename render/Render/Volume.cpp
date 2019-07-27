@@ -20,7 +20,6 @@ namespace
 	{
 		stream.read(reinterpret_cast<char*>(data), sizeof(T));
 	}
-
 }
 
 Volume::Volume(const char * path)
