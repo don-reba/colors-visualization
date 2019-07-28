@@ -1,0 +1,10 @@
+*.7z
+*.dll
+*.exe
+*.pdb
+*.png
+*.swo
+*.swp
+madoka
+screenshots
+thoughts.txt

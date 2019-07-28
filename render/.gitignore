@@ -1,0 +1,10 @@
+*.filters
+*.mp4
+*.user
+.vs
+animation
+Debug
+lib
+lib64
+mp4
+Release
