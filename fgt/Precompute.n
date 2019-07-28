@@ -1,9 +1,9 @@
 // REFERENCE: ConvertColor.dll
-// REFERENCE: FGT.dll
+// REFERENCE: Fgt3D.dll
 // PLATFORM: x86
 
 using ConvertColor;
-using FGT;
+using Fgt3D;
 using Nemerle.Collections;
 using System.Collections.Generic;
 using System.Console;
@@ -68,7 +68,7 @@ def Load(path, domain)
 			Trace.Assert(p[1] >= domain.y[0] && p[1] <= domain.y[1]);
 			Trace.Assert(p[2] >= domain.z[0] && p[2] <= domain.z[1]);
 
-			entries.Add(Value3D(p, 1.0));
+			entries.Add(Value(p, 1.0));
 		}
 		WriteLine("Loaded {0:N0} entries {1:N0} seconds", entries.Count, watch.Elapsed.TotalSeconds);
 		entries.ToArray();
@@ -108,17 +108,22 @@ def Pad(min, max, σ, r, n)
 	(min - offset, max + offset);
 }
 
-def iPath = @"..\get samples\samples.dat";
-def oPath = "coef s3 a6 2.0.dat";
 def σ     = 3.0 * Sqrt(2.0); // Sqrt(2) to make a proper Gaussian kernel
 def α     = 6;
 def r     = 2.0;
 
-def domain = Domain3D
+def rootDir = @"..\madoka\gymnopedie";
+
+_ = Directory.CreateDirectory(Path.Combine(rootDir, "fgt"));
+
+def iPath = Path.Combine(rootDir, "samples", "1.dat");
+def oPath = Path.Combine(rootDir, "fgt",     "1.dat");
+
+def domain = Domain
 	( Pad(   0.0, 100.0, σ, r, 8)
 	, Pad( -87.0,  99.0, σ, r, 8)
 	, Pad(-108.0,  96.0, σ, r, 8)
 	);
 
-// TODO: save enough information to easily restore Approximation3D
+// TODO: save enough information to easily restore Approximation
 Save(oPath, Preprocess(Load(iPath, domain), σ, α, r, domain));

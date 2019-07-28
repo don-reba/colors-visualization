@@ -1,0 +1,69 @@
+// REFERENCE: System.Drawing.dll
+// PLATFORM: x86
+
+using Nemerle.Collections;
+using System.Collections.Generic;
+using System.Console;
+using System.Diagnostics;
+using System.Drawing;
+using System.IO;
+using System.Math;
+using System;
+
+def random = Random(0);
+
+def Load(path)
+{
+	using (bmp = Bitmap(path))
+	{
+		WriteLine("Reading {0}...", path);
+		def entries = List();
+		foreach (y in [0 .. bmp.Height - 1])
+		foreach (x in [0 .. bmp.Width  - 1])
+		{
+			def color = bmp.GetPixel(x, y);
+			entries.Add
+				( color.R : double
+				, color.G : double
+				, color.B : double
+				);
+		}
+		entries.ToArray();
+	}
+}
+
+def Jitter(r, g, b)
+{
+	def Offset(x)
+	{
+	| 0.0   => 0.0   + random.NextDouble() * 0.5
+	| 255.0 => 255.0 - random.NextDouble() * 0.5
+	| x     => x     + random.NextDouble() - 0.5
+	}
+	(Offset(r), Offset(g), Offset(b));
+}
+
+def SaveBin(path, samples)
+{
+	WriteLine("Writing {0}...", path);
+	using (w = BinaryWriter(File.Create(path)))
+	{
+		w.Write(samples.Length : int);
+		foreach ((r, g, b) in samples)
+		{
+			w.Write(r : double);
+			w.Write(g : double);
+			w.Write(b : double);
+		}
+	}
+}
+
+def rootDir = @"..\madoka\gymnopedie";
+
+_ = Directory.CreateDirectory(Path.Combine(rootDir, "samples"));
+
+foreach (path in Directory.GetFiles(Path.Combine(rootDir, "img"), "*"))
+	SaveBin
+		( Path.Combine(rootDir, "samples", Path.ChangeExtension(Path.GetFileName(path), "dat"))
+		, Load(path).Map(Jitter)
+		);
