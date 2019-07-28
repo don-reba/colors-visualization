@@ -1,8 +1,7 @@
 #pragma once
 
-#include "BandValueMap.h"
+#include "BezierValueMap.h"
 #include "MappedModel.h"
-#include "PiecewiseLinearValueMap.h"
 
 #include <boost/align/aligned_delete.hpp>
 
@@ -26,9 +25,7 @@ private:
 
 	const IModel & baseModel;
 
-	PiecewiseLinearValueMap bandMap;
-
-	aligned_unique_ptr<BandValueMap> valueMap;
+	aligned_unique_ptr<BezierValueMap> valueMap;
 	aligned_unique_ptr<MappedModel>    model;
 
 public:
@@ -43,6 +40,4 @@ public:
 private:
 
 	void SetCamera(float time);
-
-	void SetModel(float time);
 };

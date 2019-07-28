@@ -146,6 +146,6 @@ def domain = Domain(RangeL, RangeA, RangeB);
 
 def watch = Stopwatch.StartNew();
 
-SaveSamples(Sample(RgbToLab(LoadPoints(iPath), domain), domain, σ, 100_000), oPath);
+SaveSamples(Sample(RgbToLab(LoadPoints(iPath), domain), domain, σ, 1_000_000), oPath);
 
 WriteLine("{0} elapsed", watch.Elapsed);

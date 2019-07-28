@@ -177,19 +177,26 @@ def SaveVolume(path, (grid, (nx, ny, nz)), domain, cellSize)
 	}
 }
 
-def iPath    = @"..\get samples\samples.dat";
-def oPath    = "volume s3.dat";
 def cellSize = 1.0;
 def σ        = 3.0;
 def n        = 4.0;
 
-def domain = Domain(RangeL, RangeA, RangeB);
+def rootDir = @"..\madoka\gymnopedie";
 
-def watch = Stopwatch.StartNew();
+_ = Directory.CreateDirectory(Path.Combine(rootDir, "voxels"));
 
-def points = RgbToLab(LoadPoints(iPath), domain);
-def volume = Voxelize(points, domain, σ, cellSize, n);
-AnalyzeVolume(volume, cellSize);
-SaveVolume(oPath, volume, domain, cellSize);
+foreach (iPath in Directory.GetFiles(Path.Combine(rootDir, "samples"), "*"))
+{
+	def oPath = Path.Combine(rootDir, "voxels", Path.ChangeExtension(Path.GetFileName(iPath), "dat"));
 
-WriteLine("{0} seconds", watch.Elapsed.TotalSeconds);
+	def domain = Domain(RangeL, RangeA, RangeB);
+
+	def watch = Stopwatch.StartNew();
+
+	def points = RgbToLab(LoadPoints(iPath), domain);
+	def volume = Voxelize(points, domain, σ, cellSize, n);
+	AnalyzeVolume(volume, cellSize);
+	SaveVolume(oPath, volume, domain, cellSize);
+
+	WriteLine("{0} seconds", watch.Elapsed.TotalSeconds);
+}

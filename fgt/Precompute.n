@@ -1,15 +1,18 @@
 // REFERENCE: ConvertColor.dll
 // REFERENCE: Fgt3D.dll
-// PLATFORM: x86
+// REFERENCE: System.Collections.Concurrent.dll
+// PLATFORM: x64
 
 using ConvertColor;
 using Fgt3D;
 using Nemerle.Collections;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Console;
 using System.Diagnostics;
 using System.IO;
 using System.Math;
+using System.Threading;
 using System;
 
 def PadToMultiple(coef1, (nx1, ny1, nz1), pd, k)
@@ -108,16 +111,9 @@ def Pad(min, max, σ, r, n)
 	(min - offset, max + offset);
 }
 
-def σ     = 3.0 * Sqrt(2.0); // Sqrt(2) to make a proper Gaussian kernel
-def α     = 6;
-def r     = 2.0;
-
-def rootDir = @"..\madoka\gymnopedie";
-
-_ = Directory.CreateDirectory(Path.Combine(rootDir, "fgt"));
-
-def iPath = Path.Combine(rootDir, "samples", "1.dat");
-def oPath = Path.Combine(rootDir, "fgt",     "1.dat");
+def σ = 3.0 * Sqrt(2.0); // Sqrt(2) to make a proper Gaussian kernel
+def α = 6;
+def r = 2.0;
 
 def domain = Domain
 	( Pad(   0.0, 100.0, σ, r, 8)
@@ -125,5 +121,28 @@ def domain = Domain
 	, Pad(-108.0,  96.0, σ, r, 8)
 	);
 
-// TODO: save enough information to easily restore Approximation
-Save(oPath, Preprocess(Load(iPath, domain), σ, α, r, domain));
+def rootDir = @"..\madoka\gymnopedie";
+
+_ = Directory.CreateDirectory(Path.Combine(rootDir, "fgt"));
+
+def files = ConcurrentQueue(Directory.GetFiles(Path.Combine(rootDir, "samples"), "*.dat"));
+def ProcessFile(_)
+{
+	mutable iPath;
+
+	while (files.TryDequeue(out iPath))
+	{
+		def oPath = Path.Combine(rootDir, "fgt", Path.ChangeExtension(Path.GetFileName(iPath), "fgt"));
+
+		// TODO: save enough information to easily restore Approximation
+		Save(oPath, Preprocess(Load(iPath, domain), σ, α, r, domain));
+	}
+}
+
+mutable threads = [];
+repeat (11)
+	threads ::= Thread(ProcessFile);
+foreach (thread in threads)
+	thread.Start();
+foreach (thread in threads)
+	thread.Join();

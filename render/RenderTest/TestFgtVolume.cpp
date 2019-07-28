@@ -56,12 +56,3 @@ namespace
 		return info;
 	}
 }
-
-/*
-BOOST_AUTO_TEST_CASE(FgtVolume_Neighbours)
-{
-	NeighborInfo info = LoadNeighborInfo("data\\FgtVolume neighbors.txt");
-
-	FgtVolume 
-}
-*/

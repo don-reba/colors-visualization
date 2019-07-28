@@ -9,6 +9,7 @@ class BezierValueMap final : public IValueMap
 {
 public:
 
+	/// @param epsilon - recommended value: 0.0001
 	BezierValueMap
 		( Eigen::Vector2f p1
 		, Eigen::Vector2f p2
