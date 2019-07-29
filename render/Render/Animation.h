@@ -1,7 +1,9 @@
 #pragma once
 
+#include "BlendedModel.h"
 #include "BezierValueMap.h"
 #include "MappedModel.h"
+#include "ModelCache.h"
 
 #include <boost/align/aligned_delete.hpp>
 
@@ -12,25 +14,9 @@
 
 class Animation final
 {
-private:
-
-	template <typename T>
-	using aligned_unique_ptr = std::unique_ptr<T, boost::alignment::aligned_delete>;
-
-	const std::string projectRoot;
-
-	const float duration;
-
-	Eigen::Matrix4f camera;
-
-	const IModel & baseModel;
-
-	aligned_unique_ptr<BezierValueMap> valueMap;
-	aligned_unique_ptr<MappedModel>    model;
-
 public:
 
-	Animation(float duration, const IModel & model);
+	Animation(float duration, ModelCache & modelCache);
 
 	const Eigen::Matrix4f & GetCamera() const;
 	const IModel          & GetModel()  const;
@@ -40,4 +26,24 @@ public:
 private:
 
 	void SetCamera(float time);
+	void SetModel(float time);
+
+private:
+
+	const std::string projectRoot;
+
+	const float duration;
+
+	Eigen::Matrix4f camera;
+
+	aligned_unique_ptr<BezierValueMap> valueMap;
+
+	ModelCache & modelCache;
+
+	ModelCache::Entry startModel;
+	ModelCache::Entry endModel;
+
+	aligned_unique_ptr<BlendedModel> blendedModel;
+	aligned_unique_ptr<MappedModel>  mappedModel;
+
 };

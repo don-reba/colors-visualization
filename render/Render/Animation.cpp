@@ -18,17 +18,14 @@ namespace
 	constexpr float animationSeconds = 8.0f;
 }
 
-Animation::Animation(float duration, const IModel & model)
-	: duration  (duration)
-	, baseModel (model)
-	, valueMap  (make_aligned_unique<BezierValueMap>
+Animation::Animation(float duration, ModelCache & modelCache)
+	: duration   (duration)
+	, valueMap   (make_aligned_unique<BezierValueMap>
 		( Eigen::Vector2f{0.00023f, 0.0f} // mean = 0.13; 0.13 / 572 = 0.000227
 		, Eigen::Vector2f{0.1f,     1.0f}
 		, 0.0f, 572.0f, 0.00001f
 		) )
-	, model     (make_aligned_unique<MappedModel>(baseModel, *valueMap))
-{
-}
+	, modelCache (modelCache) {}
 
 const Matrix4f & Animation::GetCamera() const
 {
@@ -37,12 +34,13 @@ const Matrix4f & Animation::GetCamera() const
 
 const IModel & Animation::GetModel() const
 {
-	return *model;
+	return *mappedModel;
 }
 
 void Animation::SetTime(float time)
 {
 	SetCamera(time);
+	SetModel(time);
 }
 
 void Animation::SetCamera(float time)
@@ -60,4 +58,14 @@ void Animation::SetCamera(float time)
 	const Vector3f up ( 0.0f,      0.0f,       1.0f);
 
 	camera = LookAt(eye, at, up);
+}
+
+void Animation::SetModel(float time)
+{
+	startModel = std::move(modelCache.Load("C:\\Users\\Alexey\\Projects\\Colours visualization\\madoka\\gymnopedie\\fgt\\0.fgt"));
+	endModel   = std::move(modelCache.Load("C:\\Users\\Alexey\\Projects\\Colours visualization\\madoka\\gymnopedie\\fgt\\1.fgt"));
+
+	blendedModel = make_aligned_unique<BlendedModel>(*startModel, *endModel, time / duration);
+
+	mappedModel = make_aligned_unique<MappedModel>(*blendedModel, *valueMap);
 }

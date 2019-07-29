@@ -1,6 +1,5 @@
-﻿#include "AlignedPtr.h"
-#include "Animation.h"
-#include "FgtVolume.h"
+﻿#include "Animation.h"
+#include "ModelCache.h"
 #include "Path.h"
 #include "Profiler.h"
 #include "Projection.h"
@@ -8,7 +7,6 @@
 #include "RateIndicator.h"
 #include "RenderMesh.h"
 #include "Script.h"
-#include "Volume.h"
 
 #include <Eigen/Dense>
 
@@ -142,17 +140,6 @@ namespace
 		}
 	};
 
-	aligned_unique_ptr<IModel> MakeModel(ModelType type, const char * path, Profiler & profiler)
-	{
-		Profiler::Timer modelTimer(profiler, "model loading");
-		switch (type)
-		{
-		case ModelType::Fgt: return make_aligned_unique<FgtVolume>(path);
-		case ModelType::Voxel: return make_aligned_unique<Volume>(path);
-		}
-		return {};
-	}
-
 	void Run(const Path & projectRoot, const Script & script, int thread_count, Profiler & globalProfiler)
 	{
 		Profiler::Timer timer(globalProfiler, "total time");
@@ -174,7 +161,7 @@ namespace
 		const float stepLength = 50.0f / (float)sqrt(res.w * res.w + res.h * res.h);
 
 		// set up the model
-		aligned_unique_ptr<IModel> model = MakeModel(script.model.type, projectRoot / script.model.path, globalProfiler);
+		ModelCache modelCache;
 
 		mutex frameMutex;
 
@@ -182,9 +169,9 @@ namespace
 
 		const Vector3f bgColor(90.0f, 0.005f, -0.01f);
 
-		auto ProcessFrame = [&]()
+		auto ProcessFrame = [&]
 		{
-			Animation animation(script.duration, *model);
+			Animation animation(script.duration, modelCache);
 
 			vector<Vector4f> buffer(res.w * res.h);
 
@@ -241,7 +228,7 @@ namespace
 
 int main()
 {
-	cout.imbue(locale(""));
+	std::ignore = cout.imbue(locale(""));
 
 	Eigen::initParallel();
 
