@@ -6,6 +6,7 @@
 using ConvertColor;
 using Fgt3D;
 using Nemerle.Collections;
+using Nemerle.Utility.Getopt;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Console;
@@ -53,7 +54,7 @@ def Load(path, domain)
 {
 	using (reader = BinaryReader(File.OpenRead(path)))
 	{
-		WriteLine("Reading data...");
+		WriteLine("Reading '{0}'...", path);
 		def watch = Stopwatch.StartNew();
 
 		def count = reader.ReadInt32();
@@ -111,6 +112,29 @@ def Pad(min, max, σ, r, n)
 	(min - offset, max + offset);
 }
 
+def GetArgs()
+{
+	mutable iPath;
+	mutable oPath;
+
+        def opts =
+		[ CliOption.String
+			( name     = "-in"
+			, help     = "Input file or folder."
+			, required = true
+			, handler  = x => iPath = x
+                        )
+		, CliOption.String
+                        ( name     = "-out"
+                        , help     = "Output folder. File will match the input."
+                        , required = true
+                        , handler  = x => oPath = x)
+		];
+	Parse(opts);
+
+	(iPath, oPath);
+}
+
 def σ = 3.0 * Sqrt(2.0); // Sqrt(2) to make a proper Gaussian kernel
 def α = 6;
 def r = 2.0;
@@ -121,28 +145,34 @@ def domain = Domain
 	, Pad(-108.0,  96.0, σ, r, 8)
 	);
 
-def rootDir = @"..\madoka\gymnopedie";
+def (iPath, oPath) = GetArgs();
 
-_ = Directory.CreateDirectory(Path.Combine(rootDir, "fgt"));
-
-def files = ConcurrentQueue(Directory.GetFiles(Path.Combine(rootDir, "samples"), "*.dat"));
-def ProcessFile(_)
+def MakeOPath(iPath)
 {
-	mutable iPath;
-
-	while (files.TryDequeue(out iPath))
-	{
-		def oPath = Path.Combine(rootDir, "fgt", Path.ChangeExtension(Path.GetFileName(iPath), "fgt"));
-
-		// TODO: save enough information to easily restore Approximation
-		Save(oPath, Preprocess(Load(iPath, domain), σ, α, r, domain));
-	}
+	Path.Combine(oPath, Path.GetFileName(iPath));
 }
 
-mutable threads = [];
-repeat (11)
-	threads ::= Thread(ProcessFile);
-foreach (thread in threads)
-	thread.Start();
-foreach (thread in threads)
-	thread.Join();
+_ = Directory.CreateDirectory(oPath);
+
+if (Directory.Exists(iPath))
+{
+	def files = ConcurrentQueue(Directory.GetFiles(iPath, "*.dat"));
+	def ProcessFile(_)
+	{
+		mutable filePath;
+		while (files.TryDequeue(out filePath))
+			Save(MakeOPath(filePath), Preprocess(Load(filePath, domain), σ, α, r, domain));
+	}
+
+	mutable threads = [];
+	repeat (11)
+		threads ::= Thread(ProcessFile);
+	foreach (thread in threads)
+		thread.Start();
+	foreach (thread in threads)
+		thread.Join();
+}
+else
+{
+	Save(MakeOPath(iPath), Preprocess(Load(iPath, domain), σ, α, r, domain));
+}

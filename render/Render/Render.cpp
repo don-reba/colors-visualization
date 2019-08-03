@@ -96,7 +96,7 @@ namespace
 	void PrintScript(const Script & script)
 	{
 		cout
-			<< "Rendering '" << script.meshPath << "' to '" << script.outputPath << "': "
+			<< "Rendering '" << script.model.path << "' to '" << script.outputPath << "': "
 			<< script.duration << "s at "
 			<< script.fps << " fps, "
 			<< to_string(script.res.w) << "x" << to_string(script.res.h) << ", "
@@ -167,11 +167,11 @@ namespace
 
 		RateIndicator rateIndicator(60.0);
 
-		const Vector3f bgColor(90.0f, 0.005f, -0.01f);
+		const Vector3f bgColor(100.0f, 0.0f, 0.0f);
 
 		auto ProcessFrame = [&]
 		{
-			Animation animation(script.duration, modelCache);
+			Animation animation(script.duration, modelCache, projectRoot / script.model.path.c_str());
 
 			vector<Vector4f> buffer(res.w * res.h);
 
@@ -197,7 +197,7 @@ namespace
 
 					// render
 					ProjectMesh(animation.GetCamera(), projection, res, buffer.data(), mesh);
-					SaveProjectionBuffer(projectRoot / "projection.png", res, buffer.data());
+					//SaveProjectionBuffer(projectRoot / "projection.png", res, buffer.data());
 					RenderMesh
 						( animation.GetCamera(), rayCast, res, buffer.data(), mesh
 						, animation.GetModel(), script.aamask, stepLength, profiler, rateIndicator
@@ -232,13 +232,13 @@ int main()
 
 	Eigen::initParallel();
 
-	const Path projectRoot("C:\\Users\\Alexey\\Projects\\Colours visualization");
+	const auto projectRoot = Path("C:\\Users\\Alexey\\Projects\\Colours visualization\\projects\\madoka\\gymnopedie");
 
 	try
 	{
 		Profiler profiler;
 
-		Script script = LoadScript(projectRoot / "render\\script.txt");
+		Script script = LoadScript(projectRoot / "script.txt");
 		PrintScript(script);
 
 		constexpr int thread_count = 10;

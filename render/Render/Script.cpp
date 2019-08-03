@@ -136,7 +136,7 @@ Script LoadScript(const char * path)
 
 	std::ifstream file(path);
 	if (!file)
-		throw std::invalid_argument("File not found.");
+		throw std::invalid_argument("Script file could not be opened.");
 	file.unsetf(std::ios::skipws);
 
 	string text{FileIterator(file), FileIterator()};

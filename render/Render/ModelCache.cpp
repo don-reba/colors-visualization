@@ -5,9 +5,22 @@
 
 #include <filesystem>
 
-ModelCache::Entry ModelCache::Load(const char * path)
+IModel * ModelCache::Load(const char * path)
 {
-	return Entry(&cache, cache.Load(path, [=]{ return LoadFromFile(path); }));
+	return cache.Load(path, [=]{ return LoadFromFile(path); });
+}
+
+void ModelCache::Unload(const IModel * model)
+{
+	cache.Unload(model);
+}
+
+IModel * ModelCache::Swap(const IModel * model, const char * path)
+{
+	IModel * newModel = Load(path);
+	if (model)
+		Unload(model);
+	return newModel;
 }
 
 bool ModelCache::IsEmpty() const
@@ -28,39 +41,4 @@ aligned_unique_ptr<IModel> ModelCache::LoadFromFile(const char * path)
 	if (extension == ".vxl")
 		return make_aligned_unique<Volume>(path);
 	throw std::invalid_argument("Unknown extension: '" + extension + "'.");
-}
-
-//------------------
-// ModelCache::Entry
-//------------------
-
-ModelCache::Entry::Entry(Cache<IModel> * cache, IModel * model) noexcept
-	: cache(cache), model(model) {}
-
-ModelCache::Entry::Entry(ModelCache::Entry::Entry && entry) noexcept
-	: cache(entry.cache), model(entry.model)
-{
-	entry.cache = nullptr;
-	entry.model = nullptr;
-
-ModelCache::Entry::~Entry()
-{
-	if (cache)
-		cache->Unload(model);
-}
-
-ModelCache::Entry & ModelCache::Entry::operator= (Entry && entry)
-{
-	cache = entry.cache;
-	model = entry.model;
-
-	entry.cache = nullptr;
-	entry.model = nullptr;
-
-	return *this;
-}
-
-IModel & ModelCache::Entry::operator* () const noexcept
-{
-	return *model;
 }

@@ -2,6 +2,7 @@
 
 #include "AlignedPtr.h"
 #include "BezierValueMap.h"
+#include "Path.h"
 #include "Projection.h"
 #include "Volume.h"
 
@@ -15,11 +16,12 @@ using namespace std;
 
 namespace
 {
-	constexpr float animationSeconds = 8.0f;
+	constexpr float rotationSeconds = 9.0f;
 }
 
-Animation::Animation(float duration, ModelCache & modelCache)
-	: duration   (duration)
+Animation::Animation(float duration, ModelCache & modelCache, const char * modelPath)
+	: modelPath  (modelPath)
+	, duration   (duration)
 	, valueMap   (make_aligned_unique<BezierValueMap>
 		( Eigen::Vector2f{0.00023f, 0.0f} // mean = 0.13; 0.13 / 572 = 0.000227
 		, Eigen::Vector2f{0.1f,     1.0f}
@@ -47,9 +49,9 @@ void Animation::SetCamera(float time)
 {
 	constexpr float tau = boost::math::constants::two_pi<float>();
 
-	constexpr float rate    = 1.0f / animationSeconds;
-	constexpr float d       = 450.0f;
-	constexpr float vOffset = -5.0f;
+	constexpr float rate    = 1.0f / rotationSeconds;
+	constexpr float d       = 250.0f;
+	constexpr float vOffset = 40.0f;
 
 	const float a =  tau * time * rate;
 
@@ -62,10 +64,14 @@ void Animation::SetCamera(float time)
 
 void Animation::SetModel(float time)
 {
-	startModel = std::move(modelCache.Load("C:\\Users\\Alexey\\Projects\\Colours visualization\\madoka\\gymnopedie\\fgt\\0.fgt"));
-	endModel   = std::move(modelCache.Load("C:\\Users\\Alexey\\Projects\\Colours visualization\\madoka\\gymnopedie\\fgt\\1.fgt"));
+	const int second = min(18, static_cast<int>(time));
 
-	blendedModel = make_aligned_unique<BlendedModel>(*startModel, *endModel, time / duration);
+	startModel = modelCache.Swap(startModel, modelPath / to_string(second + 0) + ".fgt");
+	endModel   = modelCache.Swap(endModel,   modelPath / to_string(second + 1) + ".fgt");
+
+	const float t = time - floor(time);
+
+	blendedModel = make_aligned_unique<BlendedModel>(*startModel, *endModel, t);
 
 	mappedModel = make_aligned_unique<MappedModel>(*blendedModel, *valueMap);
 }

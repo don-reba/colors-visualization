@@ -4,6 +4,7 @@
 #include "BezierValueMap.h"
 #include "MappedModel.h"
 #include "ModelCache.h"
+#include "Path.h"
 
 #include <boost/align/aligned_delete.hpp>
 
@@ -16,7 +17,7 @@ class Animation final
 {
 public:
 
-	Animation(float duration, ModelCache & modelCache);
+	Animation(float duration, ModelCache & modelCache, const char * modelPath);
 
 	const Eigen::Matrix4f & GetCamera() const;
 	const IModel          & GetModel()  const;
@@ -30,7 +31,7 @@ private:
 
 private:
 
-	const std::string projectRoot;
+	const Path modelPath;
 
 	const float duration;
 
@@ -40,8 +41,8 @@ private:
 
 	ModelCache & modelCache;
 
-	ModelCache::Entry startModel;
-	ModelCache::Entry endModel;
+	IModel * startModel = nullptr;
+	IModel * endModel   = nullptr;
 
 	aligned_unique_ptr<BlendedModel> blendedModel;
 	aligned_unique_ptr<MappedModel>  mappedModel;

@@ -1,10 +1,13 @@
 *.7z
+*.dat
 *.dll
 *.exe
+*.fgt
 *.pdb
 *.png
 *.swo
 *.swp
+*.vxl
 madoka
 screenshots
 thoughts.txt
