@@ -96,13 +96,12 @@ namespace
 	void PrintScript(const Script & script)
 	{
 		cout
-			<< "Rendering '" << script.model.path << "' to '" << script.outputPath << "': "
+			<< "Rendering '" << script.model << "' to '" << script.outputPath << "': "
 			<< script.duration << "s at "
 			<< script.fps << " fps, "
 			<< to_string(script.res.w) << "x" << to_string(script.res.h) << ", "
 			<< script.aamask.size() << "x AA, "
 			<< script.frames << "\n"
-			<< ToString(script.model.type) << " model '" << script.model.path << "'\n"
 			<< '\n';
 	}
 
@@ -167,11 +166,9 @@ namespace
 
 		RateIndicator rateIndicator(60.0);
 
-		const Vector3f bgColor(100.0f, 0.0f, 0.0f);
-
 		auto ProcessFrame = [&]
 		{
-			Animation animation(script.duration, modelCache, projectRoot / script.model.path.c_str());
+			Animation animation(script.duration, modelCache, projectRoot / script.model.c_str());
 
 			vector<Vector4f> buffer(res.w * res.h);
 
@@ -208,7 +205,7 @@ namespace
 						( projectRoot / script.outputPath / to_string(frame) + ".png"
 						, res
 						, buffer.data()
-						, bgColor
+						, script.background
 						);
 				}
 

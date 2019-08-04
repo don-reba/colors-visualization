@@ -1,5 +1,7 @@
 #include "Script.h"
 
+#include "Color.h"
+
 #ifdef _MSC_VER
 #pragma warning(disable : 4503)
 #endif
@@ -19,38 +21,47 @@
 #include <stdexcept>
 #include <fstream>
 #include <iterator>
+#include <sstream>
 
 namespace qi = boost::spirit::qi;
 
 using std::string;
 
 BOOST_FUSION_ADAPT_STRUCT
-	(ModelSource,
-	(ModelType, type)
-	(string,    path)
-	)
-
-BOOST_FUSION_ADAPT_STRUCT
 	(Script,
-	(string,      meshPath)
-	(string,      outputPath)
-	(ModelSource, model)
-	(Resolution,  res)
-	(AAMask,      aamask)
-	(float,       fps)
-	(float,       duration)
-	(FrameSet,    frames)
-	(bool,        printFrameInfo)
+	(string,           meshPath)
+	(string,           outputPath)
+	(string,           model)
+	(Resolution,       res)
+	(AAMask,           aamask)
+	(float,            fps)
+	(float,            duration)
+	(FrameSet,         frames)
+	(bool,             printFrameInfo)
+	(Script::LabColor, background)
 	)
 
 namespace
 {
-	template<typename Iterator>
-	struct ScriptGrammar : qi::grammar<Iterator, Script()>
+	struct LazyRgbToLab
+	{
+		using result_type = Script::LabColor;
+
+		template<typename T>
+		Script::LabColor operator()(T x, T y, T z) const
+		{
+			return RgbToLab(Eigen::Vector3f(x, y, z));
+		}
+	};
+
+	template<typename Iterator, typename Skipper>
+	struct ScriptGrammar : qi::grammar<Iterator, Script(), Skipper>
 	{
 		ScriptGrammar() : ScriptGrammar::base_type(script)
 		{
 			using namespace qi;
+			using boost::phoenix::construct;
+			using boost::phoenix::function;
 
 			resolution.add
 				("2160p", res2160p)
@@ -68,34 +79,42 @@ namespace
 				("fgt",   ModelType::Fgt)
 				("voxel", ModelType::Voxel);
 
-			sp = *(char_(' ') | char_('\t'));
-
-			sep = sp >> ':' >> sp;
-
 			framesAll   = lit("all") [_val = FramesAll()];
-			frameRange %= uint_ >> sp >> '-' >> sp >> uint_;
+			frameRange %= uint_ > '-' > uint_;
 			frameIndex %= uint_;
 			frameSet   %= framesAll | frameRange | frameIndex;
 
-			path %= '"' >> +(char_ - '"') >> '"';
+			labColor
+				= (lit("lab") > '(' > float_ > ',' > float_ > ',' > float_ > ')')
+				[_val = construct<Script::LabColor>(_1, _2, _3)];
 
-			model %= modelType >> sp >> path;
+			rgbColor
+				= (lit("rgb") > '(' > float_ > ',' > float_ > ',' > float_ > ')')
+				[_val = function<LazyRgbToLab>()(_1, _2, _3)];
+
+			color %= labColor | rgbColor;
+
+			path %= '"' > +(char_ - '"') > '"';
+
+			constexpr char sep = ':';
 
 			script
-				%= lit("mesh-path")        >> sep >> path       >> eol
-				>> lit("output-path")      >> sep >> path       >> eol
-				>> lit("model")            >> sep >> model      >> eol
-				>> lit("resolution")       >> sep >> resolution >> eol
-				>> lit("antialiasing")     >> sep >> aamask     >> eol
-				>> lit("fps")              >> sep >> float_     >> eol
-				>> lit("duration")         >> sep >> time       >> eol
-				>> lit("frames")           >> sep >> frameSet   >> eol
-				>> lit("print-frame-info") >> sep >> bool_      >> eol;
+				%= (lit("mesh-path")        > sep > path       > eol)
+				^  (lit("output-path")      > sep > path       > eol)
+				^  (lit("model")            > sep > path       > eol)
+				^  (lit("resolution")       > sep > resolution > eol)
+				^  (lit("antialiasing")     > sep > aamask     > eol)
+				^  (lit("fps")              > sep > float_     > eol)
+				^  (lit("duration")         > sep > time       > eol)
+				^  (lit("frames")           > sep > frameSet   > eol)
+				^  (lit("print-frame-info") > sep > bool_      > eol)
+				^  (lit("background")       > sep > color      > eol)
+				;
 
 			time
-				= (float_ >> "s")                          [_val = _1]
-				| (float_ >> "min" >> sp >> float_ >> "s") [_val = _1 * 60.0f + _2]
-				| (float_ >> "min")                        [_val = _1 * 60.0f];
+				= (float_ > "s")                  [_val = _1]
+				| (float_ > "min" > float_ > "s") [_val = _1 * 60.0f + _2]
+				| (float_ > "min")                [_val = _1 * 60.0f];
 
 		}
 
@@ -103,20 +122,38 @@ namespace
 		qi::symbols<char, AAMask>     aamask;
 		qi::symbols<char, ModelType>  modelType;
 
-		qi::rule<Iterator> sp;
-		qi::rule<Iterator> sep;
-
-		qi::rule<Iterator, ModelSource()> model;
-
 		qi::rule<Iterator, FramesAll()>  framesAll;
 		qi::rule<Iterator, FrameRange()> frameRange;
 		qi::rule<Iterator, FrameIndex()> frameIndex;
 		qi::rule<Iterator, FrameSet()>   frameSet;
 
-		qi::rule<Iterator, string()> path;
-		qi::rule<Iterator, Script()> script;
-		qi::rule<Iterator, float()>  time;
+
+		qi::rule<Iterator, Script::LabColor, Skipper> labColor;
+		qi::rule<Iterator, Script::LabColor, Skipper> rgbColor;
+		qi::rule<Iterator, Script::LabColor, Skipper> color;
+
+		qi::rule<Iterator, string()>               path;
+		qi::rule<Iterator, Script(), Skipper>      script;
+		qi::rule<Iterator, float(), Skipper>       time;
 	};
+
+
+	template<typename BeginIter, typename EndIter>
+	std::tuple<int, int> GetPosition(BeginIter begin, EndIter end)
+	{
+		int r = 0, c = 0;
+		for (BeginIter i = begin; i != end; ++i)
+		{
+			if (*i == '\n')
+			{
+				++r;
+				c = 0;
+			}
+			else
+				++c;
+		}
+		return std::make_tuple(r, c);
+	}
 }
 
 std::string ToString(ModelType modelType)
@@ -133,6 +170,7 @@ Script LoadScript(const char * path)
 {
 	using FileIterator   = std::istream_iterator<char>;
 	using StringIterator = string::const_iterator;
+	using Grammar        = ScriptGrammar<StringIterator, qi::blank_type>;
 
 	std::ifstream file(path);
 	if (!file)
@@ -143,12 +181,27 @@ Script LoadScript(const char * path)
 	StringIterator       i   (text.begin());
 	const StringIterator end (text.end());
 
-	Script                        script;
-	ScriptGrammar<StringIterator> grammar;
+	Script script;
 
-	const bool isMatch = qi::parse(i, end, grammar, script);
+	bool isMatch = false;
+	try
+	{
+		isMatch = qi::phrase_parse(i, end, Grammar(), qi::blank, script);
+	}
+	catch (const qi::expectation_failure<StringIterator> & e)
+	{
+		i = e.first;
+	}
 	if (!isMatch || i != end)
-		throw std::runtime_error("Parsing failed.");
+	{
+		const std::tuple<int, int> pos = GetPosition(text.begin(), i);
+		const int row = std::get<0>(pos) + 1;
+		const int col = std::get<1>(pos) + 1;
+
+		std::ostringstream msg;
+		msg << "Parsing failed at row " << row << " col " << col << ".";
+		throw std::runtime_error(msg.str());
+	}
 
 	return script;
 }
