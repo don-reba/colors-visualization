@@ -15,6 +15,16 @@
 
 class Animation final
 {
+private:
+
+	struct Keyframe
+	{
+		float time;
+		std::string path;
+		bool operator < (const Keyframe & other) { return time < other.time; }
+		bool operator < (float otherTime) { return this->time < otherTime; }
+	};
+
 public:
 
 	Animation(float duration, ModelCache & modelCache, const char * modelPath);
@@ -26,12 +36,12 @@ public:
 
 private:
 
+	static std::vector<Keyframe> ReadKeyframes(const char * path);
+
 	void SetCamera(float time);
 	void SetModel(float time);
 
 private:
-
-	const Path modelPath;
 
 	const float duration;
 
@@ -47,4 +57,5 @@ private:
 	aligned_unique_ptr<BlendedModel> blendedModel;
 	aligned_unique_ptr<MappedModel>  mappedModel;
 
+	std::vector<Keyframe> keyframes;
 };

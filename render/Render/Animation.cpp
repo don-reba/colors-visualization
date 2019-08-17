@@ -6,6 +6,8 @@
 #include "Projection.h"
 #include "Volume.h"
 
+#include <algorithm>
+#include <filesystem>
 #include <cmath>
 #include <stdexcept>
 
@@ -20,14 +22,14 @@ namespace
 }
 
 Animation::Animation(float duration, ModelCache & modelCache, const char * modelPath)
-	: modelPath  (modelPath)
-	, duration   (duration)
+	: duration   (duration)
 	, valueMap   (make_aligned_unique<BezierValueMap>
 		( Eigen::Vector2f{0.00023f, 0.0f} // mean = 0.13; 0.13 / 572 = 0.000227
 		, Eigen::Vector2f{0.1f,     1.0f}
 		, 0.0f, 572.0f, 0.00001f
 		) )
-	, modelCache (modelCache) {}
+	, modelCache (modelCache)
+	, keyframes  (ReadKeyframes(modelPath)) {}
 
 const Matrix4f & Animation::GetCamera() const
 {
@@ -43,6 +45,17 @@ void Animation::SetTime(float time)
 {
 	SetCamera(time);
 	SetModel(time);
+}
+
+std::vector<Animation::Keyframe> Animation::ReadKeyframes(const char * path)
+{
+	std::vector<Keyframe> keyframes;
+	for (const auto & file : filesystem::directory_iterator(path))
+		keyframes.push_back({std::stof(file.path().stem()), file.path().string()});
+	if (keyframes.empty())
+		throw std::runtime_error("No models found.");
+	sort(keyframes.begin(), keyframes.end());
+	return keyframes;
 }
 
 void Animation::SetCamera(float time)
@@ -64,12 +77,13 @@ void Animation::SetCamera(float time)
 
 void Animation::SetModel(float time)
 {
-	const int second = min(18, static_cast<int>(time));
+	const auto endKf   = min(keyframes.end() - 1, lower_bound(keyframes.begin(), keyframes.end(), time));
+	const auto startKf = max(keyframes.begin(), endKf - 1);
 
-	startModel = modelCache.Swap(startModel, modelPath / to_string(second + 0) + ".fgt");
-	endModel   = modelCache.Swap(endModel,   modelPath / to_string(second + 1) + ".fgt");
+	startModel = modelCache.Swap(startModel, startKf->path.c_str());
+	endModel   = modelCache.Swap(endModel,   endKf->path.c_str());
 
-	const float t = time - floor(time);
+	const float t = (startKf == endKf) ? 0.0f : (time - startKf->time) / (endKf->time - startKf->time);
 
 	blendedModel = make_aligned_unique<BlendedModel>(*startModel, *endModel, t);
 
