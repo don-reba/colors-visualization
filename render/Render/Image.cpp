@@ -4,6 +4,7 @@
 #include "FreeImagePlus.h"
 
 #include <cstdio>
+#include <random>
 #include <stdexcept>
 
 using namespace Eigen;
@@ -20,13 +21,32 @@ namespace
 	}
 }
 
+void AddNoise
+	( Resolution res
+	, Vector4f * buffer
+	, float      amount
+	)
+{
+	if (amount == 0.0f)
+		return;
+	if (amount < 0.0f)
+		throw invalid_argument("Noise amount cannot be negative.");
+
+	mt19937 rng;
+	const uniform_real_distribution<float> distribution(-amount, amount);
+
+	const Vector4f * end = buffer + res.w * res.h;
+	for (; buffer != end; ++buffer)
+		buffer->x() += distribution(rng);
+}
+
 void SaveProjectionBuffer
 	( const char     * path
 	, Resolution       res
 	, const Vector4f * buffer
 	)
 {
-	unsigned int bpp = 32;
+	constexpr unsigned int bpp = 32;
 	fipImage img(FIT_BITMAP, res.w, res.h, bpp);
 	for (unsigned int y = 0; y != res.h; ++y)
 	{
@@ -51,7 +71,7 @@ void SaveBuffer
 	, Vector3f         bgColor
 	)
 {
-	unsigned int bpp = 32;
+	constexpr unsigned int bpp = 32;
 	fipImage img(FIT_BITMAP, res.w, res.h, bpp);
 	for (unsigned int y = 0; y != res.h; ++y)
 	{

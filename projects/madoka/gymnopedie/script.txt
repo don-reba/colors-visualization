@@ -1,10 +1,11 @@
 mesh-path        : "..\..\..\shell\hull.ply"
 output-path      : "animation"
 model            : "fgt"
-resolution       : 1080p
+resolution       : 720p
 antialiasing     : 1x
-fps              : 60
-duration         : 18s
-frames           : all
+fps              : 20
+duration         : 18.0071s
 print-frame-info : true
+frames           : all
 background       : lab(0, 0, 0)
+noise            : 2

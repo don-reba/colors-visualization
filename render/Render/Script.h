@@ -32,6 +32,7 @@ struct Script final
 	FrameSet    frames = FramesAll();
 	bool        printFrameInfo = true;
 	LabColor    background;
+	float       noise = 0.0f;
 };
 
 Script LoadScript(const char * path);

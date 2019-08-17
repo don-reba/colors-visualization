@@ -1,9 +1,12 @@
 #pragma once
 
+#include <cstdint>
+
 struct Resolution
 {
-	size_t w;
-	size_t h;
+	using Type = std::uint32_t;
+	Type w;
+	Type h;
 };
 static const Resolution res2160p { 3840, 2160 };
 static const Resolution res1080p { 1920, 1080 };

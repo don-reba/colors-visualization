@@ -76,6 +76,7 @@
     <LinkIncremental>true</LinkIncremental>
     <IncludePath>$(BOOST_BUILD);D:\Programming\libpng;D:\Programming\Eigen;$(IncludePath)</IncludePath>
     <LibraryPath>$(BOOST_BUILD)\stage\lib;$(LibraryPath)</LibraryPath>
+    <CodeAnalysisRuleSet>..\Render\Render.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
@@ -86,6 +87,7 @@
     <LinkIncremental>false</LinkIncremental>
     <IncludePath>$(BOOST_BUILD);D:\Programming\libpng;D:\Programming\Eigen;$(IncludePath)</IncludePath>
     <LibraryPath>$(BOOST_BUILD)\stage64\lib;$(LibraryPath)</LibraryPath>
+    <CodeAnalysisRuleSet>..\Render\Render.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>

@@ -200,6 +200,9 @@ namespace
 						, animation.GetModel(), script.aamask, stepLength, profiler, rateIndicator
 						);
 
+					// post-process
+					AddNoise(res, buffer.data(), script.noise);
+
 					// save
 					SaveBuffer
 						( projectRoot / script.outputPath / to_string(frame) + ".png"

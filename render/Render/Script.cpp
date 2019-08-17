@@ -39,6 +39,7 @@ BOOST_FUSION_ADAPT_STRUCT
 	(FrameSet,         frames)
 	(bool,             printFrameInfo)
 	(Script::LabColor, background)
+	(float,            noise)
 	)
 
 namespace
@@ -80,7 +81,7 @@ namespace
 				("voxel", ModelType::Voxel);
 
 			framesAll   = lit("all") [_val = FramesAll()];
-			frameRange %= uint_ > '-' > uint_;
+			frameRange %= uint_ >> '-' >> uint_;
 			frameIndex %= uint_;
 			frameSet   %= framesAll | frameRange | frameIndex;
 
@@ -109,6 +110,7 @@ namespace
 				^  (lit("frames")           > sep > frameSet   > eol)
 				^  (lit("print-frame-info") > sep > bool_      > eol)
 				^  (lit("background")       > sep > color      > eol)
+				^  (lit("noise")            > sep > float_     > eol)
 				;
 
 			time
@@ -122,10 +124,10 @@ namespace
 		qi::symbols<char, AAMask>     aamask;
 		qi::symbols<char, ModelType>  modelType;
 
-		qi::rule<Iterator, FramesAll()>  framesAll;
-		qi::rule<Iterator, FrameRange()> frameRange;
-		qi::rule<Iterator, FrameIndex()> frameIndex;
-		qi::rule<Iterator, FrameSet()>   frameSet;
+		qi::rule<Iterator, FramesAll(),  Skipper> framesAll;
+		qi::rule<Iterator, FrameRange(), Skipper> frameRange;
+		qi::rule<Iterator, FrameIndex(), Skipper> frameIndex;
+		qi::rule<Iterator, FrameSet(),   Skipper> frameSet;
 
 
 		qi::rule<Iterator, Script::LabColor, Skipper> labColor;

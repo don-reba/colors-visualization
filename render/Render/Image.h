@@ -4,6 +4,12 @@
 
 #include "Resolution.h"
 
+void AddNoise
+	( Resolution        res
+	, Eigen::Vector4f * buffer
+	, float             amount
+	);
+
 void SaveProjectionBuffer
 	( const char            * path
 	, Resolution              res
