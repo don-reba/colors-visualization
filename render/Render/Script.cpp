@@ -154,7 +154,7 @@ namespace
 			else
 				++c;
 		}
-		return std::make_tuple(r, c);
+		return std::tuple(r, c);
 	}
 }
 

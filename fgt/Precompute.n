@@ -16,40 +16,6 @@ using System.Math;
 using System.Threading;
 using System;
 
-def PadToMultiple(coef1, (nx1, ny1, nz1), pd, k)
-{
-	def RoundUp(n, k)
-	{
-		if (n % k == 0)
-			n
-		else
-			n / k * k + k
-	}
-
-	WriteLine("Padding...");
-
-	def nx2 = RoundUp(nx1, k);
-	def ny2 = RoundUp(ny1, k);
-	def nz2 = RoundUp(nz1, k);
-
-	if (nx1 == nx2 && ny1 == ny2 && nz1 == nz2)
-		(coef1, (nx1, ny1, nz1))
-	else
-	{
-		def coef2 : array[double] = array(nx2 * ny2 * nz2 * pd);
-		for (mutable z; z != nz1; ++z)
-		for (mutable y; y != ny1; ++y)
-			Array.Copy
-				( sourceArray      = coef1
-				, sourceIndex      = nx1 * pd * (z * ny1 + y)
-				, destinationArray = coef2
-				, destinationIndex = nx2 * pd * (z * ny2 + y)
-				, length           = nx1 * pd
-				);
-		(coef2, (nx2, ny2, nz2))
-	}
-}
-
 def Load(path, domain)
 {
 	using (reader = BinaryReader(File.OpenRead(path)))
@@ -79,8 +45,42 @@ def Load(path, domain)
 	}
 }
 
-def Save(path, a)
+def Save(path, a : Approximation)
 {
+	def PadToMultiple(coef1, (nx1, ny1, nz1), pd, k)
+	{
+		def RoundUp(n, k)
+		{
+			if (n % k == 0)
+				n
+			else
+				n / k * k + k
+		}
+
+		WriteLine("Padding...");
+
+		def nx2 = RoundUp(nx1, k);
+		def ny2 = RoundUp(ny1, k);
+		def nz2 = RoundUp(nz1, k);
+
+		if (nx1 == nx2 && ny1 == ny2 && nz1 == nz2)
+			(coef1, (nx1, ny1, nz1))
+		else
+		{
+			def coef2 : array[double] = array(nx2 * ny2 * nz2 * pd);
+			for (mutable z; z != nz1; ++z)
+			for (mutable y; y != ny1; ++y)
+				Array.Copy
+					( sourceArray      = coef1
+					, sourceIndex      = nx1 * pd * (z * ny1 + y)
+					, destinationArray = coef2
+					, destinationIndex = nx2 * pd * (z * ny2 + y)
+					, length           = nx1 * pd
+					);
+			(coef2, (nx2, ny2, nz2))
+		}
+	}
+
 	def mem = sizeof(double) * a.n[0] * a.n[1] * a.n[2] * a.pd;
 	WriteLine("Saving {0}x{1}x{2}x{3} ({4:N0} bytes)...", a.n[0], a.n[1], a.n[2], a.pd, mem);
 
@@ -117,35 +117,56 @@ def GetArgs()
 	mutable iPath;
 	mutable oPath;
 
-        def opts =
+	mutable σ = 3.0;
+	mutable α = 6;
+	mutable r = 2.0;
+
+	def opts =
 		[ CliOption.String
 			( name     = "-in"
 			, help     = "Input file or folder."
 			, required = true
 			, handler  = x => iPath = x
-                        )
+			)
 		, CliOption.String
-                        ( name     = "-out"
-                        , help     = "Output folder. File will match the input."
-                        , required = true
-                        , handler  = x => oPath = x)
+			( name     = "-out"
+			, help     = "Output folder. File will match the input."
+			, required = true
+			, handler  = x => oPath = x
+			)
+		, CliOption.String
+			( name     = "-sigma"
+			, help     = $"Gaussian coefficient. Default: $σ."
+			, required = false
+			, handler  = x => σ = double.Parse(x)
+			)
+		, CliOption.Int
+			( name     = "-alpha"
+			, help     = $"Number of expansion coefficients. Default: $α."
+			, required = false
+			, handler  = x => α = x
+			)
+		, CliOption.String
+			( name     = "-r"
+			, help     = $"Approximation radius. Default: $r."
+			, required = false
+			, handler  = x => r = double.Parse(x)
+			)
 		];
 	Parse(opts);
 
-	(iPath, oPath);
+	σ *= Sqrt(2.0); // Sqrt(2) to make a proper Gaussian kernel
+
+	(iPath, oPath, σ, α, r);
 }
 
-def σ = 3.0 * Sqrt(2.0); // Sqrt(2) to make a proper Gaussian kernel
-def α = 6;
-def r = 2.0;
+def (iPath, oPath, σ, α, r) = GetArgs();
 
 def domain = Domain
 	( Pad(   0.0, 100.0, σ, r, 8)
 	, Pad( -87.0,  99.0, σ, r, 8)
 	, Pad(-108.0,  96.0, σ, r, 8)
 	);
-
-def (iPath, oPath) = GetArgs();
 
 def MakeOPath(iPath)
 {

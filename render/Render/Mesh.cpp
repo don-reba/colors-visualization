@@ -45,7 +45,7 @@ Mesh LoadPly(const char * path)
 {
 	ifstream ply(path);
 	if (!ply)
-		throw runtime_error("Mesh file could not be opened.");
+		throw runtime_error("Mesh file '" + string(path) + "' could not be opened.");
 
 	PlyHeader header = ParseHeader(ply);
 

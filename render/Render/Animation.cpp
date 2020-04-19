@@ -18,7 +18,7 @@ using namespace std;
 
 namespace
 {
-	constexpr float rotationSeconds = 9.0f;
+	constexpr float rotationSeconds = 10.0f;
 }
 
 Animation::Animation(float duration, ModelCache & modelCache, const char * modelPath)
@@ -53,7 +53,7 @@ std::vector<Animation::Keyframe> Animation::ReadKeyframes(const char * path)
 	for (const auto & file : filesystem::directory_iterator(path))
 		keyframes.push_back({std::stof(file.path().stem()), file.path().string()});
 	if (keyframes.empty())
-		throw std::runtime_error("No models found.");
+		throw std::runtime_error("No models found at '" + string(path) + "'.");
 	sort(keyframes.begin(), keyframes.end());
 	return keyframes;
 }

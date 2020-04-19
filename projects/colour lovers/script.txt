@@ -1,9 +1,10 @@
-mesh-path        : "shell\hull.ply"
+mesh-path        : "assets\hull.ply"
 output-path      : "animation"
-model            : "pop.fgt"
+model            : "fgt"
 resolution       : 1080p
 antialiasing     : 8x
 fps              : 60
 duration         : 10s
 frames           : all
+background       : lab(50, 0, 0)
 print-frame-info : true

@@ -8,4 +8,4 @@ duration         : 18.0071s
 print-frame-info : true
 frames           : all
 background       : lab(0, 0, 0)
-noise            : 2
+noise            : 1.5

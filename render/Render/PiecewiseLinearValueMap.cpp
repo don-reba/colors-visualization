@@ -10,7 +10,7 @@ PiecewiseLinearValueMap::PiecewiseLinearValueMap(Points points) noexcept
 
 float PiecewiseLinearValueMap::operator[] (float x) const
 {
-	const auto lb = std::lower_bound(points.begin(), points.end(), std::make_tuple(x, 0.0f));
+	const auto lb = std::lower_bound(points.begin(), points.end(), std::tuple(x, 0.0f));
 	if (lb == points.end())
 		throw std::invalid_argument("Input outside of map.");
 	if (lb == points.begin())

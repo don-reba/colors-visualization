@@ -90,5 +90,6 @@ void SaveBuffer
 			*scanline++ = 0xFF;
 		}
 	}
-	img.save(path);
+	if (!img.save(path))
+		throw runtime_error("Could not save image '" + string(path) + "'.");
 }

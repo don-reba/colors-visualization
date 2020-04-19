@@ -232,7 +232,8 @@ int main()
 
 	Eigen::initParallel();
 
-	const auto projectRoot = Path("C:\\Users\\Alexey\\Projects\\Colours visualization\\projects\\madoka\\gymnopedie");
+	//const auto projectRoot = Path(R"(C:\Users\Alexey\Projects\Colours visualization\projects\madoka\gymnopedie)");
+	const auto projectRoot = Path(R"(C:\Users\Alexey\Projects\Colours visualization\projects\colour lovers)");
 
 	try
 	{

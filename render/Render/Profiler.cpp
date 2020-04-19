@@ -71,7 +71,7 @@ Profiler::Timer::Timer(Profiler & profiler, const char * name)
 	if (i == profiler.current->children.end())
 	{
 		unique_ptr<Node> node(new Profiler::Node(profiler.current));
-		i = profiler.current->children.insert(make_pair(name, move(node))).first;
+		i = profiler.current->children.insert(pair(name, move(node))).first;
 	}
 	profiler.current = i->second.get();
 }
