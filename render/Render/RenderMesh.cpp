@@ -75,18 +75,18 @@ namespace
 			};
 
 			// (x + 100 < 0.1 mod 10) ? 0 : x
-			//const __m256 xGrid =
-			//	_mm256_and_ps
-			//		( p.x
-			//		, _mm256_cmp_ps
-			//			( _mm256_set1_ps(0.1f)
-			//			, _mm256_fmod_ps
-			//				( _mm256_add_ps(p.x, _mm256_set1_ps(100.0f))
-			//				, _mm256_set1_ps(10.0f)
-			//				)
-			//			, _CMP_LT_OQ
-			//			)
-			//		);
+			const __m256 xGrid =
+				_mm256_and_ps
+					( p.x
+					, _mm256_cmp_ps
+						( _mm256_set1_ps(0.1f)
+						, _mm256_fmod_ps
+							( _mm256_add_ps(p.x, _mm256_set1_ps(100.0f))
+							, _mm256_set1_ps(10.0f)
+							)
+						, _CMP_LT_OQ
+						)
+					);
 
 			// sample the model
 			__m256 samples        = _mm256_sub_ps(_mm256_set1_ps(1.0f), model[p]);
@@ -95,8 +95,8 @@ namespace
 			// add the new value
 			__declspec(align(32)) float a[8], x[8], y[8], z[8];
 			_mm256_store_ps(a, transparencies);
-			//_mm256_store_ps(x, xGrid);
-			_mm256_store_ps(x, p.x);
+			_mm256_store_ps(x, xGrid);
+			//_mm256_store_ps(x, p.x);
 			_mm256_store_ps(y, p.y);
 			_mm256_store_ps(z, p.z);
 

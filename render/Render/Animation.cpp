@@ -69,7 +69,7 @@ void Animation::SetCamera(float time)
 
 void Animation::SetModel(float time)
 {
-	const float cycleCount = 3.0f;
+	const float cycleCount = 2.0f;
 	const float thickness = 0.2f;
 	const float rate      = cycleCount / animationSeconds;
 

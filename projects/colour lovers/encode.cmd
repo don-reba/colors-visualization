@@ -26,7 +26,7 @@ if exist "%file%" (
 	if !height! LEQ 360  set bitrate=5m
 
 	ffmpeg                     ^
-		-framerate 30      ^
+		-framerate 60      ^
 		-i "%dir%\%%d.png" ^
 		-hide_banner       ^
 		-c:v libx264       ^
