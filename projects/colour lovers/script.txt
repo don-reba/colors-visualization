@@ -1,10 +1,11 @@
-mesh-path        : "assets\hull.ply"
-output-path      : "animation"
-model            : "fgt"
-resolution       : 1080p
-antialiasing     : 8x
-fps              : 60
-duration         : 10s
-frames           : all
-background       : lab(50, 0, 0)
-print-frame-info : true
+mesh-path         : "assets\hull.ply"
+output-path       : "animation"
+model             : "assets\coef s3 a6 2.0.fgt"
+resolution        : 1080p
+antialiasing      : 4x
+fps               : 30
+duration          : 18s
+rotation-duration : 9s
+frames            : all
+background        : lab(90, 0, 0)
+print-frame-info  : true

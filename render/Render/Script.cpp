@@ -36,6 +36,7 @@ BOOST_FUSION_ADAPT_STRUCT
 	(AAMask,           aamask)
 	(float,            fps)
 	(float,            duration)
+	(float,            rotationDuration)
 	(FrameSet,         frames)
 	(bool,             printFrameInfo)
 	(Script::LabColor, background)
@@ -100,17 +101,18 @@ namespace
 			constexpr char sep = ':';
 
 			script
-				%= (lit("mesh-path")        > sep > path       > eol)
-				^  (lit("output-path")      > sep > path       > eol)
-				^  (lit("model")            > sep > path       > eol)
-				^  (lit("resolution")       > sep > resolution > eol)
-				^  (lit("antialiasing")     > sep > aamask     > eol)
-				^  (lit("fps")              > sep > float_     > eol)
-				^  (lit("duration")         > sep > time       > eol)
-				^  (lit("frames")           > sep > frameSet   > eol)
-				^  (lit("print-frame-info") > sep > bool_      > eol)
-				^  (lit("background")       > sep > color      > eol)
-				^  (lit("noise")            > sep > float_     > eol)
+				%= (lit("mesh-path")         > sep > path       > eol)
+				^  (lit("output-path")       > sep > path       > eol)
+				^  (lit("model")             > sep > path       > eol)
+				^  (lit("resolution")        > sep > resolution > eol)
+				^  (lit("antialiasing")      > sep > aamask     > eol)
+				^  (lit("fps")               > sep > float_     > eol)
+				^  (lit("duration")          > sep > time       > eol)
+				^  (lit("rotation-duration") > sep > time       > eol)
+				^  (lit("frames")            > sep > frameSet   > eol)
+				^  (lit("print-frame-info")  > sep > bool_      > eol)
+				^  (lit("background")        > sep > color      > eol)
+				^  (lit("noise")             > sep > float_     > eol)
 				;
 
 			time

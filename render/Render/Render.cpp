@@ -168,7 +168,7 @@ namespace
 
 		auto ProcessFrame = [&]
 		{
-			Animation animation(script.duration, modelCache, projectRoot / script.model.c_str());
+			Animation animation(script.duration, script.rotationDuration, modelCache, projectRoot / script.model.c_str());
 
 			vector<Vector4f> buffer(res.w * res.h);
 

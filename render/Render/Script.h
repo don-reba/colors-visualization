@@ -29,6 +29,7 @@ struct Script final
 	AAMask      aamask = aa1x;
 	float       fps = 30.0f;
 	float       duration = 8.0;
+	float       rotationDuration = 4.0;
 	FrameSet    frames = FramesAll();
 	bool        printFrameInfo = true;
 	LabColor    background;
