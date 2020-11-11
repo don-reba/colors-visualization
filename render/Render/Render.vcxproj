@@ -90,12 +90,12 @@
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <Optimization>Disabled</Optimization>
       <AdditionalIncludeDirectories>C:\lib\boost;C:\lib\libpng;C:\lib\Eigen;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <LanguageStandard>stdcpp17</LanguageStandard>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
       <EnablePREfast>false</EnablePREfast>
       <EnableEnhancedInstructionSet>AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
       <DisableLanguageExtensions>false</DisableLanguageExtensions>
       <ConformanceMode>true</ConformanceMode>
-      <RuntimeTypeInfo>false</RuntimeTypeInfo>
+      <RuntimeTypeInfo>true</RuntimeTypeInfo>
       <FloatingPointModel>Fast</FloatingPointModel>
       <StringPooling>true</StringPooling>
       <FloatingPointExceptions>false</FloatingPointExceptions>
@@ -121,7 +121,7 @@
       <WarningLevel>Level4</WarningLevel>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <AdditionalIncludeDirectories>C:\lib\boost;C:\lib\libpng;C:\lib\Eigen;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <LanguageStandard>stdcpp17</LanguageStandard>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
       <EnablePREfast>false</EnablePREfast>
       <TreatWarningAsError>true</TreatWarningAsError>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
@@ -131,7 +131,7 @@
       <EnableEnhancedInstructionSet>AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
       <DisableLanguageExtensions>false</DisableLanguageExtensions>
       <ConformanceMode>true</ConformanceMode>
-      <RuntimeTypeInfo>false</RuntimeTypeInfo>
+      <RuntimeTypeInfo>true</RuntimeTypeInfo>
       <FloatingPointModel>Fast</FloatingPointModel>
       <FloatingPointExceptions>false</FloatingPointExceptions>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
@@ -157,10 +157,10 @@
     <ClCompile>
       <AdditionalIncludeDirectories>C:\lib\boost;C:\lib\libpng;C:\lib\Eigen</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>EIGEN_DONT_PARALLELIZE;cimg_use_png</PreprocessorDefinitions>
-      <LanguageStandard>stdcpp17</LanguageStandard>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
       <DisableLanguageExtensions>false</DisableLanguageExtensions>
       <ConformanceMode>true</ConformanceMode>
-      <RuntimeTypeInfo>false</RuntimeTypeInfo>
+      <RuntimeTypeInfo>true</RuntimeTypeInfo>
       <EnableEnhancedInstructionSet>AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
       <FloatingPointModel>Fast</FloatingPointModel>
       <StringPooling>true</StringPooling>
@@ -181,10 +181,10 @@
     <ClCompile>
       <AdditionalIncludeDirectories>C:\lib\boost;C:\lib\libpng;C:\lib\Eigen</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>EIGEN_DONT_PARALLELIZE;cimg_use_png</PreprocessorDefinitions>
-      <LanguageStandard>stdcpp17</LanguageStandard>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
       <DisableLanguageExtensions>false</DisableLanguageExtensions>
       <ConformanceMode>true</ConformanceMode>
-      <RuntimeTypeInfo>false</RuntimeTypeInfo>
+      <RuntimeTypeInfo>true</RuntimeTypeInfo>
       <EnableEnhancedInstructionSet>AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
       <FloatingPointModel>Fast</FloatingPointModel>
       <StringPooling>true</StringPooling>
@@ -224,6 +224,7 @@
     <ClCompile Include="ModelCache.cpp" />
     <ClCompile Include="PiecewiseLinearValueMap.cpp" />
     <ClCompile Include="Profiler.cpp" />
+    <ClCompile Include="ProgramOptions.cpp" />
     <ClCompile Include="Projection.cpp" />
     <ClCompile Include="ProjectMesh.cpp" />
     <ClCompile Include="RateIndicator.cpp" />
@@ -256,6 +257,7 @@
     <ClInclude Include="PiecewiseLinearValueMap.h" />
     <ClInclude Include="Pow.h" />
     <ClInclude Include="Profiler.h" />
+    <ClInclude Include="ProgramOptions.h" />
     <ClInclude Include="Projection.h" />
     <ClInclude Include="ProjectMesh.h" />
     <ClInclude Include="RateIndicator.h" />

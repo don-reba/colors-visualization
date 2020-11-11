@@ -2,6 +2,7 @@
 #include "ModelCache.h"
 #include "Path.h"
 #include "Profiler.h"
+#include "ProgramOptions.h"
 #include "Projection.h"
 #include "ProjectMesh.h"
 #include "RateIndicator.h"
@@ -18,6 +19,7 @@
 #include <locale>
 #include <mutex>
 #include <numeric>
+#include <boost/program_options.hpp>
 #include <sstream>
 #include <string>
 #include <thread>
@@ -226,24 +228,23 @@ namespace
 	}
 }
 
-int main()
+int main(int argc, char ** argv)
 {
 	std::ignore = cout.imbue(locale(""));
 
 	Eigen::initParallel();
 
-	//const auto projectRoot = Path(R"(C:\Users\Alexey\Projects\Colours visualization\projects\madoka\gymnopedie)");
-	const auto projectRoot = Path(R"(C:\Users\Alexey\Projects\Colours visualization\projects\colour lovers)");
-
 	try
 	{
+		ProgramOptions options(argc, argv);
+
 		Profiler profiler;
 
-		Script script = LoadScript(projectRoot / "script.txt");
+		Script script = LoadScript(options.ProjectRoot() / "script.txt");
 		PrintScript(script);
 
 		constexpr int thread_count = 10;
-		Run(projectRoot, script, thread_count, profiler);
+		Run(options.ProjectRoot(), script, thread_count, profiler);
 
 		std::cout << "\n";
 		PrintProfilerNode(std::cout, 0, profiler.current);
