@@ -67,6 +67,7 @@ namespace
 
 			resolution.add
 				("2160p", res2160p)
+				("1440p", res1440p)
 				("1080p", res1080p)
 				("720p",  res720p)
 				("576p",  res576p)
@@ -162,10 +163,11 @@ namespace
 
 std::string ToString(ModelType modelType)
 {
+	using enum ModelType;
 	switch (modelType)
 	{
-	case ModelType::Fgt:   return "FGT";
-	case ModelType::Voxel: return "Voxel";
+	case Fgt:   return "FGT";
+	case Voxel: return "Voxel";
 	}
 	return "";
 }
