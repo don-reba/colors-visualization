@@ -1,10 +1,11 @@
+*.args.json
 *.filters
 *.mp4
 *.user
 .vs
-animation
 Debug
+Release
+animation
 lib
 lib64
 mp4
-Release

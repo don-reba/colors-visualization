@@ -14,6 +14,7 @@
 #include <algorithm>
 #include <chrono>
 #include <fstream>
+#include <future>
 #include <iomanip>
 #include <iostream>
 #include <locale>
@@ -22,7 +23,6 @@
 #include <boost/program_options.hpp>
 #include <sstream>
 #include <string>
-#include <thread>
 #include <vector>
 
 using namespace std;
@@ -220,11 +220,11 @@ namespace
 			}
 		};
 
-		vector<thread> threads(thread_count);
+		vector<future<void>> threads(thread_count);
 		for (auto & t : threads)
-			t = thread(ProcessFrame);
+			t = async(launch::async, ProcessFrame);
 		for (auto & t : threads)
-			t.join();
+			t.get();
 	}
 }
 
